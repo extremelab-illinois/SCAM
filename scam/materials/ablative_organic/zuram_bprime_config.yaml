@@ -1,0 +1,46 @@
+# SPDX-License-Identifier: MIT
+# bprime configuration for generating the ZURAM B' table in air.
+#
+# Material: ZURAM 18/50 (zuram.yaml)
+#
+# Pyrolysis gas elemental composition (Ref [4], VKI_ZURAM_characterization_v1-5.ods):
+#   C: 0.171, H: 0.722, O: 0.107  (elemental mole fracs)
+#   C: 0.457, H: 0.162, O: 0.381  (elemental mass fracs)
+#
+# Represented as species mole fracs (solved from elemental constraints):
+#   CH4: 0.5697, CO: 0.1180, H2O: 0.3123
+# Verification: C=(0.5697+0.1180)/4.021=0.171, H=4*0.5697+2*0.3123)/4.021=0.722,
+#               O=(0.1180+0.3123)/4.021=0.107 — all match Ref [4] mole fracs.
+#
+# Output file: zuram_bprime_air.yaml
+#
+# Usage (from the SCAM repo root):
+#   python scam/tools/generate_bprime.py \
+#       --config scam/materials/ablative_organic/zuram_bprime_config.yaml \
+#       --output scam/materials/ablative_organic/zuram_bprime_air.yaml \
+#       --config \
+#       --workers 8
+#
+generator:
+  edge_x: "O2:0.21,N2:0.79"
+  pyro_y: "CH4:0.5697,CO:0.1180,H2O:0.3123"
+
+  temps:     "250:4000:25"                        # K — 151 points
+  pressures: "101.325,1013.25,10132.5,101325"     # Pa — 0.001 / 0.01 / 0.1 / 1 atm
+  bg:        "0.0,0.1,0.25,0.5,1.0,2.0"           # B'g — 6 levels
+
+  gas_mechanism: cno_ablation.yaml
+  carbon_phase:  graphite.yaml
+  carbon_moles:  100.0
+  solver:        gibbs
+
+  outdir:   /tmp/scam_bprime_zuram
+  out:      bprime_zuram_air.csv
+  out_wide: ""
+  verbose:  false
+
+plot:
+  enabled: false
+
+compare:
+  enabled: false

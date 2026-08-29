@@ -1,0 +1,139 @@
+# SPDX-License-Identifier: MIT
+# Mersen graphite grade 2340 for Ringel (2025) Plasmatron X comparisons.
+#
+# This is a provisional dense-graphite material card for uncoated Mersen 2340
+# coupons tested in:
+#   Benjamin Ringel, "Characterization of carbon ablators for hypersonic
+#   thermal protection systems", PhD thesis, University of Illinois at
+#   Urbana-Champaign, 2025, Chapter 4.
+#
+# Material anchors:
+#   - Density uses Ringel Table 4.2 measured uncoated 2340 coupon densities
+#     rounded to 1.85 g/cc.
+#   - Thermal conductivity uses the local Mersen purified graphite brochure
+#     value for grade 2340: 102 W/m/C (300 K). See the note above
+#     k_virgin/k_char for why this is the value in use (a fitted 0.08x-scaled
+#     effusivity proxy was tried and ABANDONED -- see git history / memory --
+#     because the ~13% porosity this grade carries does not, via standard
+#     effective-medium models, support anywhere near the ~12x conductivity
+#     reduction that fit required. A 2D axisymmetric iso-Q re-investigation
+#     (examples/verification/ablation_ringel_2d/) found the 2D-vs-1D
+#     comparison is INCONCLUSIVE, not a clean disproof: with a shoulder/side
+#     flux profile rescaled from the (3.3x larger) ablation3 reference body,
+#     the 2D stagnation point runs COOLER than the 1D flat slab (lateral
+#     conduction into the ~15x-lower-flux shoulder outweighs the extra
+#     directly-absorbed energy); but with a uniform flux profile the 2D
+#     point runs dramatically HOTTER, close to the pyrometer trace. Verified
+#     directly (not a bug): the true stagnation face receives flux exactly
+#     matching the 1D calibration in both cases -- the sign of the 2D effect
+#     is entirely controlled by an unvalidated assumption (how fast flux
+#     really falls off past the shoulder for THIS small, different-Reynolds-
+#     number body), for which no real CFD/PlasFlowSolver solution exists.
+#     The fast transient in the Ringel pyrometer traces remains UNEXPLAINED;
+#     emissivity/incident radiation are ruled out, the k(T) fit is
+#     porosity-inconsistent, and 1D-vs-2D geometry is genuinely ambiguous
+#     pending real flux-distribution data for this geometry.).
+#   - Specific heat reuses the graphite-like table used by existing SCAM dense
+#     carbon-ablation cards until 2340-specific cp(T) data are added.
+#   - Surface chemistry uses the ACE-style carbon-in-air B' table (gri30, C
+#     only, no C2/C3 sublimation), matching the default selected for the Ringel
+#     Plasmatron X study.
+
+name: GRAPHITE_MERSEN_2340
+description: "Mersen graphite grade 2340, non-decomposing dense graphite"
+material_category: ablative_carbon
+card_version: "1.2"
+status: provisional
+source: "Ringel 2025 PhD thesis Ch. 4; Mersen purified graphite brochure"
+
+rho_virgin:  1850.0   # [kg/m3] Ringel Table 4.2 measured 2340 coupons, rounded
+rho_char:    1850.0   # [kg/m3] non-decomposing; same solid density for recession
+gamma_resin: 0.0
+
+decomposing: false
+components: []
+
+# Thermal conductivity [W/m/K] vs T [K].
+# The 300 K point is anchored to the Mersen grade-2340 brochure value.
+# Higher-temperature values follow a conservative dense-graphite decreasing
+# trend; replace with measured 2340 k(T) when available.
+#
+# History: a flat-slab (1D) model of this material under-predicts the
+# *transient* heating rate seen in the Ringel Plasmatron X pyrometer traces
+# by 2-4x, even though it matches the quasi-steady ~300 s wall temperature to
+# within 15-46 K. Surface emissivity and incident radiation were numerically
+# ruled out as explanations (radiative flux is only 2-8% of the ~1.5 MW/m2
+# total incident flux at these early, sub-2000 K surface temperatures). A k(T)
+# fit (uniform 0.08x scale, i.e. k(300K)~8.2 W/m/K) closed the transient gap,
+# but was ABANDONED: a ~12x conductivity reduction is far more than the
+# material's ~13% porosity supports under standard effective-medium models
+# (Maxwell-Eucken/parallel bounds predict only ~15-20% reduction at that
+# porosity). The real test article is a small iso-Q shape (not a flat slab);
+# a 2D axisymmetric re-investigation (examples/verification/ablation_ringel_2d/)
+# tested whether its larger curved forebody/shoulder area (vs a flat 1D disc)
+# explains the fast transient -- it does NOT: the 2D stagnation point heats
+# slower than the 1D flat slab at every matched time (lateral conduction into
+# the less-heated shoulder is a net heat sink for the stagnation point that a
+# 1D column lacks). k(T) below is restored to the brochure curve; the fast
+# transient remains unexplained (open question, 2026-07-24).
+k_virgin:
+  - [  300.0, 102.0]
+  - [  500.0,  92.0]
+  - [  800.0,  76.0]
+  - [ 1000.0,  66.0]
+  - [ 1500.0,  50.0]
+  - [ 2000.0,  41.0]
+  - [ 2500.0,  36.0]
+  - [ 3000.0,  33.0]
+  - [ 4000.0,  30.0]
+
+k_char:
+  - [  300.0, 102.0]
+  - [  500.0,  92.0]
+  - [  800.0,  76.0]
+  - [ 1000.0,  66.0]
+  - [ 1500.0,  50.0]
+  - [ 2000.0,  41.0]
+  - [ 2500.0,  36.0]
+  - [ 3000.0,  33.0]
+  - [ 4000.0,  30.0]
+
+# Specific heat [J/kg/K] vs T [K], reused from the existing dense carbon
+# ablation card derived from Amar (2006) Table 8.12.
+cp_virgin:
+  - [  255.56,   544.4]
+  - [  533.33,   921.1]
+  - [  811.11,  1318.8]
+  - [ 1088.89,  1624.1]
+  - [ 1366.67,  1775.2]
+  - [ 1644.44,  2009.7]
+  - [ 1922.22,  2080.8]
+  - [ 2200.00,  2139.0]
+  - [ 2477.78,  2122.9]
+  - [ 2755.56,  2143.6]
+  - [ 3033.33,  2177.1]
+  - [ 4000.00,  2177.1]
+
+cp_char:
+  - [  255.56,   544.4]
+  - [  533.33,   921.1]
+  - [  811.11,  1318.8]
+  - [ 1088.89,  1624.1]
+  - [ 1366.67,  1775.2]
+  - [ 1644.44,  2009.7]
+  - [ 1922.22,  2080.8]
+  - [ 2200.00,  2139.0]
+  - [ 2477.78,  2122.9]
+  - [ 2755.56,  2143.6]
+  - [ 3033.33,  2177.1]
+  - [ 4000.00,  2177.1]
+
+# No pyrolysis gas for non-decomposing graphite.
+h_g:
+  - [300.0, 0.0]
+  - [4000.0, 0.0]
+
+emissivity:      0.80
+emissivity_char: 0.80
+
+b_prime_table: calcarb_bprime_ace_air.yaml

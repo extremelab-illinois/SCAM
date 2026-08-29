@@ -1,0 +1,22 @@
+name: tacot_char
+description: >
+  TACOT (Theoretical Ablative Composite for Open Testing) char with
+  coupled pyrolysis gas injection in air.  Reference case for B' table
+  validation against TACOT_3.0.xls.
+
+gas_mechanism: cno_ablation.yaml
+gas_phase_name: ""
+
+active_elements: [C, H, O, N]
+
+condensed_species:
+  - name: C(gr)
+    molecular_weight_kg_per_kmol: 12.011
+    elements: {C: 1}
+    density_kg_per_m3: 2200.0
+    failure_temperature_K: null
+
+pyrolysis_gas:
+  # TACOT standard pyrolysis gas composition (mass fractions).
+  composition_mass: "CH4:0.4600,CO:0.3506,H2O:0.1894"
+  bg_values: [0.0, 0.1, 0.2, 0.5, 1.0, 2.0, 5.0]

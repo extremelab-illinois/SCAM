@@ -1,0 +1,242 @@
+# SPDX-License-Identifier: MIT
+# Cork — Agglomerated Cork Ablator (BNB/P50 grade)
+#
+# Sources:
+#   [1] Bouilly et al. 2006, AIAA-2006-0658          # TODO: retrieve for verified values
+#   [2] Natali et al. 2011, "A nanostructured ablative bulk moulding compound:
+#       Development and characterization", Compos. Part A 42, pp. 1197-..., 2011.
+#       https://doi.org/10.1016/j.compositesa.2011.04.022
+#       (UNVERIFIED for cork relevance — confirm this is the correct Natali 2011 reference)
+#   [3] Pinaud et al. 2014, AIAA-2014-2208            # TODO: retrieve for verified values
+#   [4] Candau et al. 2012, Polym. Degrad. Stab. 97(6):1113-1122  # TGA kinetics cork
+#   [5] Pereira 2007, Cork: Biology, Production and Uses. Elsevier.
+#
+# Composition:
+#   Three decomposing bio-polymer components + inert mineral/silica filler.
+#   BNB grade rho_virgin ~ 180 kg/m^3; P50 ~ 120 kg/m^3 — using 180 here.
+#   Component rho_0 sum = 30 + 40 + 20 = 90 kg/m^3 (organic fraction)
+#   Inert filler contributes remaining 90 kg/m^3 → rho_char = 90 kg/m^3
+#   (mineral residue + char from rho_r terms)
+#
+# Chemistry families:
+#   - cellulose  (~300–370 °C peak, fast, fully volatilises)
+#   - suberin    (~350–500 °C peak, medium, small char residue)
+#   - lignin     (~350–500 °C broad, slow, larger char residue)
+#
+# TODO: verify all kinetics against [1] Bouilly 2006 and [4] Candau 2012 TGA data.
+
+name: Cork
+description: "Agglomerated cork ablator, BNB/P50 grade (European re-entry TPS)"
+material_category: ablative_organic
+card_version: "1.0"
+status: provisional
+
+rho_virgin:  180.0   # [kg/m^3]  # ESTIMATE: BNB catalogue value; P50~120, mid-range chosen
+rho_char:     90.0   # [kg/m^3]  # ESTIMATE: ~50% mass retention, typical of cork TGA at >800K
+gamma_resin:   0.40  # [-]       # ESTIMATE: suberin+binder resin fraction of cork cell walls
+
+components:
+  # ---- cellulose fraction ----
+  # Fast decomposition 300–370 °C; fully volatilises (rho_r=0).
+  # Kinetics: first-order Arrhenius; E_act from cellulose pyrolysis literature.
+  - name: cellulose
+    rho_0:    30.0       # [kg/m^3]  # ESTIMATE: cellulose ~17% of cork dry mass × rho_virgin
+    rho_r:     0.0       # [kg/m^3]  fully volatilises
+    A_rate:  1.0e13      # [1/s]     # ESTIMATE: typical cellulose pre-exp (Shafizadeh 1982)
+    E_act:   1.60e5      # [J/mol]   # ESTIMATE: ~160 kJ/mol cellulose pyrolysis (Antal 1995)
+    m_exp:   1.0         # [-]       first-order
+    h_decomp: 1.20e6    # [J/kg]    # ESTIMATE: endothermic, cellulose pyrolysis ~1–1.4 MJ/kg
+
+  # ---- suberin fraction ----
+  # Medium-rate decomposition 350–500 °C; suberin is the dominant cork biopolymer.
+  - name: suberin
+    rho_0:    40.0       # [kg/m^3]  # ESTIMATE: suberin ~40–45% of cork dry mass × rho_virgin
+    rho_r:     5.0       # [kg/m^3]  # ESTIMATE: small carbonaceous residue
+    A_rate:  1.0e9       # [1/s]     # ESTIMATE: slower than cellulose, similar to lignin/polyesters
+    E_act:   1.25e5      # [J/mol]   # ESTIMATE: ~125 kJ/mol (Candau 2012 suberin-rich cork TGA)
+    m_exp:   1.0         # [-]
+    h_decomp: 8.0e5     # [J/kg]    # ESTIMATE: ester bonds, slightly less endothermic than cellulose
+
+  # ---- lignin fraction ----
+  # Broad slow decomposition; produces more solid char than cellulose or suberin.
+  - name: lignin
+    rho_0:    20.0       # [kg/m^3]  # ESTIMATE: lignin ~22% of cork dry mass × rho_virgin
+    rho_r:     5.0       # [kg/m^3]  # ESTIMATE: aromatic char residue
+    A_rate:  1.0e8       # [1/s]     # ESTIMATE: lignin decomposes slowly over wide T range
+    E_act:   1.10e5      # [J/mol]   # ESTIMATE: ~110 kJ/mol (Gronli 2002 lignin TGA)
+    m_exp:   1.0         # [-]
+    h_decomp: 5.0e5     # [J/kg]    # ESTIMATE: partially exothermic char-forming reactions reduce net
+
+# Thermal conductivity of virgin cork [W/m/K] vs T [K]
+# TODO: verify against [1] Bouilly 2006 and [2] Natali 2011
+# Low-density porous organic: conduction through cell walls + radiation across pores.
+# Radiation contribution ~ 4σεT³d (d~100µm cell size) becomes significant above 500 K.
+k_virgin:
+  - [298,   0.055]   # ESTIMATE: room-T cork λ ~ 0.04–0.08 W/m/K (Gil 2007, Pereira 2007)
+  - [400,   0.062]   # ESTIMATE: slight rise with T
+  - [500,   0.072]   # ESTIMATE: radiation across pores starting to contribute
+  - [600,   0.085]   # ESTIMATE
+  - [700,   0.102]   # ESTIMATE
+  - [800,   0.120]   # ESTIMATE
+  - [900,   0.140]   # ESTIMATE
+  - [1000,  0.162]   # ESTIMATE
+  - [1200,  0.210]   # ESTIMATE: radiation term dominates at high T
+  - [1500,  0.285]   # ESTIMATE
+  - [1800,  0.375]   # ESTIMATE
+  - [2000,  0.435]   # ESTIMATE
+  - [2500,  0.580]   # ESTIMATE
+
+# Thermal conductivity of char cork [W/m/K] vs T [K]
+# TODO: verify against [1] Bouilly 2006
+# Char is more open/porous than virgin, radiative transport higher; carbonised walls conduct better.
+k_char:
+  - [298,   0.060]   # ESTIMATE: char slightly more conductive than virgin at RT
+  - [400,   0.070]   # ESTIMATE
+  - [500,   0.083]   # ESTIMATE
+  - [600,   0.100]   # ESTIMATE
+  - [700,   0.122]   # ESTIMATE
+  - [800,   0.148]   # ESTIMATE
+  - [900,   0.178]   # ESTIMATE
+  - [1000,  0.212]   # ESTIMATE
+  - [1200,  0.285]   # ESTIMATE
+  - [1500,  0.400]   # ESTIMATE
+  - [1800,  0.530]   # ESTIMATE
+  - [2000,  0.620]   # ESTIMATE
+  - [2500,  0.840]   # ESTIMATE
+
+# Specific heat of virgin cork [J/kg/K] vs T [K]
+# TODO: verify against [2] Natali 2011 DSC data
+# Organic polymers: cp ~ 1400–2200 J/kg/K; rises with T (classical polymer behaviour).
+# Peak around pyrolysis zone not captured here (handled by h_decomp in components).
+cp_virgin:
+  - [298,   1500.0]  # ESTIMATE: wood/cork RT value ~1400–1700 J/kg/K (Pereira 2007)
+  - [400,   1600.0]  # ESTIMATE
+  - [500,   1700.0]  # ESTIMATE
+  - [600,   1780.0]  # ESTIMATE
+  - [700,   1840.0]  # ESTIMATE
+  - [800,   1880.0]  # ESTIMATE
+  - [900,   1910.0]  # ESTIMATE
+  - [1000,  1940.0]  # ESTIMATE
+  - [1200,  1970.0]  # ESTIMATE
+  - [1500,  2000.0]  # ESTIMATE
+  - [1800,  2030.0]  # ESTIMATE
+  - [2000,  2050.0]  # ESTIMATE
+  - [2500,  2080.0]  # ESTIMATE
+
+# Specific heat of char cork [J/kg/K] vs T [K]
+# TODO: verify against [1] Bouilly 2006
+# Carbon/silica char: cp rises roughly as graphite-like Debye curve.
+cp_char:
+  - [298,    900.0]  # ESTIMATE: carbon char at RT ~ 700–1000 J/kg/K
+  - [400,   1050.0]  # ESTIMATE
+  - [500,   1180.0]  # ESTIMATE
+  - [600,   1300.0]  # ESTIMATE
+  - [700,   1400.0]  # ESTIMATE
+  - [800,   1480.0]  # ESTIMATE
+  - [900,   1550.0]  # ESTIMATE
+  - [1000,  1610.0]  # ESTIMATE
+  - [1200,  1700.0]  # ESTIMATE
+  - [1500,  1800.0]  # ESTIMATE
+  - [1800,  1880.0]  # ESTIMATE
+  - [2000,  1930.0]  # ESTIMATE
+  - [2500,  2010.0]  # ESTIMATE
+
+# Pyrolysis gas enthalpy [J/kg] vs T [K], 298 K reference.
+# Cork pyrolysis gas is predominantly CO, CO2, H2O, small hydrocarbons from
+# cellulose/suberin thermal cracking — broadly similar to TACOT but more O-rich.
+# h_g(298) ≡ 0 by convention; values estimated from CEA equilibrium for a
+# C0.45 H0.07 O0.48 elemental composition (cellulose-like) at 1 atm.
+# TODO: generate from Cantera with cork pyro_elem_fracs composition.
+h_g:
+  - [298,     0.0]
+  - [400,   6.50e4]  # ESTIMATE: sensible heat of CO/CO2/H2O mixture
+  - [500,   1.40e5]  # ESTIMATE
+  - [600,   2.30e5]  # ESTIMATE
+  - [700,   3.50e5]  # ESTIMATE: onset of CH4 cracking
+  - [800,   5.50e5]  # ESTIMATE: cracking reactions accelerate
+  - [900,   9.00e5]  # ESTIMATE: thermal cracking peak (endothermic)
+  - [1000,  1.80e6]  # ESTIMATE
+  - [1100,  2.80e6]  # ESTIMATE
+  - [1200,  3.60e6]  # ESTIMATE: post-cracking; mostly CO+H2
+  - [1400,  4.50e6]  # ESTIMATE
+  - [1600,  5.20e6]  # ESTIMATE
+  - [1800,  5.90e6]  # ESTIMATE
+  - [2000,  6.60e6]  # ESTIMATE
+  - [2500,  8.20e6]  # ESTIMATE
+  - [3000,  1.00e7]  # ESTIMATE
+
+# Elemental mass fractions of cork pyrolysis gas vs T [K].
+# Cork is primarily cellulose (~C6H10O5) + suberin (polyester, C-H-O).
+# At low T: CO2, H2O, small acids — high O content.
+# At high T: CO dominant, H2, trace CH4 — O decreases, C increases.
+# TODO: compute from CEA equilibrium for cork gas composition.
+pyro_elem_fracs:
+  C:
+    - [300,   0.35]  # ESTIMATE: cellulose ~ C:0.44, but with CO2/H2O dilution
+    - [500,   0.40]  # ESTIMATE
+    - [700,   0.45]  # ESTIMATE
+    - [900,   0.50]  # ESTIMATE: shift toward CO
+    - [1100,  0.55]  # ESTIMATE
+    - [1300,  0.58]  # ESTIMATE
+    - [1500,  0.60]  # ESTIMATE
+    - [2000,  0.62]  # ESTIMATE
+  H:
+    - [300,   0.07]  # ESTIMATE: H2O fraction early
+    - [500,   0.07]  # ESTIMATE
+    - [700,   0.06]  # ESTIMATE
+    - [900,   0.05]  # ESTIMATE
+    - [1100,  0.04]  # ESTIMATE
+    - [1300,  0.03]  # ESTIMATE
+    - [1500,  0.02]  # ESTIMATE
+    - [2000,  0.01]  # ESTIMATE
+  O:
+    - [300,   0.58]  # ESTIMATE: high O from CO2/H2O at low T
+    - [500,   0.53]  # ESTIMATE
+    - [700,   0.49]  # ESTIMATE
+    - [900,   0.45]  # ESTIMATE
+    - [1100,  0.41]  # ESTIMATE
+    - [1300,  0.39]  # ESTIMATE
+    - [1500,  0.38]  # ESTIMATE
+    - [2000,  0.37]  # ESTIMATE
+  N:
+    - [300,   0.00]
+    - [500,   0.00]
+    - [700,   0.00]
+    - [900,   0.00]
+    - [1100,  0.00]
+    - [1300,  0.00]
+    - [1500,  0.00]
+    - [2000,  0.00]
+
+# Surface emissivity
+# TODO: verify against [1] Bouilly 2006 optical measurements
+emissivity:       0.85   # ESTIMATE: organic virgin surface, typical charring ablator
+emissivity_char:  0.90   # ESTIMATE: carbonised surface, slightly higher
+
+emissivity_virgin:
+  - [298,   0.85]  # ESTIMATE
+  - [400,   0.85]  # ESTIMATE
+  - [600,   0.86]  # ESTIMATE
+  - [800,   0.87]  # ESTIMATE
+  - [1000,  0.87]  # ESTIMATE
+  - [1200,  0.87]  # ESTIMATE
+  - [1500,  0.87]  # ESTIMATE
+  - [2000,  0.87]  # ESTIMATE
+  - [2500,  0.87]  # ESTIMATE
+  - [3000,  0.87]  # ESTIMATE
+
+emissivity_char_table:
+  - [298,   0.90]  # ESTIMATE
+  - [400,   0.90]  # ESTIMATE
+  - [600,   0.90]  # ESTIMATE
+  - [800,   0.91]  # ESTIMATE
+  - [1000,  0.91]  # ESTIMATE
+  - [1200,  0.91]  # ESTIMATE
+  - [1500,  0.91]  # ESTIMATE
+  - [2000,  0.91]  # ESTIMATE
+  - [2500,  0.91]  # ESTIMATE
+  - [3000,  0.91]  # ESTIMATE
+
+# Placeholder — B' table must be generated via scam/tools/generate_bprime.py
+# using the pyro_elem_fracs above with a Cantera backend.
+b_prime_table: cork_bprime_air.yaml  # PROVISIONAL — see table header

@@ -1,0 +1,43 @@
+description: |-
+  Minimal C/F/O/N/H fluoropolymer ablation equilibrium mechanism for SCAM.
+
+  This mechanism is intended for first-pass PTFE/Teflon B' table generation.
+  Gas species are imported from Cantera's nasa_gas.yaml thermodynamic database.
+  It contains no reactions and is used only for equilibrium calculations.
+
+phases:
+- name: ptfe_fluorine_gas
+  thermo: ideal-gas
+  elements: [C, F, O, N, H]
+  species:
+  - nasa_gas.yaml/species:
+    - C
+    - C2
+    - C3
+    - CF
+    - CF2
+    - CF3
+    - CF4
+    - C2F2
+    - C2F4
+    - CO
+    - CO2
+    - COF
+    - COF2
+    - F
+    - F2
+    - HF
+    - H
+    - H2
+    - H2O
+    - N
+    - N2
+    - NO
+    - NO2
+    - O
+    - O2
+    - OH
+  kinetics: none
+  state:
+    T: 300.0
+    P: 101325.0

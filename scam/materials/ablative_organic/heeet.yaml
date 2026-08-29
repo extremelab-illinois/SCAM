@@ -1,0 +1,236 @@
+# SPDX-License-Identifier: MIT
+# HEEET — Heatshield for Extreme Entry Environment Technology
+# Woven dual-layer carbon TPS developed at NASA Ames Research Center.
+# Designed for high-heat-flux planetary entry (Venus, Saturn, Uranus/Neptune
+# probes) where PICA would be insufficient.
+#
+# Sources:
+#   [1] Venkatapathy, E. et al., "Adaptive Deployable Entry and Placement
+#       Technology (ADEPT) and other TPS for Venus Entry", AIAA 2018-4173,
+#       2018 Atmospheric Flight Mechanics Conference.  # UNVERIFIED: DOI 10.2514/6.2018-4173
+#       resolves to a hydrofoil optimization paper — correct DOI unknown.
+#   [2] Ellerby, D. et al., "HEEET: Development and Testing of a New Woven
+#       TPS for Future NASA Missions", NASA-TM-2019-220517, 2019.
+#       (primary reference for bulk properties; layer descriptions; arc-jet data)
+#   [3] Mahzari, M. et al., "Inverse Estimation of HEEET Thermal Properties",
+#       AIAA SciTech 2019.  (thermal characterisation from arc-jet flight data)
+#   [4] Beck, R.A.S. et al., "Developmental Testing of HEEET at NASA ARC IHF",
+#       AIAA 2019-0046, 2019.  (recession data; bulk density measurement)
+#   [5] Wercinski, P. et al., "HEEET Woven TPS Technology Status", IPPW-14, 2017.
+#       (layer-resolved properties described separately)
+#
+# Architecture:
+#   HEEET is a two-layer woven composite:
+#     Outer layer (recession layer) — woven 3-D carbon preform, densified with
+#       carbon phenolic resin; rho ≈ 800–1000 kg/m³; faces the aero-heating.
+#     Inner layer (insulating layer) — woven carbon preform, partially
+#       densified with phenolic, porous; rho ≈ 240–280 kg/m³ (PICA-like).
+#
+# THIS FILE models the outer (recession) layer only.
+# See heeet_inner.yaml for the inner (insulation) layer.
+#
+# The two-layer stack should be assembled in a SCAM case YAML as:
+#   stack:
+#     - material: heeet          # outer recession layer
+#       thickness: 0.010         # ~10 mm typical outer layer
+#     - material: heeet_inner    # inner insulation layer
+#       thickness: 0.025         # ~25 mm typical inner layer
+#
+# Composition (outer layer):
+#   Carbon fiber preform densified with carbon-phenolic resin.
+#   Approximately 25–30 % by mass is pyrolysable phenolic resin;
+#   the woven carbon fiber skeleton (~70–75 % mass) survives pyrolysis.
+#   rho_virgin ≈ 900 kg/m³, rho_char ≈ 660 kg/m³.
+#   gamma_resin ≈ 0.27
+#
+# All tables: T in K, strictly increasing. h_g reference: 298 K.
+
+name: heeet
+description: >
+  HEEET outer (recession) woven carbon layer; carbon preform densified
+  with carbon-phenolic resin (~900 kg/m³).  See heeet_inner.yaml for
+  the inner insulation layer.  Two-layer assembly needed for full TPS stack.
+
+material_category: ablative_organic
+card_version: "1.0"
+status: provisional
+rho_virgin:  900.0    # [kg/m^3] Ref [2,4]; outer woven carbon layer
+rho_char:    660.0    # [kg/m^3] Ref [2]; carbon skeleton after resin pyrolysis
+gamma_resin: 0.267    # [-] (rho_virgin - rho_char)/rho_virgin
+
+components:
+  - name: phenolic_resin
+    rho_0:    240.0       # [kg/m^3] apparent virgin density of phenolic binder
+    rho_r:      0.0       # [kg/m^3] resin fully carbonises/volatilises
+    # Phenolic resin in densified carbon composite; parameters consistent with
+    # carbon-phenolic TPS literature (Strauss & Curry 1994; Koo et al. 1997).
+    # ESTIMATE: A and E_act from carbon-phenolic class; closer to SC-1008 than TACOT.
+    A_rate:  2.0e12       # [1/s]   ESTIMATE
+    E_act:   1.47e5       # [J/mol] ESTIMATE (carbon-phenolic, ~1.4–1.6 × 10⁵)
+    m_exp:   1.0          # [-]     ESTIMATE
+    h_decomp: 1.50e6      # [J/kg]  ESTIMATE (endothermic; carbon phenolic class)
+
+# ── Thermal conductivity of virgin HEEET outer layer [W/m/K] vs T [K] ────────
+# Carbon-dominated woven composite; k higher than PICA due to higher density
+# and continuous carbon fiber weave.  Ref [2,3] arc-jet inverse analysis
+# gives k_eff ≈ 0.4–1.0 W/m/K at 300–1500 K for the outer layer.
+# Through-thickness direction (perpendicular to weave plane).
+# ESTIMATE: table shape from dense carbon-phenolic analogues; magnitudes from [2,3].
+k_virgin:
+  - [200,   0.35]
+  - [300,   0.42]   # Ref [2,3] estimate ~0.4 W/m/K at 300 K
+  - [400,   0.50]
+  - [500,   0.58]
+  - [600,   0.67]
+  - [700,   0.78]
+  - [800,   0.90]
+  - [900,   1.04]
+  - [1000,  1.20]
+  - [1200,  1.55]
+  - [1500,  2.10]
+  - [2000,  3.10]
+  - [3000,  5.20]
+
+# ── Thermal conductivity of char [W/m/K] vs T [K] ────────────────────────────
+# After pyrolysis: porous carbon skeleton.  Carbon has high k but porosity
+# reduces it; radiation raises effective k above ~1200 K.
+# Similar to dense PICA char but higher due to higher fiber density.
+# ESTIMATE: scaled from Panerai et al. (2013) FiberForm and PICA char data.
+k_char:
+  - [200,   0.50]
+  - [300,   0.60]
+  - [400,   0.70]
+  - [500,   0.82]
+  - [600,   0.96]
+  - [700,   1.12]
+  - [800,   1.30]
+  - [900,   1.52]
+  - [1000,  1.78]
+  - [1200,  2.40]
+  - [1500,  3.50]
+  - [2000,  5.60]
+  - [3000,  9.50]
+
+# ── Specific heat of virgin HEEET outer layer [J/kg/K] vs T [K] ──────────────
+# Mass-weighted blend of carbon fiber (cp_C ~ 700–2000 J/kg/K) and phenolic
+# resin (cp_resin ~ 1000–1600 J/kg/K).  Overall shape dominated by carbon.
+# Ref [2,3]: cp ≈ 900–1800 J/kg/K over 300–2000 K range.
+# ESTIMATE: interpolated from carbon-phenolic class measurements.
+cp_virgin:
+  - [200,   620.0]
+  - [300,   800.0]
+  - [400,   980.0]
+  - [500,   1130.0]
+  - [600,   1250.0]
+  - [700,   1340.0]
+  - [800,   1410.0]
+  - [900,   1465.0]
+  - [1000,  1510.0]
+  - [1200,  1580.0]
+  - [1500,  1660.0]
+  - [2000,  1750.0]
+  - [3000,  1830.0]
+
+# ── Specific heat of char [J/kg/K] vs T [K] ──────────────────────────────────
+# Porous carbon; essentially graphitic carbon after high-T charring.
+# Literature (Touloukian & Buyco, Vol. 5): graphite cp ~ 710 J/kg/K at 300 K
+# → 2050 J/kg/K at 2000 K.  Porous structure does not change cp significantly.
+cp_char:
+  - [200,   590.0]
+  - [300,   730.0]
+  - [400,   930.0]
+  - [500,   1090.0]
+  - [600,   1220.0]
+  - [700,   1330.0]
+  - [800,   1420.0]
+  - [900,   1490.0]
+  - [1000,  1555.0]
+  - [1200,  1660.0]
+  - [1500,  1790.0]
+  - [2000,  1950.0]
+  - [3000,  2050.0]
+
+# ── Pyrolysis gas enthalpy [J/kg] vs T [K], reference 298 K ──────────────────
+# Phenolic resin pyrolysis gas: C/H/O mixture (same chemistry as TACOT gas
+# but from a denser, less-oxygenated resin).  ESTIMATE: table adapted from
+# TACOT h_g (Lachaud & Mansour 2014) with slight H/O ratio adjustment for
+# a carbon-richer phenolic.  The cracking peak near 700–950 K is retained.
+# No measured enthalpy table found for HEEET; shape is well-constrained by
+# phenolic chemistry.
+h_g:
+  - [200,  -1.40e+05]
+  - [250,  -6.80e+04]
+  - [300,   0.00e+00]
+  - [350,   7.00e+04]
+  - [400,   1.50e+05]
+  - [450,   2.30e+05]
+  - [500,   3.25e+05]
+  - [550,   4.35e+05]
+  - [600,   5.65e+05]
+  - [650,   7.20e+05]
+  - [700,   9.10e+05]
+  - [750,   1.15e+06]
+  - [800,   1.46e+06]
+  - [850,   1.83e+06]
+  - [900,   2.23e+06]
+  - [950,   2.62e+06]
+  - [1000,  2.95e+06]
+  - [1100,  3.45e+06]
+  - [1200,  3.88e+06]
+  - [1400,  4.65e+06]
+  - [1600,  5.38e+06]
+  - [1800,  6.05e+06]
+  - [2000,  6.70e+06]
+  - [2500,  8.50e+06]
+  - [3000,  1.05e+07]
+
+# Elemental mass fractions of pyrolysis gas [C, H, O, N].
+# Carbon-phenolic resin has higher C / lower O than an epoxy or other resins.
+# ESTIMATE: carbon-phenolic pyrolysate fracs from Strauss & Curry (1994) class data.
+pyro_elem_fracs:
+  C:
+    - [300,   0.50]
+    - [500,   0.55]
+    - [700,   0.60]
+    - [900,   0.66]
+    - [1100,  0.71]
+    - [1300,  0.75]
+    - [1500,  0.78]
+    - [2000,  0.80]
+  H:
+    - [300,   0.08]
+    - [500,   0.07]
+    - [700,   0.05]
+    - [900,   0.04]
+    - [1100,  0.03]
+    - [1300,  0.02]
+    - [1500,  0.01]
+    - [2000,  0.01]
+  O:
+    - [300,   0.42]
+    - [500,   0.38]
+    - [700,   0.35]
+    - [900,   0.30]
+    - [1100,  0.26]
+    - [1300,  0.23]
+    - [1500,  0.21]
+    - [2000,  0.19]
+  N:
+    - [300,   0.00]
+    - [500,   0.00]
+    - [700,   0.00]
+    - [900,   0.00]
+    - [1100,  0.00]
+    - [1300,  0.00]
+    - [1500,  0.00]
+    - [2000,  0.00]
+
+# Surface emissivity.
+# Carbon-rich woven surface; high emissivity typical of graphitic carbon.
+# Ref [2] / general carbon TPS: ε ≈ 0.85–0.90 for carbon composites.
+emissivity:       0.85   # virgin
+emissivity_char:  0.90   # char (more graphitic after pyrolysis)
+
+# Placeholder — B' table not yet generated.
+# TODO: generate heeet_bprime_air.yaml using tools/generate_bprime.py
+b_prime_table: heeet_bprime_air.yaml  # PROVISIONAL — see table header

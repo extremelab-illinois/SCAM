@@ -1,0 +1,66 @@
+Material: Calcarb® CBCF 18/2000				
+				
+Description				
+Mersen Calcarb Preform (CBCF 18/2000)				
+				
+Material characteristics				
+		Charring:	NO	
+		Isotropy	Orthotropic	
+				
+Volume fraction [-]				
+			Gas	Fibers
+			8.86E-001	1.14E-001
+				
+Average density [kg/m³]				
+			1.80E+002	
+				
+Intrinsic density [kg/m³] from [6]				
+			Fibers	
+			1.58E+003	
+				
+Permeability [m²]				
+				3.97E-008
+				
+Tortuosity [-]				
+				1.10E+00
+				
+Solid phase heat capacity [1]				
+			Solid phases heat capacity [J/kg/K]	
+			Heat capacity expressed with the following formula for virgin and char in [J/kg-K]:  cp =  a + bT + c/T 	
+		a	1.850E+03	
+		b	2.480E-01	
+		c	-3.940E+05	
+				
+				
+Effective conductivity [2]				
+			Through-the-thickness [W/m/K]	
+			Explanation: Conductivity law based on the data from [2] (in N2) applying a reduction factor of 4 (guessed from []) for the through the thickness direction.  k =(a + b T + c T2)/4  Note: limit temperature in the fitted data from [2] is 200 K, but we necessarily will use the fit above this temperature which can result in a  significant error.	
+		a	3.275E-01	
+		b	2.327E-04	
+		c	1.70E-07	
+				
+			In-plane [W/m/K]	
+			Explanation: Conductivity law based on the data from [2] (in N2) applying a reduction factor of 4 (guessed from [7]) for the through the thickness direction.  k =a + b T + c T2  Note: limit temperature in the fitted data from [2] is 2000 K, but we necessarily will use the fit above this temperature which can result in a  significant error.	
+		a	3.275E-01	
+		b	2.327E-04	
+		c	1.70E-07	
+				
+			In-plane [W/m/K]	
+			Explanation: Conductivity law based on the data from [2] (in N2) applying a reduction factor of 4 (guessed from []) for the through the thickness direction.  k =a + b T + c T2  Note: limit temperature in the fitted data from [2] is 2000 K, but we necessarily will use the fit above this temperature which can result in a  significant error.	
+		a	3.275E-01	
+		b	2.327E-04	
+		c	1.70E-07	
+				
+Surface radiative properties [5]				
+			Emissivity	
+			0.85-0.9	
+
+
+Ref.	Title/Name	Type	Author/s	Institution	Data
+[1]	AblaNTIS TN-2.2.pdf	PDF file	F. Torres, B. Helber, A. Turchi	VKI	Technical note on the ZURAM characterization.
+[2]	 Calcarb: rigid carbon thermal insulation	Technical guide		Mersen Scotland Holytown Ltd.	Thermal conductivity data on CBCF 18-2000
+[3]	ZURAM material_data_update.xlsx	Excel file		DLR	Collection of several data for ZURAM (e.g., volume fractions, densities)
+[4]	TACOT_3.0.xls	Excel file	J. Lachaud, T. van Eekelen, D. Bianchi, A. Martin		Fictitious material properties from US Ablation Workshop (2014)
+[5]	Measurement techniques data processing: Relating and contributing to WP2, Ablacat Project	TN-2.4 of ESA AO/1-7664/13/NL/RA	A.Turchi, A. Viladegut, D. Le Quang, B. Helber, O. Chazot	VKI	Emissivity measurements based on pyrometer and radiometer measurements. Range of values from single-color temperature measurements of pyrometer are used.
+[6]	VKI_ZURAM_characterization_v1-4.ods	OpenOffice spreadsheet file	A. Turchi, F. Torres	VKI	Direct measurements on ZURAM plates used in AblaNTIS to evaluate: average densities, intrinsic densities, volume fractions, elemental compositions and resin formation enthalpy. Part of these data can be found in AblaNTIS TN-2.2
+[7]	Computational study on the effect of the microstructure on macroscopic properties for carbon fiber felts	Master thesis (PDF file)	J. Rico Orero	VKI-VUB	Simulation of Calcarb  CBCF 18/2000 using the NASA Puma software.

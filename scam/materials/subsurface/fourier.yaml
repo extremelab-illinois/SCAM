@@ -1,0 +1,35 @@
+# SPDX-License-Identifier: MIT
+# PATO FourierTemplate inert sublayer used by AblationTestCase_2.x_multiMat.
+
+name: Fourier
+description: "Inert FourierTemplate sublayer: constant k, cp, and density"
+material_category: subsurface
+card_version: "1.0"
+status: verified
+
+rho_virgin: 1000.0
+rho_char: 1000.0
+gamma_resin: 0.0
+decomposing: false
+
+components: []
+
+k_virgin:
+  - [200.0, 1.0]
+  - [4000.0, 1.0]
+k_char:
+  - [200.0, 1.0]
+  - [4000.0, 1.0]
+
+cp_virgin:
+  - [200.0, 1000.0]
+  - [4000.0, 1000.0]
+cp_char:
+  - [200.0, 1000.0]
+  - [4000.0, 1000.0]
+
+h_g:
+  - [200.0, 0.0]
+  - [4000.0, 0.0]
+
+emissivity: 0.8

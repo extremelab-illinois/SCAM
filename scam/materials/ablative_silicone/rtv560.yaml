@@ -1,0 +1,274 @@
+# SPDX-License-Identifier: MIT
+# RTV-560 — Dow Corning Room-Temperature-Vulcanising Silicone Rubber
+# Silicone elastomeric TPS coating / gap filler used on Space Shuttle (Orbiter
+# acreage tiles, inter-tile fillers), planetary probes, and other spacecraft.
+# Single-component polydimethylsiloxane (PDMS) elastomer; no fiber reinforcement.
+#
+# Sources:
+#   [1] Clark, R.K., "Thermal-Structural Testing of Space Shuttle TPS Materials",
+#       NASA TN D-6620, 1971.  (silicone rubber thermal properties in space env.)
+#   [2] Rindal, R.A. et al., "An Experimental and Theoretical Study of Ablation
+#       Behaviour of Silicone Rubbers", Aerotherm Corp. UM 69-6, 1969.
+#       (RTV ablation; pyrolysis products; recession; arc-jet data for Dow Corning
+#       silicone elastomers)
+#   [3] Dow Corning Corporation, "Sylgard 184 and RTV-560 Technical Data Sheet",
+#       Midland MI, 2017 (public engineering data; density, k, cp at ambient).
+#   [4] Thomas, L.C., "Thermal Decomposition of PDMS", Thermochimica Acta,
+#       272, 1996.  # UNVERIFIED: DOI 10.1016/0040-6031(95)02595-3 returns 404; pre-digital
+#       era reference — verify via Elsevier Thermochimica Acta archive.
+#       (PDMS Arrhenius TGA: A ~ 10¹³–10¹⁵ s⁻¹, E_act ~ 1.5–2.0 × 10⁵ J/mol)
+#   [5] Cai, H. et al., "Thermal degradation kinetics of PDMS in air and N2",
+#       Polymer Degradation and Stability, 2008.
+#       (two-step PDMS degradation; low-T volatile + high-T silica residue)
+#   [6] Milos, F.S. & Chen, Y.-K., "Ablation, Thermal Response, and Chemistry
+#       Program for Analysis of TPS", J. Spacecraft & Rockets, 50(1), 2013.
+#       https://doi.org/10.2514/1.A32302  (silicone gap-filler TPS modelling)
+#
+# Composition:
+#   Pure polydimethylsiloxane (PDMS) elastomer cross-linked with silica filler.
+#   Approximately 80–90 % PDMS polymer + 10–20 % fumed silica filler (Aerosil).
+#   On pyrolysis, PDMS volatilises to cyclic siloxanes (D3, D4, D5) + CH4 + SiO;
+#   the silica filler and oxidised Si residue remain as a friable SiO2 char.
+#
+#   gamma_resin = 1.0 because the whole material is effectively "resin":
+#   there is no separate inert fiber skeleton (the silica filler pyrolyses
+#   partially and is accounted for through the char density).
+#
+#   IMPORTANT: The pyrolysis gas contains Si-bearing species (D4 = Si4O4(CH3)8,
+#   SiO, etc.).  These are NOT well represented by a pure C/H/O elemental
+#   description.  The pyro_elem_fracs table below is an ESTIMATE of the
+#   non-Si C/H/O fraction; Si is tracked implicitly through rho_char.
+#   A proper Cantera surface chemistry setup would require Si-O-C-H species.
+#   TODO: add Si to elemental fracs table once a Si-aware Cantera config is available.
+#
+# Two-component decomposition model:
+#   Component 1 (low-T): volatile cyclic siloxane (D4/D5) production
+#     Onset ~550 K, peak ~650–700 K (ref [4,5]).
+#   Component 2 (high-T): residual PDMS backbone degradation + SiO formation
+#     Onset ~800 K, peak ~900–1000 K.
+#
+# All tables: T in K, strictly increasing. h_g reference: 298 K.
+
+name: rtv560
+description: >
+  RTV-560 Dow Corning silicone elastomer (PDMS-based).  Used as Space Shuttle
+  gap filler and low-heat-flux ablative coating.  Pure PDMS; no fiber reinforcement.
+  Pyrolysis gas contains Si-bearing cyclic siloxanes (D4/D5); C/H/O elemental
+  fracs are approximate — see file header for caveat.
+
+material_category: ablative_silicone
+card_version: "1.0"
+status: provisional
+rho_virgin:  1160.0   # [kg/m^3] Ref [3]: 1150–1180 kg/m³ for Dow Corning RTV-560
+rho_char:     450.0   # [kg/m^3] Ref [2,6]: SiO2-rich friable char; ~35–45% of virgin
+gamma_resin:  1.000   # [-] all mass is polymer (no separate inert fiber)
+
+components:
+  - name: pdms_volatile
+    rho_0:    500.0       # [kg/m^3]  low-T volatile fraction (D4/D5 production)
+    rho_r:      0.0       # [kg/m^3]  fully volatilises
+    # Ref [4,5]: low-T PDMS degradation.  A and E_act from TGA data (Thomas 1996).
+    A_rate:  1.0e13       # [1/s]   Ref [4]
+    E_act:   1.55e5       # [J/mol] Ref [4]; range 1.5–1.6 × 10⁵ J/mol
+    m_exp:   1.0          # [-]
+    # Endothermic: cyclic siloxane vaporisation.
+    # ESTIMATE: ~0.5–1.0 MJ/kg from DSC data for PDMS.
+    h_decomp: 8.0e5       # [J/kg]  ESTIMATE (endothermic D4/D5 vaporisation)
+
+  - name: pdms_residual
+    rho_0:    210.0       # [kg/m^3]  high-T residue component
+    rho_r:      0.0       # [kg/m^3]  residue fully oxidises/volatilises above ~1000 K
+    # High-T backbone degradation and SiO formation; stiffer kinetics.
+    # ESTIMATE: from Cai et al. (2008) second-step parameters.
+    A_rate:  5.0e14       # [1/s]   ESTIMATE (Cai 2008: A ~ 10¹⁴–10¹⁵ for step 2)
+    E_act:   1.85e5       # [J/mol] ESTIMATE (Cai 2008: ~1.8–2.0 × 10⁵ for step 2)
+    m_exp:   1.0          # [-]
+    h_decomp: 1.20e6      # [J/kg]  ESTIMATE (endothermic; higher-T backbone cracking)
+
+# ── Thermal conductivity of virgin RTV-560 [W/m/K] vs T [K] ──────────────────
+# Silicone rubber is a poor conductor: k ≈ 0.20–0.27 W/m/K at room temperature.
+# Ref [3]: k ≈ 0.24 W/m/K at 298 K.
+# Silicone k decreases slightly with T (phonon scattering), then radiation
+# contribution raises effective k above ~800 K.
+# ESTIMATE: below 200 K and above 700 K extrapolated from rubber + radiation trends.
+k_virgin:
+  - [200,   0.22]
+  - [250,   0.23]
+  - [300,   0.24]   # Ref [3]: 0.24 W/m/K
+  - [350,   0.24]
+  - [400,   0.25]
+  - [450,   0.25]
+  - [500,   0.26]
+  - [550,   0.27]
+  - [600,   0.29]   # approaching pyrolysis onset
+  - [700,   0.34]   # ESTIMATE: radiation + convective effects
+  - [800,   0.42]   # ESTIMATE
+  - [1000,  0.65]   # ESTIMATE
+  - [1200,  1.00]   # ESTIMATE
+  - [1500,  1.80]   # ESTIMATE: SiO2 char forming; radiation dominant
+  - [2000,  3.50]   # ESTIMATE
+  - [3000,  7.00]   # ESTIMATE
+
+# ── Thermal conductivity of char [W/m/K] vs T [K] ────────────────────────────
+# SiO2-rich friable char (amorphous silica + some carbon from methyl groups).
+# Amorphous SiO2 glass: k ~ 1.3–1.4 W/m/K at 300 K, ~2 W/m/K at 1200 K.
+# However, the char is porous/friable, which reduces k significantly.
+# Ref [2,6]: char k ~ 0.2–0.5 W/m/K at low T.
+# ESTIMATE: entire table from porous SiO2 literature + ablation analogues.
+k_char:
+  - [200,   0.18]
+  - [300,   0.22]
+  - [400,   0.28]
+  - [500,   0.35]
+  - [600,   0.44]
+  - [700,   0.55]
+  - [800,   0.69]
+  - [900,   0.87]
+  - [1000,  1.08]
+  - [1200,  1.60]
+  - [1500,  2.80]   # ESTIMATE: radiation dominant in porous SiO2
+  - [2000,  5.50]   # ESTIMATE
+  - [3000,  9.00]   # ESTIMATE
+
+# ── Specific heat of virgin RTV-560 [J/kg/K] vs T [K] ────────────────────────
+# PDMS rubber cp ≈ 1090–1200 J/kg/K at 298–500 K (Ref [3] and literature).
+# Silicone cp is relatively flat with T at low T; increases toward pyrolysis.
+# ESTIMATE: below 200 K and above 600 K extrapolated.
+cp_virgin:
+  - [200,   950.0]
+  - [250,   1020.0]
+  - [300,   1090.0]   # Ref [3]: ~1090 J/kg/K
+  - [350,   1130.0]
+  - [400,   1165.0]
+  - [450,   1200.0]
+  - [500,   1235.0]
+  - [550,   1270.0]
+  - [600,   1310.0]
+  - [700,   1400.0]   # ESTIMATE: approaching decomp range
+  - [800,   1500.0]   # ESTIMATE
+  - [1000,  1650.0]   # ESTIMATE
+  - [1200,  1750.0]   # ESTIMATE
+  - [1500,  1850.0]   # ESTIMATE
+  - [2000,  1950.0]   # ESTIMATE
+  - [3000,  2050.0]   # ESTIMATE
+
+# ── Specific heat of char [J/kg/K] vs T [K] ──────────────────────────────────
+# Porous SiO2 char.  Amorphous SiO2 cp (Touloukian Vol. 5):
+# ~740 J/kg/K at 300 K → ~1050 J/kg/K at 1200 K → ~1250 J/kg/K at 2000 K.
+# Porous structure does not significantly alter cp (mass-based property).
+cp_char:
+  - [200,   640.0]
+  - [300,   740.0]
+  - [400,   840.0]
+  - [500,   930.0]
+  - [600,   1000.0]
+  - [700,   1050.0]
+  - [800,   1090.0]
+  - [900,   1120.0]
+  - [1000,  1145.0]
+  - [1200,  1180.0]
+  - [1500,  1220.0]
+  - [2000,  1270.0]   # ESTIMATE
+  - [3000,  1330.0]   # ESTIMATE
+
+# ── Pyrolysis gas enthalpy [J/kg] vs T [K], reference 298 K ──────────────────
+# Silicone pyrolysis gas is primarily cyclic siloxanes (D4 = octamethylcyclo-
+# tetrasiloxane) + methane (CH4) at low T, then SiO + CO + H2 at high T.
+# D4 boiling point is 448 K; vaporisation accounts for large latent heat.
+# ESTIMATE: table constructed from:
+#   - cp,D4(g) ≈ 1600 J/kg/K; ΔH_vap,D4 ≈ 295 kJ/kg at 448 K
+#   - cp,CH4(g) ≈ 2200 J/kg/K
+#   - At high T (>1000 K), SiO/CO/H2 mixture: cp ~ 1200–1400 J/kg/K
+# h_g(298 K) = 0 by definition.  The step near 448–550 K reflects D4 latent heat.
+# Si species complicate a standard C/H/O equilibrium calculation; the table is
+# an engineering ESTIMATE.  A rigorous Cantera calculation with Si-O-C-H
+# chemistry should replace this when setting up the B' table.
+h_g:
+  - [200,  -1.50e+05]
+  - [250,  -7.50e+04]
+  - [300,   0.00e+00]
+  - [350,   6.00e+04]
+  - [400,   1.25e+05]
+  - [450,   2.10e+05]   # approaching D4 vaporisation range
+  - [500,   3.50e+05]   # D4 vaporisation (latent heat step) complete
+  - [550,   4.70e+05]
+  - [600,   5.90e+05]
+  - [700,   8.20e+05]
+  - [800,   1.05e+06]
+  - [900,   1.28e+06]
+  - [1000,  1.50e+06]
+  - [1200,  1.92e+06]
+  - [1500,  2.55e+06]
+  - [1800,  3.18e+06]
+  - [2000,  3.60e+06]
+  - [2500,  4.70e+06]
+  - [3000,  5.90e+06]
+
+# Elemental mass fractions of pyrolysis gas [C, H, O, N].
+# NOTE: Si is NOT included in these fractions; the elemental fracs below
+# describe only the C/H/O portion of the gas mixture.  Because D4 is
+# (CH3)2SiO)₄, the non-Si elemental composition is roughly:
+#   C: 0.27, H: 0.07, O: 0.17 by mass per D4 molecule (normalised to non-Si mass).
+# At high T, SiO dominates → gas becomes Si-O with less C/H.
+# ESTIMATE: Si-bearing species not formally tracked; sum of C+H+O < 1 at high T
+# because Si fraction grows.  This table is a placeholder pending a proper
+# Si-O-C-H Cantera configuration.
+# TODO: add Si elemental fraction once Si-aware Cantera config is available.
+pyro_elem_fracs:
+  C:
+    - [300,   0.35]
+    - [500,   0.30]
+    - [700,   0.25]
+    - [900,   0.18]
+    - [1100,  0.12]
+    - [1300,  0.08]
+    - [1500,  0.05]
+    - [2000,  0.03]
+  H:
+    - [300,   0.10]
+    - [500,   0.09]
+    - [700,   0.07]
+    - [900,   0.05]
+    - [1100,  0.03]
+    - [1300,  0.02]
+    - [1500,  0.01]
+    - [2000,  0.01]
+  O:
+    - [300,   0.55]
+    - [500,   0.61]
+    - [700,   0.68]
+    - [900,   0.77]   # growing SiO → O fraction rises in non-Si fracs
+    - [1100,  0.85]
+    - [1300,  0.90]
+    - [1500,  0.94]
+    - [2000,  0.96]
+  N:
+    - [300,   0.00]
+    - [500,   0.00]
+    - [700,   0.00]
+    - [900,   0.00]
+    - [1100,  0.00]
+    - [1300,  0.00]
+    - [1500,  0.00]
+    - [2000,  0.00]
+
+# Surface emissivity.
+# Silicone rubber surface: ε ≈ 0.87–0.92 at ambient; slightly higher for char.
+# Ref [1,3]: ε ≈ 0.88–0.90 for RTV-class silicones at 300 K.
+# SiO2 char emissivity: ε ≈ 0.85–0.90 (glassy/porous silica).
+emissivity:       0.90   # virgin silicone rubber
+emissivity_char:  0.87   # SiO2-rich friable char
+
+# Placeholder — B' table requires Si-O-C-H surface chemistry system.
+# B' TABLE NOT AVAILABLE — Si-bearing material (CRITICAL)
+# RTV-560 is pure PDMS silicone rubber. Its primary pyrolysis products are cyclic
+# siloxanes (D4: Si4O4C8H24, D5: Si5O5C10H30) and SiO at high wall temperature.
+# Si is the dominant element in the ablation products — this is not a minor caveat.
+# The current Cantera CNO mechanism only supports C, H, O, N; Si is absent from the _M
+# element dict in bprime_evaluator.py. A C-H-O-N B' table for RTV-560 is physically
+# meaningless and must NOT be used.
+# To generate B' tables for RTV-560:
+#   1. Extend Cantera mechanism to support Si (add Si to _M, add SiO/SiO2/D4/D5 species to mechanism)
+#   2. Validate against Clark 1971 / Rindal arc-jet data
+#   3. Re-run scam/tools/generate_bprime.py with a Si-capable Cantera backend config
+# b_prime_table: rtv560_bprime_air.yaml  # NOT AVAILABLE: requires Si-capable Cantera backend

@@ -1,0 +1,52 @@
+# SPDX-License-Identifier: MIT
+# bprime configuration for generating the Calcarb B' table in air.
+#
+# Material: Calcarb CBCF 18/2000 (calcarb.yaml)
+# Surface chemistry: pure carbon oxidation in air.
+#   C + O  → CO   (active oxidation, dominant below ~2500 K)
+#   C + O2 → CO2  (passive oxidation)
+#   C(gr)  → C(g) (sublimation, dominant above ~3500 K)
+#
+# Calcarb does NOT pyrolyze — there is no pyrolysis gas.
+# B'g = 0 for any standalone Calcarb surface.
+# The pyro_y field is required by the generator but is multiplied by B'g,
+# so it has no effect on the B'g = 0 column.  "CO:1.0" is used as a
+# chemically valid placeholder (a C/O gas present in the CNO mechanism).
+#
+# The B'g > 0 columns in the table are provided for completeness: they cover
+# the case where Calcarb is used as the hot-face cap over a pyrolyzing sublayer
+# (e.g. PICA or cork), with pyrolysis gas venting through the porous felt.
+# In that scenario the relevant pyro_y is that of the underlying ablator, not
+# CO:1.0; re-generate with the appropriate pyro_y if needed.
+#
+# Output file: calcarb_bprime_air.yaml
+#
+# Usage (from the SCAM repo root):
+#   python scam/tools/generate_bprime.py \
+#       --config scam/materials/ablative_carbon/calcarb_bprime_config.yaml \
+#       --output scam/materials/ablative_carbon/calcarb_bprime_air.yaml \
+#       --workers 8
+
+generator:
+  edge_x: "O2:0.21,N2:0.79"
+  pyro_y: "CO:1.0"              # placeholder; only B'g=0 column is physical for standalone Calcarb
+
+  temps:     "250:4000:25"                        # K — 151 points
+  pressures: "101.325,1013.25,10132.5,101325"     # Pa — 0.001 / 0.01 / 0.1 / 1 atm
+  bg:        "0.0,0.1,0.25,0.5,1.0,2.0"           # B'g — 6 levels (only 0.0 is physical for standalone use)
+
+  gas_mechanism: cno_ablation.yaml
+  carbon_phase:  graphite.yaml
+  carbon_moles:  100.0
+  solver:        gibbs
+
+  outdir:   /tmp/scam_bprime_calcarb
+  out:      bprime_calcarb_air.csv
+  out_wide: ""
+  verbose:  false
+
+plot:
+  enabled: false
+
+compare:
+  enabled: false

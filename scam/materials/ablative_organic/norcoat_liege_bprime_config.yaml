@@ -1,0 +1,42 @@
+# SPDX-License-Identifier: MIT
+# bprime configuration for generating the NORCOAT LIEGE B' table in air.
+# Norcoat Liege cork+phenolic binder composite (Ariane 5 fairing, ArianeGroup)
+#
+# WARNING: PROVISIONAL
+# This config uses pyrolysis gas composition estimated from training-data
+# pyro_elem_fracs in norcoat_liege.yaml. The resulting B' table has NOT been
+# validated against arc-jet or experimental data. Use for scoping only;
+# replace pyro_y with literature-validated values before flight analysis.
+#
+# pyro_y from norcoat_liege.yaml pyro_elem_fracs at 700 K (C=0.520,H=0.060,O=0.420 mass frac)
+#
+# Usage (from the SCAM repo root):
+#   python scam/tools/generate_bprime.py \
+#       --config scam/materials/norcoat_liege_bprime_config.yaml \
+#       --output scam/materials/norcoat_liege_bprime_air.yaml \
+#       --workers 4
+
+generator:
+  edge_x: "O2:0.21,N2:0.79"
+  pyro_y: "CO:0.6382,CH4:0.3618"
+
+  # Same axis grid as TACOT reference table
+  temps:     "250:4000:25"                        # K  — 151 points
+  pressures: "101.325,1013.25,10132.5,101325"     # Pa — 0.001 / 0.01 / 0.1 / 1 atm
+  bg:        "0.0,0.5,1.0"                        # B'g coupling levels
+
+  gas_mechanism: cno_ablation.yaml
+  carbon_phase:  graphite.yaml
+  carbon_moles:  100.0
+  solver:        gibbs
+
+  outdir:   /tmp/scam_bprime
+  out:      bprime_norcoat_liege_air.csv
+  out_wide: ""
+  verbose:  false
+
+plot:
+  enabled: false
+
+compare:
+  enabled: false

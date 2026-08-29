@@ -1,0 +1,150 @@
+description: |-
+  SiC ablation equilibrium mechanism for SCAM equilibrium chemistry — Milos & Chen (1997) Fig. 2
+  comparison case.
+
+  Gas species are imported from Cantera's nasa_gas.yaml (Si/C/N/O system).
+  Condensed phases are imported from nasa_condensed.yaml and are defined as
+  separate fixed-stoichiometry phases so that Cantera's Mixture API can
+  hold them as competing phases in multi-condensed equilibration.
+
+  Condensed phases present:
+    graphite      — C(gr)        carbon graphite
+    sic_beta      — SiC(b)       silicon carbide beta (only allomorph in NASA DB)
+    sio2_lqz      — SiO2(Lqz)   low quartz  (stable < ~846 K)
+    sio2_hqz      — SiO2(hqz)   high quartz (stable ~846-1140 K)
+    sio2_liquid   — SiO2(L)     liquid silica (proxy for cristobalite/melt)
+    si_liquid     — Si(L)        liquid silicon
+
+  Reference: Milos & Chen, AIAA 97-0141 (1997).
+
+species:
+- name: SiC(a)
+  composition: {Si: 1, C: 1}
+  thermo:
+    model: NASA7
+    temperature-ranges: [300.0, 1000.0, 4000.0]
+    data:
+    - [-2.42177034e+00, 3.05596107e-02, -4.93524361e-05, 3.90271982e-08, -1.20107153e-11, -8.87666587e+03, 8.54103295e+00]
+    - [3.72845943e+00, 3.23090217e-03, -1.45017580e-06, 3.19459373e-10, -2.67581674e-14, -1.00498182e+04, -2.06590806e+01]
+  note: JANAF 4th ed. SiC alpha (hexagonal), Chase 1998
+
+- name: SiO2(cr)
+  composition: {Si: 1, O: 2}
+  thermo:
+    model: NASA7
+    temperature-ranges: [298.0, 848.0, 1996.0]
+    data:
+    - [2.46146138e-01, 2.47990053e-02, -2.97437891e-05, 1.67038961e-08, -3.58733876e-12, -1.10193106e+05, -2.48150967e+00]
+    - [7.78578069e-05, 2.59472419e-02, -2.64395027e-05, 1.23344715e-08, -2.11989454e-12, -1.10632771e+05, -2.28561716e+00]
+  note: JANAF 4th ed. SiO2 cristobalite (low+high forms), Chase 1998
+
+phases:
+
+- name: sic_gas
+  thermo: ideal-gas
+  elements: [C, N, O, Si]
+  species:
+  - nasa_gas.yaml/species:
+    - C
+    - C2
+    - C3
+    - CN
+    - CO
+    - CO2
+    - N
+    - N2
+    - NO
+    - NO2
+    - N2O
+    - O
+    - O2
+    - Si
+    - SiC
+    - SiC2
+    - SiN
+    - SiO
+    - SiO2
+    - Si2
+    - Si2C
+    - Si2N
+    - Si3
+  kinetics: none
+  state:
+    T: 300.0
+    P: 101325.0
+
+- name: graphite
+  thermo: fixed-stoichiometry
+  elements: [C]
+  species:
+  - nasa_condensed.yaml/species:
+    - C(gr)
+  state:
+    T: 1000.0
+    P: 101325.0
+
+- name: sic_beta
+  thermo: fixed-stoichiometry
+  elements: [Si, C]
+  species:
+  - nasa_condensed.yaml/species:
+    - SiC(b)
+  state:
+    T: 1000.0
+    P: 101325.0
+
+- name: sio2_lqz
+  thermo: fixed-stoichiometry
+  elements: [O, Si]
+  species:
+  - nasa_condensed.yaml/species:
+    - SiO2(Lqz)
+  state:
+    T: 1000.0
+    P: 101325.0
+
+- name: sio2_hqz
+  thermo: fixed-stoichiometry
+  elements: [O, Si]
+  species:
+  - nasa_condensed.yaml/species:
+    - SiO2(hqz)
+  state:
+    T: 1000.0
+    P: 101325.0
+
+- name: sio2_liquid
+  thermo: fixed-stoichiometry
+  elements: [O, Si]
+  species:
+  - nasa_condensed.yaml/species:
+    - SiO2(L)
+  state:
+    T: 2000.0
+    P: 101325.0
+
+- name: si_liquid
+  thermo: fixed-stoichiometry
+  elements: [Si]
+  species:
+  - nasa_condensed.yaml/species:
+    - Si(L)
+  state:
+    T: 1700.0
+    P: 101325.0
+
+- name: sic_alpha
+  thermo: fixed-stoichiometry
+  elements: [Si, C]
+  species: [SiC(a)]
+  state:
+    T: 1000.0
+    P: 101325.0
+
+- name: sio2_cristobalite
+  thermo: fixed-stoichiometry
+  elements: [O, Si]
+  species: [SiO2(cr)]
+  state:
+    T: 1200.0
+    P: 101325.0

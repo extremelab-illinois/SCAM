@@ -1,0 +1,208 @@
+# SPDX-License-Identifier: MIT
+# HEEET — Inner (Insulation) Layer
+# Heatshield for Extreme Entry Environment Technology — inner porous carbon layer.
+# Woven carbon preform, partially densified with phenolic resin; PICA-like porosity.
+# Developed at NASA Ames Research Center for high-heat-flux planetary entry.
+#
+# Sources:
+#   [1] Ellerby, D. et al., "HEEET: Development and Testing of a New Woven
+#       TPS for Future NASA Missions", NASA-TM-2019-220517, 2019.
+#   [2] Mahzari, M. et al., "Inverse Estimation of HEEET Thermal Properties",
+#       AIAA SciTech 2019.
+#   [3] Panerai, F. et al., "Micro-tomography based analysis of thermal
+#       conductivity, diffusivity and oxidation behavior of rigid and flexible
+#       fibrous insulators", Int. J. Heat Mass Transfer 108, 2017.
+#       https://doi.org/10.1016/j.ijheatmasstransfer.2016.12.048
+#   [4] Lachaud, J. & Mansour, N.N., JTHT 28(2), 2014 (TACOT / PICA reference)
+#
+# Architecture note:
+#   This file covers the HEEET INNER layer only.
+#   See heeet.yaml for the outer (recession) layer.
+#   In a SCAM case, stack heeet.yaml (hot face, ~10 mm) over heeet_inner.yaml
+#   (~25 mm).  Contact resistance between layers may be specified if data exist.
+#
+# Composition (inner layer):
+#   Low-density woven carbon preform + sparse phenolic densification.
+#   Similar to PICA (Phenolic Impregnated Carbon Ablator) but with a woven
+#   (not chopped) fiber architecture.
+#   rho_virgin ≈ 260 kg/m³, rho_char ≈ 195 kg/m³.
+#   gamma_resin ≈ 0.25
+#
+# All tables: T in K, strictly increasing. h_g reference: 298 K.
+
+name: heeet_inner
+description: >
+  HEEET inner (insulation) woven carbon layer; low-density carbon preform
+  partially densified with phenolic resin (~260 kg/m³).  Similar to PICA.
+  Stack behind heeet.yaml (outer recession layer) in TPS configuration.
+
+material_category: ablative_organic
+card_version: "1.0"
+status: provisional
+rho_virgin:  260.0    # [kg/m^3] Ref [1]; inner insulation layer
+rho_char:    195.0    # [kg/m^3] Ref [1]; carbon skeleton after resin pyrolysis
+gamma_resin: 0.250    # [-] (rho_virgin - rho_char)/rho_virgin
+
+components:
+  - name: phenolic_resin
+    rho_0:    65.0        # [kg/m^3] apparent virgin density of phenolic binder
+    rho_r:     0.0        # [kg/m^3] resin fully carbonises/volatilises
+    # ESTIMATE: PICA-like phenolic resin parameters (Lachaud 2014 / TACOT class).
+    # Inner layer resin chemistry is similar to PICA; A and E from TACOT/PICA range.
+    A_rate:  1.5e12       # [1/s]   ESTIMATE (phenolic class, similar to PICA)
+    E_act:   1.47e5       # [J/mol] ESTIMATE
+    m_exp:   1.0          # [-]     ESTIMATE
+    h_decomp: 1.60e6      # [J/kg]  ESTIMATE (endothermic; phenolic class)
+
+# ── Thermal conductivity of virgin inner layer [W/m/K] vs T [K] ──────────────
+# Low-density carbon preform + phenolic; analogous to PICA (rho ~280 kg/m³).
+# Ref [2] gives k_eff ≈ 0.1–0.4 W/m/K at 300–1500 K from inverse analysis.
+# Slightly higher than PICA due to woven (vs chopped) fiber architecture.
+# ESTIMATE: scaled from PICA k_virgin (Lachaud 2014) with +15% for woven.
+k_virgin:
+  - [200,   0.10]
+  - [300,   0.13]
+  - [400,   0.16]
+  - [500,   0.19]
+  - [600,   0.23]
+  - [700,   0.28]
+  - [800,   0.34]
+  - [900,   0.42]
+  - [1000,  0.52]
+  - [1200,  0.76]
+  - [1500,  1.20]
+  - [2000,  2.10]
+  - [3000,  4.00]
+
+# ── Thermal conductivity of char [W/m/K] vs T [K] ────────────────────────────
+# Porous carbon skeleton; radiation conduction important above 1200 K.
+# Very similar to PICA char (Lachaud 2014); slight upward scaling for woven.
+k_char:
+  - [200,   0.16]
+  - [300,   0.20]
+  - [400,   0.25]
+  - [500,   0.31]
+  - [600,   0.39]
+  - [700,   0.49]
+  - [800,   0.62]
+  - [900,   0.78]
+  - [1000,  0.98]
+  - [1200,  1.50]
+  - [1500,  2.55]
+  - [2000,  4.50]
+  - [3000,  8.50]
+
+# ── Specific heat of virgin inner layer [J/kg/K] vs T [K] ────────────────────
+# Almost identical to PICA: carbon + sparse phenolic.
+# Ref [2]; ESTIMATE from PICA/TACOT cp_virgin (within ±5 %).
+cp_virgin:
+  - [200,   640.0]
+  - [300,   820.0]
+  - [400,   1000.0]
+  - [500,   1150.0]
+  - [600,   1275.0]
+  - [700,   1375.0]
+  - [800,   1455.0]
+  - [900,   1515.0]
+  - [1000,  1560.0]
+  - [1200,  1630.0]
+  - [1500,  1710.0]
+  - [2000,  1780.0]
+  - [3000,  1830.0]
+
+# ── Specific heat of char [J/kg/K] vs T [K] ──────────────────────────────────
+# Graphitic porous carbon; from Touloukian Vol. 5 + PICA char data (Lachaud 2014).
+cp_char:
+  - [200,   590.0]
+  - [300,   730.0]
+  - [400,   930.0]
+  - [500,   1090.0]
+  - [600,   1220.0]
+  - [700,   1330.0]
+  - [800,   1420.0]
+  - [900,   1490.0]
+  - [1000,  1555.0]
+  - [1200,  1660.0]
+  - [1500,  1790.0]
+  - [2000,  1950.0]
+  - [3000,  2050.0]
+
+# ── Pyrolysis gas enthalpy [J/kg] vs T [K], reference 298 K ──────────────────
+# Phenolic pyrolysis gas: C/H/O mixture, same as PICA/TACOT gas chemistry.
+# ESTIMATE: taken directly from TACOT h_g (Lachaud 2014); inner layer resin
+# is phenolic, chemically indistinguishable from TACOT gas at engineering accuracy.
+h_g:
+  - [200,  -1.538e+05]
+  - [250,  -7.680e+04]
+  - [300,   0.00e+00]
+  - [350,   6.80e+04]
+  - [400,   1.50e+05]
+  - [450,   2.30e+05]
+  - [500,   3.10e+05]
+  - [550,   4.10e+05]
+  - [600,   5.30e+05]
+  - [650,   6.80e+05]
+  - [700,   8.80e+05]
+  - [750,   1.13e+06]
+  - [800,   1.44e+06]
+  - [850,   1.82e+06]
+  - [900,   2.22e+06]
+  - [950,   2.60e+06]
+  - [1000,  2.93e+06]
+  - [1100,  3.43e+06]
+  - [1200,  3.85e+06]
+  - [1400,  4.60e+06]
+  - [1600,  5.32e+06]
+  - [1800,  6.00e+06]
+  - [2000,  6.62e+06]
+  - [2500,  8.40e+06]
+  - [3000,  1.04e+07]
+
+# Elemental mass fractions of pyrolysis gas [C, H, O, N].
+# Phenolic resin: similar to TACOT pyrolysis gas composition.
+# ESTIMATE: same fractions as TACOT pyro_elem_fracs (Lachaud 2014).
+pyro_elem_fracs:
+  C:
+    - [300,   0.20]
+    - [500,   0.25]
+    - [700,   0.32]
+    - [900,   0.40]
+    - [1100,  0.47]
+    - [1300,  0.52]
+    - [1500,  0.55]
+    - [2000,  0.58]
+  H:
+    - [300,   0.10]
+    - [500,   0.09]
+    - [700,   0.07]
+    - [900,   0.05]
+    - [1100,  0.03]
+    - [1300,  0.02]
+    - [1500,  0.01]
+    - [2000,  0.01]
+  O:
+    - [300,   0.70]
+    - [500,   0.66]
+    - [700,   0.61]
+    - [900,   0.55]
+    - [1100,  0.50]
+    - [1300,  0.46]
+    - [1500,  0.44]
+    - [2000,  0.41]
+  N:
+    - [300,   0.00]
+    - [500,   0.00]
+    - [700,   0.00]
+    - [900,   0.00]
+    - [1100,  0.00]
+    - [1300,  0.00]
+    - [1500,  0.00]
+    - [2000,  0.00]
+
+# Surface emissivity (inner layer — rarely exposed, but defined for completeness).
+emissivity:       0.85
+emissivity_char:  0.90
+
+# Placeholder — B' table not yet generated.
+# TODO: generate heeet_inner_bprime_air.yaml
+b_prime_table: heeet_inner_bprime_air.yaml  # PROVISIONAL — see table header

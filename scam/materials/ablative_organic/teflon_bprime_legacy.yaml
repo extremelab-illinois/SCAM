@@ -1,0 +1,152 @@
+# SPDX-License-Identifier: MIT
+# PTFE / Teflon — polytetrafluoroethylene fluoropolymer.
+# LEGACY Gibbs-equilibrium B'-table closure. Kept for comparison/regression
+# only — NOT physically endorsed for production use.
+#
+# studies/teflon_ablation/ (compare_teflon_kinetic_models.py Panel 4,
+# why_ptfe_mdot_depends_on_Tw_not_p.md) found that PTFE ablation is a
+# reaction-rate-limited (kinetic) process, not a phase-equilibrium process:
+# the depolymerization product's vapor pressure is so high that boundary-
+# layer mass transfer never limits the rate. A Langmuir/equilibrium closure
+# built from this card's assumptions overpredicts the validated kinetic
+# (Kemp 1968) mass-loss rate by 4-9 orders of magnitude at typical PTFE
+# ablation temperatures. The canonical scam/materials/ablative_organic/
+# teflon.yaml now uses the kinetic (Kemp) closure instead; this file is
+# retained only so the superseded B'-table path stays available for
+# regression testing and side-by-side comparison.
+#
+# This card is an engineering estimate for thermal-response trial runs, not a
+# validated TPS material model. PTFE is represented here as a low-temperature
+# surface sublimator/volatilizer: nearly no in-depth pyrolysis, no char layer,
+# and surface mass loss supplied by the fluorine-target B' table. The current
+# solver still names that surface mass flux "m_dot_char" internally for
+# historical CMA compatibility, but for this card it should be interpreted as
+# condensed PTFE surface loss.
+#
+# Sources used for anchors:
+#   [1] Common PTFE data sheets and handbooks: density ~2.15-2.20 g/cm3,
+#       k ~0.25 W/m/K near room temperature, cp ~1.0 kJ/kg/K, melting near 600 K.
+#   [2] PTFE safety/property summaries: degradation/sublimation begins at much
+#       lower temperatures than classical carbon ablators; major products are
+#       TFE and related fluorocarbon fragments.
+#   [3] Low-temperature PTFE mass loss is treated as a surface process in this
+#       first-pass SCAM card. No TGA Arrhenius in-depth pyrolysis fit is used.
+
+name: PTFE_bprime_legacy
+description: >
+  Polytetrafluoroethylene (PTFE, commonly known by the Teflon trade name).
+  LEGACY Gibbs-equilibrium B'-table card, superseded by the kinetic (Kemp
+  1968) closure in teflon.yaml — see header note above. Estimate-only
+  fluoropolymer card: low-temperature surface sublimation/volatilization to
+  fluorocarbon gas, negligible in-depth pyrolysis, no char, estimate-only
+  F-capable B' chemistry.
+material_category: ablative_organic
+card_version: "1.0"
+status: estimate
+
+rho_virgin: 2200.0   # [kg/m^3] typical molded PTFE density
+rho_char:   2200.0   # [kg/m^3] no char state; used as solid density for recession
+gamma_resin:   1.0   # [-] single polymer phase
+decomposing: false
+
+components: []
+
+k_virgin:
+  - [200.0, 0.20]
+  - [250.0, 0.23]
+  - [300.0, 0.25]
+  - [350.0, 0.26]
+  - [400.0, 0.27]
+  - [450.0, 0.28]
+  - [500.0, 0.29]
+  - [550.0, 0.30]
+  - [600.0, 0.31]
+  - [700.0, 0.33]
+  - [900.0, 0.36]
+  - [1200.0, 0.40]
+  - [2000.0, 0.50]
+  - [3000.0, 0.65]
+
+# PTFE has no char state in this first-pass sublimator model. Duplicate the
+# virgin tables because some legacy mixture helpers evaluate the "char" branch
+# when rho_char == rho_virgin for non-decomposing materials.
+k_char:
+  - [200.0, 0.20]
+  - [250.0, 0.23]
+  - [300.0, 0.25]
+  - [350.0, 0.26]
+  - [400.0, 0.27]
+  - [450.0, 0.28]
+  - [500.0, 0.29]
+  - [550.0, 0.30]
+  - [600.0, 0.31]
+  - [700.0, 0.33]
+  - [900.0, 0.36]
+  - [1200.0, 0.40]
+  - [2000.0, 0.50]
+  - [3000.0, 0.65]
+
+cp_virgin:
+  - [200.0, 800.0]
+  - [250.0, 900.0]
+  - [298.0, 1000.0]
+  - [300.0, 1005.0]
+  - [350.0, 1080.0]
+  - [400.0, 1160.0]
+  - [450.0, 1240.0]
+  - [500.0, 1330.0]
+  - [550.0, 1420.0]
+  - [600.0, 1510.0]
+  - [700.0, 1650.0]
+  - [900.0, 1850.0]
+  - [1200.0, 2050.0]
+  - [2000.0, 2300.0]
+  - [3000.0, 2500.0]
+
+cp_char:
+  - [200.0, 800.0]
+  - [250.0, 900.0]
+  - [298.0, 1000.0]
+  - [300.0, 1005.0]
+  - [350.0, 1080.0]
+  - [400.0, 1160.0]
+  - [450.0, 1240.0]
+  - [500.0, 1330.0]
+  - [550.0, 1420.0]
+  - [600.0, 1510.0]
+  - [700.0, 1650.0]
+  - [900.0, 1850.0]
+  - [1200.0, 2050.0]
+  - [2000.0, 2300.0]
+  - [3000.0, 2500.0]
+
+# Fluorocarbon surface-vapor sensible enthalpy, 298 K reference. This is only a
+# smooth engineering table for reference consistency in surface terms; with
+# decomposing=false it is not used as an in-depth pyrolysis gas source.
+h_g:
+  - [200.0, -1.0e5]
+  - [250.0, -5.0e4]
+  - [298.0,  0.0]
+  - [300.0,  2.0e3]
+  - [400.0,  1.1e5]
+  - [500.0,  2.3e5]
+  - [600.0,  3.6e5]
+  - [700.0,  5.0e5]
+  - [800.0,  6.5e5]
+  - [900.0,  8.1e5]
+  - [1000.0, 9.8e5]
+  - [1200.0, 1.34e6]
+  - [1500.0, 1.88e6]
+  - [2000.0, 2.80e6]
+  - [2500.0, 3.75e6]
+  - [3000.0, 4.75e6]
+
+# Converts the sensible h_g table above to the Cantera absolute reference used
+# by teflon_bprime_air.yaml. Value is h(C2F4, 298 K, 1 atm) from the bundled
+# ptfe_fluorine_ablation Cantera mechanism.
+h_g_abs_offset: -6.584746229e6
+
+emissivity: 0.85
+emissivity_char: 0.85
+
+b_prime_table: teflon_bprime_air.yaml

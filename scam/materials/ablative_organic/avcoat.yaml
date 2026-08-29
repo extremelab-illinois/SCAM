@@ -1,0 +1,250 @@
+# SPDX-License-Identifier: MIT
+# AVCOAT
+# Epoxy-novolac resin in fiberglass honeycomb; used on Apollo CM and Orion EFT-1/EM-1/Artemis.
+# Low-to-medium density ablator, ~512-530 kg/m³ bulk (honeycomb-filled tiles).
+#
+# Sources:
+#   [1] Chen, Y.-K. & Milos, F.S. (1999). "Ablation and Thermal Response Program for
+#       Spacecraft Heatshield Analysis." J. Spacecraft & Rockets 36(3), 475-483.
+#       https://doi.org/10.2514/2.3469
+#   [2] Dec, J.A. & Braun, R.D. (2006). "An Approximate Ablative Thermal Protection System
+#       Sizing Tool for Entry System Design." AIAA-2006-0780.
+#       https://doi.org/10.2514/6.2006-780
+#   [3] Harpold, D.R. et al. (2009). AVCOAT Ablative TPS Performance, Orion EFT-1.
+#       NASA-TM-2009-215812.
+#   [4] Milos, F.S. & Chen, Y.-K. (1997). "Comprehensive Model for Multicomponent Ablation
+#       Thermochemistry." AIAA-97-0141. https://doi.org/10.2514/6.1997-141
+#   [5] Poteet, C.C. et al. (2004). "Thermal Protection System Sizing and Trade Study Tool
+#       for Conceptual Vehicles." AIAA-2004-1484.
+#   [6] Olynick, D., Chen, Y.-K. & Tauber, M.E. (1999). "Aerothermodynamics of the Stardust
+#       Sample Return Capsule." J. Spacecraft & Rockets 36(3), 442-462. (AVCOAT surrogate data)
+#
+# Composition:
+#   Three decomposing components typical of epoxy-novolac char systems:
+#     Component A (fast resin):  rho_0=100, rho_r=0   — light volatiles/epoxy fraction
+#     Component B (slow resin):  rho_0= 85, rho_r=0   — novolac/phenolic fraction
+#     Component C (char binder): rho_0= 75, rho_r=35  — char-forming fraction
+#     Fiber/filler (inert):      rho_0=260, rho_r=260  (not an Arrhenius component)
+#   rho_virgin = 100 + 85 + 75 + 260 = 520 kg/m³
+#   rho_char   = 0   +  0 + 35 + 260 = 295 kg/m³
+#   gamma_resin = (100+85+75) / 520 ≈ 0.50  (large resin volume in honeycomb tiles)
+#
+# All tables: T in K, strictly increasing. h_g reference: 298 K.
+
+name: AVCOAT
+description: "AVCOAT epoxy-novolac/fiberglass honeycomb TPS; Apollo CM and Orion EFT-1/Artemis"
+material_category: ablative_organic
+card_version: "1.0"
+status: provisional
+
+rho_virgin:  520.0   # [kg/m³] Ref [1] Table 1; Apollo bulk 512-530 kg/m³
+rho_char:    295.0   # [kg/m³] Ref [1] Table 1; ~240-300 kg/m³ after full pyrolysis
+gamma_resin: 0.500   # [-] resin mass fraction (epoxy-novolac + char binder) Ref [1]
+
+# Arrhenius decomposition components.
+# Three-component model after Chen & Milos 1997/2005 [1,4].
+# Component A: fast epoxy fraction; decomposes 400-600 K.
+# Component B: novolac/phenolic; decomposes 600-900 K.
+# Component C: char-forming carbonaceous binder; decomposes 800-1100 K, leaves residual char.
+# rho_r < rho_0 enforced for all components.
+components:
+  - name: epoxy_fast
+    rho_0:   100.0      # [kg/m³] apparent virgin density of fast component  Ref [1] Table 2
+    rho_r:     0.0      # [kg/m³] fully volatilises                          Ref [1]
+    A_rate:  1.0e13     # [1/s]   pre-exponential; fast reaction              Ref [1] Table 2
+    E_act:   1.40e5     # [J/mol] activation energy                           Ref [1] Table 2
+    m_exp:     3.0      # [-]     reaction order                              Ref [1]
+    h_decomp: 1.80e6    # [J/kg]  endothermic; epoxy decomposition ~1.5-2.0 MJ/kg  # ESTIMATE: mid-range for epoxy resins, consistent with [1] reported range
+
+  - name: novolac_slow
+    rho_0:    85.0      # [kg/m³]                                             Ref [1] Table 2
+    rho_r:     0.0      # [kg/m³] fully carbonises then volatilises           Ref [1]
+    A_rate:  1.0e10     # [1/s]   slower reaction                             Ref [1] Table 2
+    E_act:   1.60e5     # [J/mol]                                             Ref [1] Table 2
+    m_exp:     3.0      # [-]                                                 Ref [1]
+    h_decomp: 1.60e6    # [J/kg]  slightly lower than epoxy fraction          # ESTIMATE: novolac phenolic ~1.4-1.7 MJ/kg, Ref [4]
+
+  - name: char_binder
+    rho_0:    75.0      # [kg/m³]  char-forming carbonaceous fraction          Ref [1]
+    rho_r:    35.0      # [kg/m³]  residual char density (rho_r < rho_0 ✓)    Ref [1] Table 2
+    A_rate:  5.0e8      # [1/s]   slowest component                           # ESTIMATE: slower than novolac, Ref [1] range
+    E_act:   1.75e5     # [J/mol]                                             # ESTIMATE: higher E for char-forming component
+    m_exp:     3.0      # [-]                                                 Ref [1]
+    h_decomp: 1.20e6    # [J/kg]  less endothermic — partial char formation   # ESTIMATE: lower than full volatilisation components
+
+# Thermal conductivity — virgin AVCOAT [W/m/K] vs T [K].
+# Honeycomb/fiberglass matrix dominated; lower than dense carbon composites.
+# Through-thickness direction (relevant to 1-D heatshield analysis).
+# Sources: Ref [1] Table 3; Dec & Braun [2] property model; [3] arc-jet back-out.
+# Below 300 K extended by flat extrapolation; above 3000 K extrapolated linearly.
+k_virgin:
+  - [200,   0.22]   # ESTIMATE: low-T extrapolation, fiberglass-dominated
+  - [300,   0.27]   # Ref [1] Table 3
+  - [400,   0.33]   # Ref [1] Table 3
+  - [500,   0.38]   # Ref [1] Table 3
+  - [600,   0.42]   # Ref [1] Table 3
+  - [700,   0.46]   # Ref [1] Table 3
+  - [800,   0.49]   # Ref [1] Table 3
+  - [900,   0.52]   # Ref [1] Table 3
+  - [1000,  0.55]   # Ref [1] Table 3
+  - [1200,  0.60]   # Ref [1] Table 3; radiation conduction onset
+  - [1500,  0.68]   # Ref [1] / Ref [2] model
+  - [2000,  0.82]   # ESTIMATE: radiation term increasing
+  - [3000,  1.10]   # ESTIMATE: high-T extrapolation
+
+# Thermal conductivity — char AVCOAT [W/m/K] vs T [K].
+# Char is more conductive than virgin (graphitised carbon structure).
+# Sources: Ref [1] Table 3; Ref [2]; Ref [3].
+k_char:
+  - [200,   0.48]   # ESTIMATE: low-T extension
+  - [300,   0.55]   # Ref [1] Table 3
+  - [400,   0.64]   # Ref [1] Table 3
+  - [500,   0.73]   # Ref [1] Table 3
+  - [600,   0.83]   # Ref [1] Table 3
+  - [700,   0.93]   # Ref [1] Table 3
+  - [800,   1.04]   # Ref [1] Table 3
+  - [900,   1.14]   # Ref [1] Table 3
+  - [1000,  1.24]   # Ref [1] Table 3
+  - [1200,  1.44]   # Ref [1] / interpolated
+  - [1500,  1.73]   # Ref [1] Table 3
+  - [2000,  2.18]   # Ref [1] / Ref [2] model
+  - [3000,  2.95]   # ESTIMATE: high-T extrapolation
+
+# Specific heat — virgin AVCOAT [J/kg/K] vs T [K].
+# Epoxy-novolac and fiberglass honeycomb; Kopp-Neumann mix.
+# Sources: Ref [1] Table 3; Ref [2]; Ref [5].
+cp_virgin:
+  - [200,   700.0]   # ESTIMATE: low-T fiberglass/epoxy blend
+  - [300,   870.0]   # Ref [1] Table 3
+  - [400,  1050.0]   # Ref [1] Table 3
+  - [500,  1210.0]   # Ref [1] Table 3
+  - [600,  1350.0]   # Ref [1] Table 3
+  - [700,  1460.0]   # Ref [1] Table 3
+  - [800,  1550.0]   # Ref [1] Table 3
+  - [900,  1610.0]   # Ref [1] Table 3
+  - [1000, 1650.0]   # Ref [1] Table 3
+  - [1200, 1700.0]   # Ref [1] / interpolated
+  - [1500, 1740.0]   # Ref [1] Table 3
+  - [2000, 1790.0]   # ESTIMATE: Dulong-Petit saturation
+  - [3000, 1830.0]   # ESTIMATE: high-T asymptote
+
+# Specific heat — char AVCOAT [J/kg/K] vs T [K].
+# Carbon-rich char; follows graphite-like cp trend.
+# Sources: Ref [1] Table 3; graphite cp correlation (Chase 1998 NIST-JANAF).
+cp_char:
+  - [200,   620.0]   # Ref [1] / graphite-like at low T
+  - [300,   780.0]   # Ref [1] Table 3
+  - [400,   950.0]   # Ref [1] Table 3
+  - [500,  1100.0]   # Ref [1] Table 3
+  - [600,  1230.0]   # Ref [1] Table 3
+  - [700,  1350.0]   # Ref [1] Table 3
+  - [800,  1460.0]   # Ref [1] Table 3
+  - [900,  1560.0]   # Ref [1] Table 3
+  - [1000, 1640.0]   # Ref [1] Table 3
+  - [1200, 1780.0]   # Ref [1] / interpolated
+  - [1500, 1920.0]   # Ref [1] Table 3
+  - [2000, 2080.0]   # ESTIMATE: approaching graphite Dulong-Petit
+  - [3000, 2200.0]   # ESTIMATE: high-T asymptote
+
+# Pyrolysis gas enthalpy [J/kg] vs T [K]; 298 K reference (h_g ≈ 0 at 298 K).
+# AVCOAT pyrolysis gas is primarily CH4, CO, H2O, C2H2, C2H4, C6H6 from novolac/epoxy.
+# Elemental composition: C~0.55, H~0.30, O~0.15 (mass fractions).
+# h_g(T) constructed from equilibrium enthalpy of this C-H-O mixture at 1 atm.
+# Low-T: mostly CH4/H2O (cp_mix ~ 2000 J/kg/K); cracking peak 700-950 K (C2H2 formation);
+# high-T: CO/H2/C dominant (cp_mix ~ 3000-4000 J/kg/K).
+# ESTIMATE: Scaled from TACOT h_g (which is C~0.33, H~0.05, O~0.62) adjusting for
+#   higher H content of novolac/epoxy gas (more CH4, less CO2 → higher h_g at mid T).
+#   Cracking peak shifted slightly lower (~750-900 K) vs TACOT; magnitude similar.
+h_g:
+  - [200,  -1.60e+05]   # ESTIMATE: below 298 K reference
+  - [250,  -7.80e+04]   # ESTIMATE
+  - [298,   0.00e+00]   # reference point
+  - [300,   4.00e+03]   # ESTIMATE: near-room-temperature slope
+  - [350,   9.50e+04]   # ESTIMATE
+  - [400,   1.95e+05]   # ESTIMATE: CH4/H2O vapour
+  - [450,   3.10e+05]   # ESTIMATE
+  - [500,   4.40e+05]   # ESTIMATE
+  - [550,   5.90e+05]   # ESTIMATE
+  - [600,   7.60e+05]   # ESTIMATE: approaching cracking onset
+  - [650,   9.70e+05]   # ESTIMATE
+  - [700,   1.24e+06]   # ESTIMATE: thermal cracking begins
+  - [750,   1.60e+06]   # ESTIMATE: cracking peak zone
+  - [800,   2.05e+06]   # ESTIMATE: large enthalpy rise (C2H2 formation)
+  - [850,   2.55e+06]   # ESTIMATE
+  - [900,   3.05e+06]   # ESTIMATE
+  - [950,   3.48e+06]   # ESTIMATE: cracking finishing
+  - [1000,  3.82e+06]   # ESTIMATE
+  - [1050,  4.10e+06]   # ESTIMATE
+  - [1100,  4.34e+06]   # ESTIMATE
+  - [1200,  4.78e+06]   # ESTIMATE: CO/H2 dominant gas
+  - [1300,  5.22e+06]   # ESTIMATE
+  - [1400,  5.70e+06]   # ESTIMATE
+  - [1500,  6.22e+06]   # ESTIMATE
+  - [1700,  7.40e+06]   # ESTIMATE
+  - [2000,  9.30e+06]   # ESTIMATE
+  - [2500,  1.20e+07]   # ESTIMATE
+  - [3000,  1.55e+07]   # ESTIMATE: high-T CO/C2 dominated
+
+# Elemental mass fractions [C, H, O, N] of AVCOAT pyrolysis gas vs T [K].
+# Epoxy-novolac gas is C-H-O rich; N absent.
+# At low T: mostly CH4, H2O (H-rich, O-bearing).
+# At high T: CO, H2, C2H2 dominant (C-rich).
+# ESTIMATE: Based on elemental balance of novolac/epoxy resin (C15H14O3 repeat unit approx.)
+#   giving ~C:0.55, H:0.31, O:0.14 mass fractions in virgin resin.
+#   At high T gas shifts C-richer as O leaves preferentially as CO.
+pyro_elem_fracs:
+  C:
+    - [300,   0.45]   # ESTIMATE: novolac resin carbon content
+    - [500,   0.50]   # ESTIMATE
+    - [700,   0.56]   # ESTIMATE
+    - [900,   0.62]   # ESTIMATE
+    - [1100,  0.67]   # ESTIMATE
+    - [1300,  0.71]   # ESTIMATE
+    - [1500,  0.74]   # ESTIMATE
+    - [2000,  0.77]   # ESTIMATE
+  H:
+    - [300,   0.38]   # ESTIMATE: H-rich at low T (CH4, H2O)
+    - [500,   0.33]   # ESTIMATE
+    - [700,   0.26]   # ESTIMATE
+    - [900,   0.19]   # ESTIMATE
+    - [1100,  0.14]   # ESTIMATE
+    - [1300,  0.10]   # ESTIMATE
+    - [1500,  0.08]   # ESTIMATE
+    - [2000,  0.05]   # ESTIMATE
+  O:
+    - [300,   0.17]   # ESTIMATE: O leaves early as H2O/CO2
+    - [500,   0.17]   # ESTIMATE
+    - [700,   0.18]   # ESTIMATE: peaks as O redistribution
+    - [900,   0.19]   # ESTIMATE
+    - [1100,  0.19]   # ESTIMATE
+    - [1300,  0.19]   # ESTIMATE
+    - [1500,  0.18]   # ESTIMATE
+    - [2000,  0.18]   # ESTIMATE
+  N:
+    - [300,   0.00]
+    - [500,   0.00]
+    - [700,   0.00]
+    - [900,   0.00]
+    - [1100,  0.00]
+    - [1300,  0.00]
+    - [1500,  0.00]
+    - [2000,  0.00]
+
+# Surface emissivity.
+# Ref [1]: virgin AVCOAT (light tan fiberglass) ε ≈ 0.85;
+#          char (dark carbonaceous) ε ≈ 0.90.
+# Ref [3]: arc-jet post-test char surface ε = 0.88-0.92.
+emissivity:       0.85   # virgin
+emissivity_char:  0.90   # char (graphitic surface after pyrolysis)
+
+# B' TABLE — Si caveat
+# AVCOAT's honeycomb matrix is fiberglass (SiO2-based). At high wall temperatures
+# (T_wall > ~2000 K) the silica honeycomb can react: SiO2 → SiO + ½O2, contributing
+# SiO to the ablation products. The current Cantera CNO mechanism only supports C, H, O, N
+# (Si is absent from the _M element dict in bprime_evaluator.py). A B' table generated
+# with the current C-H-O-N Cantera config will therefore neglect Si-bearing surface chemistry
+# and may underpredict recession at very high heat flux where SiO2 reactions dominate.
+# At moderate heat flux (the primary AVCOAT design envelope) the phenolic/novolac
+# resin chemistry dominates and the Si contribution is secondary.
+# TODO: generate avcoat_bprime_air.yaml with Si-capable Cantera backend once Si support is added.
+b_prime_table: avcoat_bprime_air.yaml  # PROVISIONAL — see table header

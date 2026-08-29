@@ -1,0 +1,45 @@
+# SPDX-License-Identifier: MIT
+# Multi-pressure B' table for Calcarb in air — full Cantera CNO (C, C2, C3) species.
+#
+# Identical to calcarb_bprime_config.yaml except the pressure grid is extended
+# to 5 atm so that BPrimeTable interpolates correctly above 1 atm (the original
+# table clamped to 1 atm, overestimating B'_c in the sublimation regime at the
+# peak edge pressure of ~1.6 atm in Amar 2006 §8.7).
+#
+# Species set: full CNO (GRI-Mech 3.0 + C2 + C3).  C2 and C3 are the dominant
+# carbon sublimation products above ~3200 K in Cantera/JANAF thermochemistry.
+# This is the higher-fidelity equilibrium table; see calcarb_bprime_ace_config.yaml
+# for the ACE-style table (C only, no C2/C3) for code-to-code comparison with
+# CMA / SODDIT / Amar research code.
+#
+# Output file: calcarb_bprime_air_mp.yaml
+#
+# Usage (from the SCAM repo root):
+#   python scam/tools/generate_bprime.py \
+#       --config scam/materials/ablative_carbon/calcarb_bprime_mp_config.yaml \
+#       --output scam/materials/ablative_carbon/calcarb_bprime_air_mp.yaml \
+#       --workers 8
+
+generator:
+  edge_x: "O2:0.21,N2:0.79"
+  pyro_y: "CO:1.0"              # placeholder; only B'g=0 column is physical for standalone Calcarb
+
+  temps:     "250:4000:25"                                        # K — 151 points
+  pressures: "101.325,1013.25,10132.5,101325,202650,506625"       # Pa — 0.001/0.01/0.1/1/2/5 atm
+  bg:        "0.0,0.1,0.25,0.5,1.0,2.0"                          # B'g — 6 levels
+
+  gas_mechanism: cno_ablation.yaml
+  carbon_phase:  graphite.yaml
+  carbon_moles:  100.0
+  solver:        gibbs
+
+  outdir:   /tmp/scam_bprime_calcarb_mp
+  out:      bprime_calcarb_air_mp.csv
+  out_wide: ""
+  verbose:  false
+
+plot:
+  enabled: false
+
+compare:
+  enabled: false

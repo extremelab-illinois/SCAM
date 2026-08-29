@@ -1,0 +1,233 @@
+# SPDX-License-Identifier: MIT
+# Norcoat Liège — ArianeGroup High-Binder Cork Composite (Ariane 5 fairing TPS)
+#
+# Sources:
+#   [1] Bouilly et al. 2006, AIAA-2006-0658          # TODO: retrieve for verified values
+#   [2] Natali et al. 2011, "A nanostructured ablative bulk moulding compound:
+#       Development and characterization", Compos. Part A 42, pp. 1197-..., 2011.
+#       https://doi.org/10.1016/j.compositesa.2011.04.022
+#       (UNVERIFIED for Norcoat Liège relevance — confirm this is the correct Natali 2011 reference)
+#   [3] Pinaud et al. 2014, AIAA-2014-2208            # TODO: retrieve for verified values
+#   [6] Muylaert et al. 2009, AIAA-2009-7420          # TODO: Ariane fairing TPS overview
+#   [7] Laub & Venkatapathy 2004, IAC-04-V.6.07       # Cork TPS survey
+#
+# Norcoat Liège is a structural cork+phenolic composite developed by ArianeGroup (formerly
+# EADS/Astrium).  Used on Ariane 5 fairings and cryogenic tank insulation.  It is denser
+# and more mechanically robust than BNB/ZURAM due to a higher phenolic binder loading.
+# Open-access thermophysical data are extremely sparse; all values are ESTIMATES scaled
+# from the cork/phenolic ablator family unless cited.
+#
+# Composition:
+#   Two decomposing components (cork organic + phenolic binder) + inert filler/mineral.
+#   rho_0_sum = 100 + 120 = 220 kg/m^3 (organic fraction)
+#   inert = 400 - 220 = 180 kg/m^3
+#   rho_char = inert + sum(rho_r) = 180 + 10 + 10 = 200 kg/m^3 → reported 220 (accounting
+#   for uncertainty; adjust to 220 to give ~45% mass retention consistent with phenolics).
+#
+# Note: rho_char 220 means inert contribution = 220 - 20 = 200 → inert = 180 OK if there
+# is some char densification.  Treat as a scaffold; verify with TGA.
+
+name: NorcoatLiege
+description: "Norcoat Liège cork-phenolic composite (Ariane 5 fairing) — all values ESTIMATE"
+material_category: ablative_organic
+card_version: "1.0"
+status: estimate
+
+rho_virgin:  400.0   # [kg/m^3]  # ESTIMATE: structural cork+resin composite, Ariane 5 fairing spec
+rho_char:    220.0   # [kg/m^3]  # ESTIMATE: ~55% mass retention, higher than BNB due to phenolic char
+gamma_resin:   0.55  # [-]       # ESTIMATE: high phenolic binder loading for structural properties
+
+components:
+  # ---- cork organic fraction ----
+  # Cellulose + suberin lumped into a single component at higher density.
+  # Kinetics intermediate between pure cellulose (fast) and suberin (slow).
+  - name: cork_organic
+    rho_0:   100.0       # [kg/m^3]  # ESTIMATE: cork cell-wall biopolymers in dense composite
+    rho_r:    10.0       # [kg/m^3]  # ESTIMATE: some carbonaceous residue from dense cork
+    A_rate:  1.0e10      # [1/s]     # ESTIMATE: intermediate between cellulose and suberin
+    E_act:   1.30e5      # [J/mol]   # ESTIMATE: ~130 kJ/mol lumped cork kinetics
+    m_exp:   1.0         # [-]
+    h_decomp: 9.0e5     # [J/kg]    # ESTIMATE: weighted mean of cellulose/suberin values
+
+  # ---- phenolic binder ----
+  # Higher activation energy and pre-exponential than cork alone; produces more char.
+  # Based on phenolic ablator literature (Stokes 1965; Henderson 1987 for PICA phenolic).
+  - name: phenolic_binder
+    rho_0:   120.0       # [kg/m^3]  # ESTIMATE: dominant component in Norcoat Liège
+    rho_r:    10.0       # [kg/m^3]  # ESTIMATE: dense phenolic char residue
+    A_rate:  1.0e11      # [1/s]     # ESTIMATE: phenolic resin kinetics (Henderson 1987)
+    E_act:   1.50e5      # [J/mol]   # ESTIMATE: ~150 kJ/mol phenolic decomposition
+    m_exp:   3.0         # [-]       # ESTIMATE: higher order matches phenolic crosslink network
+    h_decomp: 1.50e6    # [J/kg]    # ESTIMATE: endothermic, consistent with phenolic ablators
+
+# Thermal conductivity of virgin Norcoat Liège [W/m/K] vs T [K]
+# TODO: verify against [3] Pinaud 2014, [6] Muylaert 2009
+# Higher density than BNB/ZURAM → higher solid-phase conduction.
+# Scaling: k ≈ k_BNB × (400/180)^0.6 ≈ BNB × 1.8 (empirical porous solid exponent)
+k_virgin:
+  - [298,   0.120]   # ESTIMATE: cork composites ~0.10–0.20 W/m/K at RT (Natali 2011)
+  - [400,   0.135]   # ESTIMATE
+  - [500,   0.155]   # ESTIMATE
+  - [600,   0.180]   # ESTIMATE
+  - [700,   0.210]   # ESTIMATE
+  - [800,   0.245]   # ESTIMATE
+  - [900,   0.285]   # ESTIMATE
+  - [1000,  0.328]   # ESTIMATE
+  - [1200,  0.425]   # ESTIMATE
+  - [1500,  0.570]   # ESTIMATE
+  - [1800,  0.740]   # ESTIMATE
+  - [2000,  0.855]   # ESTIMATE
+  - [2500,  1.130]   # ESTIMATE
+
+# Thermal conductivity of char Norcoat Liège [W/m/K] vs T [K]
+# TODO: verify against [1] Bouilly 2006, [3] Pinaud 2014
+# Phenolic char is denser and more thermally conductive than cork char.
+k_char:
+  - [298,   0.145]   # ESTIMATE: phenolic char at RT ~0.12–0.20 W/m/K
+  - [400,   0.170]   # ESTIMATE
+  - [500,   0.200]   # ESTIMATE
+  - [600,   0.236]   # ESTIMATE
+  - [700,   0.278]   # ESTIMATE
+  - [800,   0.326]   # ESTIMATE
+  - [900,   0.380]   # ESTIMATE
+  - [1000,  0.440]   # ESTIMATE
+  - [1200,  0.575]   # ESTIMATE
+  - [1500,  0.785]   # ESTIMATE
+  - [1800,  1.020]   # ESTIMATE
+  - [2000,  1.180]   # ESTIMATE
+  - [2500,  1.570]   # ESTIMATE
+
+# Specific heat of virgin Norcoat Liège [J/kg/K] vs T [K]
+# TODO: verify against [2] Natali 2011 DSC, [3] Pinaud 2014
+# Organic polymer basis; cp lower than pure cork because mineral/resin fraction
+# depresses the mass-specific value relative to pure organic.
+cp_virgin:
+  - [298,   1300.0]  # ESTIMATE: cork+phenolic composite, lower than pure cork (mineral dilution)
+  - [400,   1400.0]  # ESTIMATE
+  - [500,   1500.0]  # ESTIMATE
+  - [600,   1580.0]  # ESTIMATE
+  - [700,   1640.0]  # ESTIMATE
+  - [800,   1690.0]  # ESTIMATE
+  - [900,   1730.0]  # ESTIMATE
+  - [1000,  1760.0]  # ESTIMATE
+  - [1200,  1800.0]  # ESTIMATE
+  - [1500,  1840.0]  # ESTIMATE
+  - [1800,  1870.0]  # ESTIMATE
+  - [2000,  1890.0]  # ESTIMATE
+  - [2500,  1920.0]  # ESTIMATE
+
+# Specific heat of char Norcoat Liège [J/kg/K] vs T [K]
+# TODO: verify against [1] Bouilly 2006
+# Phenolic char has higher cp than pure cork char at mid-T; graphitises at high T.
+cp_char:
+  - [298,    950.0]  # ESTIMATE: phenolic/mineral char at RT ~ 900–1100 J/kg/K
+  - [400,   1100.0]  # ESTIMATE
+  - [500,   1230.0]  # ESTIMATE
+  - [600,   1350.0]  # ESTIMATE
+  - [700,   1450.0]  # ESTIMATE
+  - [800,   1535.0]  # ESTIMATE
+  - [900,   1605.0]  # ESTIMATE
+  - [1000,  1665.0]  # ESTIMATE
+  - [1200,  1760.0]  # ESTIMATE
+  - [1500,  1860.0]  # ESTIMATE
+  - [1800,  1940.0]  # ESTIMATE
+  - [2000,  1990.0]  # ESTIMATE
+  - [2500,  2060.0]  # ESTIMATE
+
+# Pyrolysis gas enthalpy [J/kg] vs T [K], 298 K reference.
+# Norcoat gas = cork biopolymer + phenolic decomposition products.
+# Phenolic produces more aromatic species (benzene, phenol, CO) → slightly more
+# endothermic cracking zone at 700–1000 K than plain cork.
+# TODO: generate from Cantera with Norcoat pyro_elem_fracs.
+h_g:
+  - [298,     0.0]
+  - [400,   6.80e4]  # ESTIMATE: slightly higher than plain cork due to phenolic species
+  - [500,   1.50e5]  # ESTIMATE
+  - [600,   2.50e5]  # ESTIMATE
+  - [700,   3.80e5]  # ESTIMATE: phenolic cracking begins
+  - [800,   6.20e5]  # ESTIMATE: aromatic ring-opening, more endothermic than cork
+  - [900,   1.05e6]  # ESTIMATE
+  - [1000,  2.00e6]  # ESTIMATE
+  - [1100,  3.00e6]  # ESTIMATE
+  - [1200,  3.80e6]  # ESTIMATE
+  - [1400,  4.70e6]  # ESTIMATE
+  - [1600,  5.40e6]  # ESTIMATE
+  - [1800,  6.10e6]  # ESTIMATE
+  - [2000,  6.80e6]  # ESTIMATE
+  - [2500,  8.50e6]  # ESTIMATE
+  - [3000,  1.03e7]  # ESTIMATE
+
+# Elemental mass fractions of Norcoat Liège pyrolysis gas vs T [K].
+# Phenolic binder (C6H5OH repeat unit) has ~C:0.77, H:0.07, O:0.17 → gas is more C-rich
+# than plain cork at high T.  Cork organic fraction contributes more O-rich species at low T.
+# TODO: compute from CEA equilibrium for Norcoat gas composition.
+pyro_elem_fracs:
+  C:
+    - [300,   0.40]  # ESTIMATE: higher C than plain cork due to phenolic contribution
+    - [500,   0.46]  # ESTIMATE
+    - [700,   0.52]  # ESTIMATE
+    - [900,   0.57]  # ESTIMATE
+    - [1100,  0.62]  # ESTIMATE
+    - [1300,  0.65]  # ESTIMATE
+    - [1500,  0.67]  # ESTIMATE
+    - [2000,  0.68]  # ESTIMATE
+  H:
+    - [300,   0.07]  # ESTIMATE
+    - [500,   0.07]  # ESTIMATE
+    - [700,   0.06]  # ESTIMATE
+    - [900,   0.05]  # ESTIMATE
+    - [1100,  0.04]  # ESTIMATE
+    - [1300,  0.03]  # ESTIMATE
+    - [1500,  0.02]  # ESTIMATE
+    - [2000,  0.01]  # ESTIMATE
+  O:
+    - [300,   0.53]  # ESTIMATE: lower O than plain cork owing to phenolic (low-O) binder
+    - [500,   0.47]  # ESTIMATE
+    - [700,   0.42]  # ESTIMATE
+    - [900,   0.38]  # ESTIMATE
+    - [1100,  0.34]  # ESTIMATE
+    - [1300,  0.32]  # ESTIMATE
+    - [1500,  0.31]  # ESTIMATE
+    - [2000,  0.31]  # ESTIMATE
+  N:
+    - [300,   0.00]
+    - [500,   0.00]
+    - [700,   0.00]
+    - [900,   0.00]
+    - [1100,  0.00]
+    - [1300,  0.00]
+    - [1500,  0.00]
+    - [2000,  0.00]
+
+# Surface emissivity
+# TODO: verify against [3] Pinaud 2014, manufacturer datasheet
+# Phenolic surface has slightly higher emissivity than plain cork at char state.
+emissivity:       0.85   # ESTIMATE: virgin surface (organic+resin, cork family)
+emissivity_char:  0.92   # ESTIMATE: phenolic char surface, slightly higher than BNB/ZURAM
+
+emissivity_virgin:
+  - [298,   0.85]  # ESTIMATE
+  - [400,   0.85]  # ESTIMATE
+  - [600,   0.86]  # ESTIMATE
+  - [800,   0.87]  # ESTIMATE
+  - [1000,  0.87]  # ESTIMATE
+  - [1200,  0.87]  # ESTIMATE
+  - [1500,  0.88]  # ESTIMATE
+  - [2000,  0.88]  # ESTIMATE
+  - [2500,  0.88]  # ESTIMATE
+  - [3000,  0.88]  # ESTIMATE
+
+emissivity_char_table:
+  - [298,   0.92]  # ESTIMATE
+  - [400,   0.92]  # ESTIMATE
+  - [600,   0.92]  # ESTIMATE
+  - [800,   0.92]  # ESTIMATE
+  - [1000,  0.92]  # ESTIMATE
+  - [1200,  0.92]  # ESTIMATE
+  - [1500,  0.92]  # ESTIMATE
+  - [2000,  0.92]  # ESTIMATE
+  - [2500,  0.92]  # ESTIMATE
+  - [3000,  0.92]  # ESTIMATE
+
+# Placeholder — B' table must be generated via scam/tools/generate_bprime.py
+b_prime_table: norcoat_liege_bprime_air.yaml  # PROVISIONAL — see table header

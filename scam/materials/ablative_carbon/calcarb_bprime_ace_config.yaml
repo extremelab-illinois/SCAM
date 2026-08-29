@@ -1,0 +1,50 @@
+# SPDX-License-Identifier: MIT
+# ACE-style B' table for Calcarb in air — GRI-Mech 3.0 (C only, no C2/C3).
+#
+# Motivation: Amar (2006), CMA, and SODDIT use ACE (Aerotherm Chemical Equilibrium)
+# thermochemistry, which includes C but not C2 or C3 as gas-phase species.  The
+# ACE database predicts B'_c staying near the diffusion-controlled plateau (~0.175)
+# up to ~3600 K because without C2/C3 the only carbon vapor route is atomic C,
+# whose vapour pressure is much lower.  Cantera/JANAF with C2/C3 predicts sublimation
+# onset at ~3200 K and B'_c rising steeply above it.
+#
+# Using gri30.yaml (GRI-Mech 3.0) as the gas mechanism gives exactly this behaviour:
+#   - C (atomic) is included → diffusion-controlled C + O → CO / C + O2 → CO2 captured
+#   - C2, C3 excluded → no high-T sublimation shoulder
+# This produces B'_c values that match the implied ACE curve back-calculated from
+# Amar research code + CMA/SODDIT reference data.
+#
+# Intended use: code-to-code verification vs Amar §8.7/§8.8.  NOT recommended for
+# flight-vehicle design where sublimation may be significant above 3200 K.
+#
+# Output file: calcarb_bprime_ace_air.yaml
+#
+# Usage (from the SCAM repo root):
+#   python scam/tools/generate_bprime.py \
+#       --config scam/materials/ablative_carbon/calcarb_bprime_ace_config.yaml \
+#       --output scam/materials/ablative_carbon/calcarb_bprime_ace_air.yaml \
+#       --workers 8
+
+generator:
+  edge_x: "O2:0.21,N2:0.79"
+  pyro_y: "CO:1.0"              # placeholder; only B'g=0 column is physical for standalone Calcarb
+
+  temps:     "250:4000:25"                                        # K — 151 points
+  pressures: "101.325,1013.25,10132.5,101325,202650,506625"       # Pa — 0.001/0.01/0.1/1/2/5 atm
+  bg:        "0.0,0.1,0.25,0.5,1.0,2.0"                          # B'g — 6 levels
+
+  gas_mechanism: gri30.yaml     # GRI-Mech 3.0: has C but NOT C2 or C3 → ACE-style
+  carbon_phase:  graphite.yaml
+  carbon_moles:  100.0
+  solver:        gibbs
+
+  outdir:   /tmp/scam_bprime_calcarb_ace
+  out:      bprime_calcarb_ace_air.csv
+  out_wide: ""
+  verbose:  false
+
+plot:
+  enabled: false
+
+compare:
+  enabled: false

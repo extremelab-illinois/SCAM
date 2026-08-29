@@ -1,0 +1,16 @@
+name: silica
+description: >
+  Fused silica (SiO2) ablating in air.  Single condensed phase.
+  Uses the project-local sionc_silica.yaml mechanism.
+
+gas_mechanism: mechanisms/sionc_silica.yaml
+gas_phase_name: sionc_gas
+
+active_elements: [Si, O, N]
+
+condensed_species:
+  - name: SiO2(l)
+    molecular_weight_kg_per_kmol: 60.084
+    elements: {Si: 1, O: 2}
+    density_kg_per_m3: 2200.0
+    failure_temperature_K: 2000.0

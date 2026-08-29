@@ -1,0 +1,18 @@
+name: carbon_char
+description: >
+  Isotropic carbon char (graphite) ablating in air.
+  Equilibrium model, no pyrolysis gas.
+  Reference mechanism: GRI-Mech 3.0 + C2/C3 (cno_ablation.yaml).
+
+gas_mechanism: cno_ablation.yaml
+gas_phase_name: ""
+
+active_elements: [C, O, N]
+
+condensed_species:
+  - name: C(gr)
+    molecular_weight_kg_per_kmol: 12.011
+    elements: {C: 1}
+    density_kg_per_m3: 2200.0
+    # Graphite sublimates rather than melting; no sharp failure temperature.
+    failure_temperature_K: null

@@ -1,0 +1,57 @@
+# SPDX-License-Identifier: MIT
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "scam"
+version = "0.1.0"
+description = "Simple Code for Ablative Materials — 1-D charring ablation solver"
+readme = "README.md"
+license = "MIT"
+authors = [
+    { name = "Francesco Panerai", email = "fpaneraiai@gmail.com" },
+]
+requires-python = ">=3.10"
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Science/Research",
+    "Programming Language :: Python :: 3",
+    "Topic :: Scientific/Engineering :: Physics",
+]
+dependencies = [
+    "numpy>=1.24",
+    "scipy>=1.10",
+    "pyyaml>=6.0",
+    "matplotlib>=3.7",
+]
+
+[project.urls]
+# TODO: update once the public repository location is finalized.
+Homepage = "https://github.com/fpanerai/scam"
+Repository = "https://github.com/fpanerai/scam"
+
+[project.optional-dependencies]
+dev = ["pytest>=7.0", "pytest-cov", "h5py>=3.8"]
+hdf5 = ["h5py>=3.8"]
+bprime = ["cantera>=3.0", "pandas>=1.5"]
+jax = ["jax[cpu]>=0.6"]
+
+[project.scripts]
+scam = "scam.cli.main:main"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["scam*"]
+exclude = ["scam.mesh2d*", "scam.physics2d*", "scam.numerics2d*", "scam.solvers2d*", "scam.state2d*"]
+
+[tool.setuptools.package-data]
+"scam.materials" = ["**/*.yaml", "**/*.xml"]
+"scam.mechanisms" = ["*.yaml", "*.xml"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+markers = [
+    "cantera: tests requiring the Cantera library",
+]

@@ -1,0 +1,215 @@
+# SPDX-License-Identifier: MIT
+# =============================================================================
+# SCAM input deck template — AblationTestCase 2.x style
+# =============================================================================
+#
+# Run:   python3 -m scam examples/templates/ablation2_template.yaml
+# Plot:  python3 examples/templates/plot_results.py results/ablation2_template/ --video
+#
+# What this case tests
+# --------------------
+# Full ablative material response: in-depth conduction + Arrhenius pyrolysis
+# + surface energy balance (SEB) + B' table surface chemistry + surface
+# recession.  This is the SCAM equivalent of PATO AblationTestCase_2.x
+# (5 cm TACOT slab, 120 s heating/cooldown cycle, fully coupled).
+#
+# Key differences from ablation1_template.yaml:
+#   - surface_bc.type: energy_balance   (Newton SEB, not prescribed-T)
+#   - Enthalpy-based convection: rhoUeCH + h_r  (PATO Bprime BC style)
+#   - B' table surface chemistry enabled via C_M > 0 and rho_e_u_e > 0
+#   - allow_recession: true             (surface recedes as char is ablated)
+#   - continuous_remap: true            (ALE mesh — smooth T_wall, no node-drop sawtooth)
+#   - 201 nodes (finer than arcjet template; coarser than ablation1)
+#
+# Key differences from tacot_arcjet_template.yaml:
+#   - Convection is enthalpy-based (rhoUeCH/h_r) instead of temperature-based
+#     (alpha_conv/T_aw).  When rhoUeCH > 0 the two alpha_conv/T_aw fields are
+#     ignored and q_conv = rhoUeCH * (h_r − h_wall(T_w)) is used instead.
+#   - rho_e_u_e is set to 0 during cooldown to gate the B' chemistry off,
+#     reproducing PATO's chemistryOn=0 flag in the cooldown phase.
+#   - ALE recession is enabled (continuous_remap: true).
+#
+# Surface chemistry note
+# ----------------------
+# The B' table (tacot_v3.0_bprime_air.yaml, loaded automatically by the material
+# loader alongside tacot_v3.0.yaml) maps (T_wall, p_e, B'_g) → (B'_c, h_wall).
+# The mass-transfer flux is:
+#   m_dot_char = rho_e_u_e * C_M * B'_c
+# where B'_c is the char oxidation blowing parameter at the wall.
+# Setting C_M=1.0 and rho_e_u_e=rhoUeCH exactly mirrors PATO's AblationTestCase
+# normalisation (ρ_e·u_e·C_H = ρ_e·u_e·C_M = 0.3 kg/m²/s at peak heating).
+#
+# Cooldown gating
+# ---------------
+# During cooldown (t > 60.1 s) the arc-jet is off: h_r drops to 0 and
+# rho_e_u_e drops to 0.  Zeroing rho_e_u_e prevents the solver from running
+# the B' lookup with inconsistent enthalpy references (see docs/verification/pato_validation.md
+# §cooldown).  rhoUeCH is kept at a small residual value (0.003 kg/m²/s) to
+# match PATO's background convective BC; because h_r=0 and rho_e_u_e=0 this
+# has no practical effect on the surface temperature.
+# =============================================================================
+
+
+name: "AblationTestCase 2.x Template"
+
+
+# -----------------------------------------------------------------------------
+# Geometry
+# -----------------------------------------------------------------------------
+geometry:
+  type: slab
+
+
+# -----------------------------------------------------------------------------
+# Material stack — 5 cm TACOT, 201 nodes
+# -----------------------------------------------------------------------------
+stack:
+  layers:
+    - material: TACOT
+      thickness: 0.05    # [m]
+      n_nodes: 201       # ~0.25 mm spacing; coarser than ablation1 but fine enough
+                         # for the ALE scheme to conserve fields without wobble
+      n_subcells: 4      # nodelets per node for decomposition sub-grid
+
+
+# -----------------------------------------------------------------------------
+# Surface boundary condition — full energy balance
+#
+# Convection mode: enthalpy-based (PATO rhoUeCH/h_r style)
+# ---------------------------------------------------------
+# q_conv = rhoUeCH * (h_r − h_wall(T_wall))
+#
+# rhoUeCH = rho_e * u_e * C_H  [kg/m²/s]: the lumped mass-heat-transfer
+#   coefficient.  Active when rhoUeCH > 0; at that point alpha_conv/T_aw
+#   are ignored (they may be omitted).
+#
+# h_r  [J/kg]: freestream recovery enthalpy on the same reference as the
+#   material's h_g table (h=0 at 298.15 K).
+#
+# During cooldown h_r = 0 and rhoUeCH is kept at a small residual value
+# matching PATO's background flux (1 % of peak heating value).
+# -----------------------------------------------------------------------------
+surface_bc:
+  type: energy_balance
+
+  # Enthalpy-based convection (overrides alpha_conv/T_aw when rhoUeCH > 0)
+  rhoUeCH:
+    - [0.000, 0.003]      # small background before heat pulse [kg/m²/s]
+    - [0.099, 0.003]
+    - [0.100, 0.300]      # arc-jet on: peak rhoUeCH [kg/m²/s]
+    - [60.000, 0.300]
+    - [60.100, 0.003]     # arc-jet off: back to background
+    - [120.000, 0.003]
+
+  h_r:
+    - [0.000, 0.0]        # no recovery enthalpy before heat pulse [J/kg]
+    - [0.099, 0.0]
+    - [0.100, 1.5e6]      # recovery enthalpy during heating [J/kg]
+    - [60.000, 1.5e6]
+    - [60.100, 0.0]       # arc-jet off: h_r → 0
+    - [120.000, 0.0]
+
+  # --- Radiation ---
+  emissivity: -1          # use material card values (virgin→char blend by char fraction)
+  view_factor: 1.0
+  T_rad_in: 300.0         # PATO Tbackground [K]: incoming radiation from a 300 K enclosure
+
+  # --- Blowing correction ---
+  # Reduces the effective Stanton number when pyrolysis gas and char products
+  # are injected.  Three models available:
+  #   "lees"     — log(1+Phi)/Phi, PATO's constantLambdaBlowingCorrectionModel;
+  #                also looks up B'_g on the blown basis (PATO-consistent).
+  #   "rational" — 1/(1 + lambda*B_total), SCAM legacy Amar-style.
+  #   "kays"     — Phi/(exp(Phi)-1), implicit solve for char flux (Amar Eq. 42).
+  lambda_blowing: 0.5     # 0.5 = laminar [default: 0.5]
+  blowing_model: "lees"   # PATO-consistent [options: "lees", "rational", "kays"]
+
+  # rho_e_u_e is used ONLY to scale B' → m_dot_char and to compute B'_g.
+  # Setting it to 0 at cooldown gates the B' chemistry off, preventing the
+  # solver from mixing enthalpy references when h_r and chemistryOn are both 0.
+  rho_e_u_e:
+    - [0.000, 0.003]
+    - [0.099, 0.003]
+    - [0.100, 0.300]      # activate B' chemistry during heating [kg/m²/s]
+    - [60.000, 0.300]
+    - [60.100, 0.0]       # deactivate B' chemistry at cooldown
+    - [120.000, 0.0]
+
+  # Mass transfer Stanton number.  C_M = 1.0 with rho_e_u_e = rhoUeCH mirrors
+  # PATO's normalisation where C_H = C_M and m_dot_char = rho_e_u_e * B'_c.
+  C_M: 1.0
+
+  # Edge pressure for B' table lookup [Pa]
+  p_e: 101325.0
+
+
+# -----------------------------------------------------------------------------
+# Back-face boundary condition — adiabatic
+# -----------------------------------------------------------------------------
+back_bc:
+  type: adiabatic
+
+
+# -----------------------------------------------------------------------------
+# Solver options
+# -----------------------------------------------------------------------------
+solver:
+  t_start: 0.0
+  t_end: 120.0        # 60 s heating + 60 s cooldown
+
+  # Adaptive timestep — tighter dt_max_dT than the arcjet template because the
+  # enthalpy-based SEB converges more iterations at the heating onset.
+  dt_init: 0.01
+  dt_min: 1.0e-5
+  dt_max: 0.5
+  dt_max_dT: 30.0         # [K/step] [default: 50]
+  dt_max_drho_frac: 0.05
+
+  # Surface energy balance Newton solver
+  max_seb_iter: 50
+  seb_tol: 1.0            # [W/m²]
+
+  # Picard iteration on in-depth tridiagonal
+  max_picard: 8
+  picard_tol: 0.05        # [K]
+
+  # Surface recession — must be enabled for ablation2
+  allow_recession: true
+
+  # ALE continuous moving-mesh recession scheme.
+  # True:  nodes redistributed every step between receding surface and fixed
+  #        back face; no discrete node drops; T_wall is smooth.  Recommended
+  #        for ablation2 (matches PATO's mesh-motion treatment).
+  # False: Lagrangian fixed-grid; surface cell shrinks and is dropped/merged
+  #        when thin; produces a ±6 K sawtooth on T_wall.
+  continuous_remap: true
+
+  # Exact d(ρh)/dt energy storage (recommended; see docs/verification/pato_validation.md §10)
+  use_rho_old: true
+
+  # Element transport and live Cantera B' not needed for the base 2.x table case
+  element_transport: false
+  bprime_runtime: false
+
+  # Output
+  output_dt: 0.5          # [s] denser than the arcjet template (captures onset transient)
+
+  # TC probe depths [m] from original front face — matches PATO AblationTestCase_2.x
+  tc_positions: [0.001, 0.002, 0.004, 0.008, 0.012, 0.016, 0.024]
+
+
+# -----------------------------------------------------------------------------
+# Material files
+# The material loader automatically discovers tacot_v3.0_bprime_air.yaml (the
+# B' table) alongside tacot_v3.0.yaml; no separate path entry is needed.
+# -----------------------------------------------------------------------------
+materials:
+  - ../../scam/materials/ablative_organic/tacot_v3.0.yaml
+
+
+# -----------------------------------------------------------------------------
+# Output
+# -----------------------------------------------------------------------------
+output:
+  path: results/ablation2_template/
+  format: csv

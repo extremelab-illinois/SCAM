@@ -1,0 +1,42 @@
+# SPDX-License-Identifier: MIT
+# bprime configuration for generating the TACOT v3.0 B' table in air.
+#
+# Material: TACOT v3.0 (tacot_v3.0.yaml / tacot_v3.0_3rxn.yaml)
+# The B' chemistry depends only on the pyrolysis gas elemental composition
+# (C:0.206, H:0.679, O:0.115) and the edge gas, not on the solid kinetics.
+# This config is therefore identical to tacot_v2.2_bprime_config.yaml.
+#
+# pyro_y: CH4:0.5551,CO:0.2418,H2O:0.2031 matches PATO tacot26 elemental fracs.
+# See memory feedback_scam_bprime_evaluator.md for derivation.
+#
+# Output file: tacot_v3.0_bprime_air.yaml
+#
+# Usage (from the SCAM repo root):
+#   python scam/tools/generate_bprime.py \
+#       --config scam/materials/ablative_organic/tacot_v3.0_bprime_config.yaml \
+#       --output scam/materials/ablative_organic/tacot_v3.0_bprime_air.yaml \
+#       --workers 8
+
+generator:
+  edge_x: "O2:0.21,N2:0.79"
+  pyro_y: "CH4:0.5551,CO:0.2418,H2O:0.2031"
+
+  temps:     "250:4000:25"                        # K — 151 points
+  pressures: "101.325,1013.25,10132.5,101325"     # Pa — 0.001 / 0.01 / 0.1 / 1 atm
+  bg:        "0.0,0.1,0.25,0.5,1.0,2.0"           # B'_g — 6 levels
+
+  gas_mechanism: cno_ablation.yaml
+  carbon_phase:  graphite.yaml
+  carbon_moles:  100.0
+  solver:        gibbs
+
+  outdir:   /tmp/scam_bprime_tacot_v3.0
+  out:      bprime_tacot_v3.0_air.csv
+  out_wide: ""
+  verbose:  false
+
+plot:
+  enabled: false
+
+compare:
+  enabled: false

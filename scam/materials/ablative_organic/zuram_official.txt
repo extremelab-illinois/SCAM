@@ -1,0 +1,106 @@
+Material: ZURAM® 18/50					
+					
+Description					
+Carbon-phenolic ablator produced by DLR. Composed by Mersen Calcarb Preform (CBCF 18/2000) impregnated with phenolic resin. A mix of available data and data obtained through the AblaNTIS characterization campaign is used					
+					
+Material characteristics					
+		Charring:	YES		
+		Isotropy	Orthotropic		
+					
+Volume fraction [-], data from [4]					
+			Gas	Fibers	Resin
+		Virgin	7.07E-001	1.30E-001	1.63E-001
+		Char	7.69E-001	1.30E-001	1.01E-001
+					
+Average density [kg/m³], data from [4]					
+			Virgin	Charred	
+			4.19E-001	3.38E-001	
+					
+Intrinsic density [kg/m³], data from [4]					
+			Fibers	Virgin Resin matrix	Charred resin matrix
+			1.58E+000	1.32E+000	1.32E+000
+					
+Permeability [m²] from [2]					
+			Virgin	Charred	
+			1.06E-011	3.97E-008	
+					
+Tortuosity [-] from [3]					
+			Virgin	Charred	
+			1.20E+00	1.10E+00	
+					
+Solid phase heat capacity [5]					
+			Solid phases heat capacity [J/kg/K]		
+			Virgin	Charred	
+			Heat capacity expressed with the following formula for virgin and char in [J/kg-K]:  cp =  a + bT + c/T 	Heat capacity expressed with the following formula for virgin and char in [J/kg-K]:  cp =  a + bT + c/T	
+		a	1.725E+03	1.850E+03	
+		b	6.560E-01	2.480E-01	
+		c	-3.110E+05	-3.940E+05	
+					
+Effective conductivity					
+			Through-the-thickness [W/m/K]		
+			Virgin (using data from [1])	Charred (using data from [5] and [6])	
+			Explanation: Conductivity law fitted to LFA data (in He) of virgin material using the density of the ZURAM measured in [1] (i.e., 366kg/m3) and the above virgin cp law.  k =a/T+ b  Note: limit temperature in the fitted data from [1] is 500 K, but we necessarily will use the fit above this temperature which can result in a  significant error.	Explanation: Conductivity law fitted to LFA data (in He) using the density as measured for each sample before the test (after graphite has been applied) and the above char cp law.  k = a/T + b + cT + dT2 + eT3	
+		a	-3.139E+01	-5.602E+01	
+		b	2.443E-01	3.812E-01	
+		c	---	5.354E-04	
+		d	---	-3.605E-07	
+		e	---	1.267E-10	
+					
+			In-plane [W/m/K]		
+			Virgin (using data from [1])	Charred (using data from [5] and [6])	
+			Explanation: Conductivity law fitted to LFA (in He) data of virgin material using the density of the ZURAM measured in [1] (i.e., 366kg/m3) and the above virgin cp law.  k =a/T+ b  Note: limit temperature in the fitted data from [1] is 500 K, but we necessarily will use the fit above this temperature which can result in a  significant error.	Explanation: Conductivity law fitted to LFA data (in He) using the density as measured for each sample before the test (after graphite has been applied) and the above char cp law.  k = a/T + b + cT + dT2 + eT3	
+		a	-1.081E+02	-4.700E+02	
+		b	8.784E-01	2.476E+00	
+		c	---	-9.128E-04	
+		d	---	1.606E-07	
+		e	---	8.523E-11	
+					
+			In-plane [W/m/K]		
+			Virgin (using data from [1])	Charred (using data from [5] and [6])	
+			Explanation: Conductivity law fitted to LFA data (in He) of virgin material using the density of the ZURAM measured in [1] (i.e., 366kg/m3) and the above virgin cp law.  k =a/T+ b  Note: limit temperature in the fitted data from [1] is 500 K, but we necessarily will use the fit above this temperature which can result in a  significant error.	Explanation: Conductivity law fitted to LFA data (in He) using the density as measured for each sample before the test (after graphite has been applied) and the above char cp law.  k = a/T + b + cT + dT2 + eT3	
+		a	-1.081E+02	-4.700E+02	
+		b	8.784E-01	2.476E+00	
+		c	---	-9.128E-04	
+		d	---	1.606E-07	
+		e	---	8.523E-11	
+					
+Thermochemistry					
+Enthalpy of formation at 298 K [J/kg]					
+		Char	0		
+		Phenolic resin	-2.144E+06		
+		Virgin	-1.095E+06		
+					
+Pyrolysis kinetics [5]					
+Number of pseudo-phases		2			
+Number of reactions		4			
+Resin mass fraction of TGA sample		0.5418			
+	Density loss fraction	Arrhenius parameters			
+SI units					
+Reaction	f [-]	log10A [SI]	E/R [K]	m [-]	n [-]
+1	3.507E-02	5.330E+00	8.18E+003	4.30	0
+2	2.769E-02	8.690E+00	1.61E+004	3.70	0
+3	9.598E-02	1.060E+01	2.16E+004	2.57	0
+4	2.215E-01	1.167E+01	2.64E+004	4.63	0
+					
+Average elemental composition of the pyrolysis gases [4]					
+		Element	Mole fraction	Mass fraction	Molar mass
+		C	0.171	0.457	12.0107
+		H	0.722	0.162	1.00794
+		O	0.107	0.381	15.999
+		Total	1	1	
+					
+					
+Surface radiative properties [3]					
+			Emissivity		
+		Virgin	0.8		
+		Char	0.9		
+
+
+
+Ref.	Title/Name	Type	Author/s	Institution	Data
+[1]	Zuram_aged_data_en.xlsx.	Excel file	C. Zuber, T. Reimer	DLR	Thermal diffusivity measurements for ZURAM precharred at different temperatures
+[2]	DLR_updated_data.ods	OpenOffice spreadsheet file	C. Zuber, T. Reimer	DLR	Collection of several data for ZURAM (e.g., volume fractions, densities)
+[3]	TACOT_3.0.xls	Excel file	J. Lachaud, T. van Eekelen, D. Bianchi, A. Martin		Fictitious material properties from US Ablation Workshop (2014)
+[4]	VKI_ZURAM_characterization_v1-5.ods	OpenOffice spreadsheet file	A. Turchi, F. Torres	VKI	Direct measurements on ZURAM plates used in AblaNTIS to evaluate: average densities, intrinsic densities, volume fractions, elemental compositions and resin formation enthalpy. Part of these data can be found in AblaNTIS TN-2.2
+[5]	AblaNTIS TN-2.2.pdf	PDF file	F. Torres, B. Helber, A. Turchi	VKI	Technical note on the ZURAM characterization.
+[6]	LFA_charred_ZURAM_Summary.xlsx	Excel file	G. Pintsuk	Forschungszentrum Juelich	Summary of LFA results on pre-charred ZURAM

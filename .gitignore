@@ -1,0 +1,62 @@
+# SPDX-License-Identifier: MIT
+# ==========================================
+# Python & Bytecode (Cleans up 90% of your log)
+# ==========================================
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+scam.egg-info/
+dist/
+build/
+
+# ==========================================
+# Project-Specific Assets & Outputs
+# ==========================================
+# Simulation output directories (CSV, PNG, GIF/MP4 produced by CLI runs)
+results/
+examples/**/results*/
+
+# Paper studies and publication workspaces (private/in-progress) -- not tracked
+studies/
+
+# Generated plots/images in examples
+examples/**/*.png
+examples/**/*.gif
+examples/**/*.mp4
+
+# Ignore generated diagnostic plots from tool scripts
+scam/tools/*.png
+
+# Ignore temporary system locks
+.~lock.*
+
+# ==========================================
+# Tooling, IDEs, and Agent Directories
+# ==========================================
+.claude/
+.codex/
+.vscode/
+.idea/
+.venv/
+env/
+venv/
+
+# ==========================================
+# graphify — local knowledge-graph tooling output, entirely regenerable via
+# `graphify update .`; not tracked in the public repo (large, machine/session
+# specific, no value to a reader).
+# ==========================================
+graphify-out/
+
+# ==========================================
+# OS Specific
+# ==========================================
+.DS_Store
+Thumbs.db
+
+scam_git_workflow.md
+docs/planning/scam_nd_roadmap.md
+
+wd/

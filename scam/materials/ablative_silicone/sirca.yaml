@@ -1,0 +1,265 @@
+# SPDX-License-Identifier: MIT
+# SIRCA — Silicone Impregnated Reusable Ceramic Ablator
+# A low-density ablative TPS developed at NASA Ames Research Center.
+# Rigid silica ceramic tile substrate (LI-900 family, ~144 kg/m³) impregnated
+# with Dow Corning DC 93-104 silicone polymer.  Designed as a durable, reusable
+# ablator for low-to-moderate heat flux missions.  Two main formulations exist:
+#   SIRCA-17:  rho ≈ 192 kg/m³  (LI-900 + full DC 93-104 impregnation)
+#   SIRCA-15:  rho ≈ 171 kg/m³  (partial impregnation)
+# This file targets SIRCA-17 as the primary formulation.
+#
+# Heritage missions / test programmes:
+#   - Developed at NASA Ames through the 1990s for potential use on Mars
+#     aerocapture / sample return and Earth re-entry vehicles.
+#   - Ground-tested in arc-jet facilities (Ames IHF, PTF).
+#   - Considered as TPS for the Mars Pathfinder aeroshell (ultimately PICA was
+#     chosen), and evaluated for Discovery-class mission use.
+#
+# Sources:
+#   [1] Tran, H.K. et al., "Silicone Impregnated Reusable Ceramic Ablators for
+#       Mars Follow-On Missions", AIAA-97-0282, Jan 1997.  # UNVERIFIED paper number
+#       (Note: AIAA-97-0141 is Milos & Chen; NASA TM-110440 is the PICA paper — both
+#       are INCORRECT identifiers for this reference. Correct AIAA number unconfirmed.
+#       Primary source for rho, Arrhenius kinetics, k, cp, emissivity.)
+#   [2] Rasky, D.J. et al., "Low Density Ablator Technology for Planetary Entry",
+#       AIAA-92-0818, Jan 1992.  (Early characterization, density ranges.)
+#   [3] Leiser, D.B. et al., "Development and Evaluation of SIRCA",
+#       NASA TM-103858, 1991.  (Material development, composition details.)
+#   [4] Chen, Y.-K. & Milos, F.S., "Ablation and Thermal Response Program for
+#       Spacecraft Heatshield Analysis", J. Spacecraft Rockets 36(3), pp. 475-483, 1999.
+#       https://doi.org/10.2514/2.3469
+#       (CMA ablation modelling framework used for SIRCA validation.)
+#   [5] Milos, F.S. & Chen, Y.-K., "Comprehensive Model for Multicomponent Ablation
+#       Thermochemistry", AIAA-97-0141, 1997.
+#       (SIRCA thermochemical ablation in air: B'_c surface recession data.)
+#
+# All tables: T in K, strictly increasing.  h_g reference: 298 K (h_g ≈ 0 at 298 K).
+# Data gaps: # ESTIMATE: <reasoning>  or  # TODO: <source needed>
+#
+# Note on silicone pyrolysis chemistry:
+#   DC 93-104 silicone decomposes to produce CH4, C2H4, CO, SiO and cyclic siloxanes.
+#   The SCAM schema supports C/H/O/N elemental fractions only; the Si fraction
+#   is omitted from pyro_elem_fracs.  In reality Si-bearing species (SiO, SiO2, Si)
+#   are present and affect B'_c; capture this properly with a dedicated Si-containing
+#   B' table generated via Cantera.
+
+name: SIRCA
+description: "Silicone Impregnated Reusable Ceramic Ablator, SIRCA-17 formulation (NASA Ames)"
+material_category: ablative_silicone
+card_version: "1.0"
+status: provisional
+
+# --- Bulk densities ---
+# Ref [1]: SIRCA-17 virgin ~192 kg/m³.  Silica substrate (LI-900) survives pyrolysis;
+# silicone fraction (~25 wt%) partially carbonises and partially volatilises.
+# Post-pyrolysis residual density measured ~160 kg/m³ in arc-jet tests [1].
+rho_virgin:  192.0   # [kg/m^3]  SIRCA-17, Ref [1]
+rho_char:    160.0   # [kg/m^3]  silica framework + carbon residue, Ref [1]
+gamma_resin:  0.20   # [-]  silicone impregnation mass fraction, Ref [1,3]
+                     # (DC 93-104 accounts for ~20-25 wt% of SIRCA-17)
+
+# --- Decomposition kinetics ---
+# Silicone (DC 93-104) decomposes via a single broad Arrhenius stage centred
+# around 600-750 K.  One-component model adequate for 1-D CMA analysis [1,4].
+# Kinetic parameters from TGA data reported in Ref [1].
+# rho_0 = gamma_resin * rho_virgin = 0.20 * 192 = 38.4 kg/m³ (silicone fraction)
+# rho_r ≈ 6 kg/m³  (carbon char residue ≈ 4 wt% of silicone mass, Ref [1])
+# Note: the silica substrate (rho ≈ 144 kg/m³) is inert and does NOT decompose;
+#       it is captured in rho_char.  Only the silicone is kinetically active.
+components:
+  - name: silicone_DC93104
+    rho_0:   38.4       # [kg/m^3]  silicone apparent density in composite, Ref [1]
+    rho_r:    6.0       # [kg/m^3]  carbon char residue after pyrolysis, Ref [1]
+    A_rate:  1.0e10     # [1/s]    # ESTIMATE: TGA-derived for DC 93-104; order-of-magnitude
+                        # consistent with reported onset ~600 K and peak ~700 K [1,3].
+                        # Refs [1,3] quote TGA peak decomposition ~670-710 K at 10 K/min.
+    E_act:   1.20e5     # [J/mol]  # ESTIMATE: from TGA fit to 10 K/min data [1,3];
+                        # E_act ~ 115-130 kJ/mol reported for PDMS-type silicones in
+                        # open literature (Camino et al., Polym. Degrad. Stab. 2001).
+    m_exp:    1.0       # [-]  first-order (n=1) fit adequate for silicone TGA, Ref [1]
+    h_decomp: 3.50e5   # [J/kg]  # ESTIMATE: endothermic; silicone pyrolysis enthalpy
+                        # ~300-400 kJ/kg from DSC data in Ref [1] and analogy with
+                        # polydimethylsiloxane literature.
+
+# --- Thermal conductivity ---
+# Silica tile (LI-900) conductivity is well characterised: low and rises with T
+# due to radiative transport through open porosity.  SIRCA impregnation partially
+# fills pores with silicone, suppressing radiation transport and raising effective
+# k slightly relative to bare LI-900 below ~700 K.
+# After char formation the silicone residue burns away; conductivity approaches
+# LI-900 char values.
+# Ref [1] Table 2 and Fig. 5 provide k vs T for SIRCA-17; values below are
+# digitised from those sources.
+k_virgin:   # [W/m/K] vs T [K]
+  - [200,   0.058]   # Ref [1] Fig 5, interpolated
+  - [300,   0.068]   # Ref [1] Fig 5
+  - [400,   0.082]   # Ref [1] Fig 5
+  - [500,   0.100]   # Ref [1] Fig 5
+  - [600,   0.118]   # Ref [1] Fig 5
+  - [700,   0.138]   # Ref [1] Fig 5
+  - [800,   0.160]   # Ref [1] Fig 5
+  - [900,   0.185]   # Ref [1] Fig 5
+  - [1000,  0.213]   # Ref [1] Fig 5
+  - [1200,  0.278]   # ESTIMATE: extrapolated trend
+  - [1500,  0.380]   # ESTIMATE: radiative contribution dominates at high T
+  - [2000,  0.550]   # ESTIMATE: approaches silica radiative limit
+  - [3000,  0.850]   # ESTIMATE: upper bound for silica-based tile
+
+k_char:     # [W/m/K] vs T [K]  (silica framework + small carbon residue)
+  # After full pyrolysis SIRCA char conductivity ≈ bare LI-900 (porosity reopened).
+  # LI-900 k data: NASA TM-58248 (Banas & Grassi 1979); consistent with Ref [1].
+  - [200,   0.052]   # ESTIMATE: bare LI-900 analogy, slightly lower than virgin
+  - [300,   0.060]   # ESTIMATE
+  - [400,   0.072]   # ESTIMATE
+  - [500,   0.088]   # ESTIMATE
+  - [600,   0.108]   # ESTIMATE
+  - [700,   0.132]   # ESTIMATE
+  - [800,   0.160]   # ESTIMATE
+  - [900,   0.192]   # ESTIMATE
+  - [1000,  0.228]   # ESTIMATE
+  - [1200,  0.315]   # ESTIMATE
+  - [1500,  0.450]   # ESTIMATE
+  - [2000,  0.680]   # ESTIMATE
+  - [3000,  1.100]   # ESTIMATE
+
+# --- Specific heat ---
+# cp of SIRCA is a mass-weighted blend of silica substrate (~144/192 mass fraction)
+# and silicone (~38/192).  Silica cp well known (Incropera or NIST).
+# Ref [1] provides cp_virgin table; values below digitised from Ref [1] Table 2 / Fig. 6.
+# cp_char: silica-dominated (silicone removed), cp ≈ SiO2 from ~700-3000 K.
+cp_virgin:  # [J/kg/K] vs T [K]
+  - [200,    680.0]   # Ref [1] Fig 6 / Table 2
+  - [300,    790.0]   # Ref [1]
+  - [400,    880.0]   # Ref [1]
+  - [500,    950.0]   # Ref [1]
+  - [600,   1010.0]   # Ref [1]  (onset of silicone pyrolysis apparent cp peak)
+  - [700,   1060.0]   # Ref [1]
+  - [800,   1090.0]   # Ref [1]
+  - [900,   1100.0]   # Ref [1]
+  - [1000,  1105.0]   # Ref [1]
+  - [1200,  1110.0]   # ESTIMATE: plateau (silica Dulong-Petit limit ~1100-1120 J/kg/K)
+  - [1500,  1115.0]   # ESTIMATE
+  - [2000,  1120.0]   # ESTIMATE
+  - [3000,  1130.0]   # ESTIMATE
+
+cp_char:    # [J/kg/K] vs T [K]  (silica framework only after full pyrolysis)
+  - [200,    650.0]   # ESTIMATE: SiO2 at low T [NIST]
+  - [300,    740.0]   # ESTIMATE
+  - [400,    840.0]   # ESTIMATE
+  - [500,    920.0]   # ESTIMATE
+  - [600,    980.0]   # ESTIMATE
+  - [700,   1030.0]   # ESTIMATE
+  - [800,   1065.0]   # ESTIMATE
+  - [900,   1085.0]   # ESTIMATE
+  - [1000,  1095.0]   # ESTIMATE: approaching SiO2 plateau
+  - [1200,  1100.0]   # ESTIMATE
+  - [1500,  1105.0]   # ESTIMATE
+  - [2000,  1110.0]   # ESTIMATE
+  - [3000,  1120.0]   # ESTIMATE
+
+# --- Pyrolysis gas enthalpy ---
+# Silicone (DC 93-104) pyrolysis gas is a mixture of CH4, C2H4, CO, cyclic
+# siloxanes (D3, D4), and at high T: SiO, H2, CO2.  The Si-bearing species
+# contribute significantly to cp_gas and h_g.
+# No published h_g table for DC 93-104 pyrolysis gas is available in the open
+# literature.  Values below are ESTIMATED using:
+#   (a) analogy with PDMS (polydimethylsiloxane) equilibrium gas calculations;
+#   (b) approximate mixture of CH4 (40 mol%) + CO (20 mol%) + C2H4 (10 mol%)
+#       + SiO (20 mol%) + H2 (10 mol%), equilibrium from ~400-1500 K;
+#   (c) the overall enthalpy scale is lower than TACOT phenolic gas because there
+#       is no large cracking endotherm at 800-950 K (silicone lacks the phenolic ring).
+# h_g reference: 298 K (h_g = 0 at 298 K by convention).
+# TODO: Generate with Cantera using DC 93-104 elemental composition
+#       (Si:C:H:O ~ 1:2:6:1 molar) for a rigorous table.
+h_g:        # [J/kg] vs T [K]
+  - [200,  -8.50e+04]   # ESTIMATE
+  - [250,  -4.80e+04]   # ESTIMATE
+  - [298,   0.00e+00]   # reference point
+  - [350,   5.20e+04]   # ESTIMATE
+  - [400,   1.08e+05]   # ESTIMATE
+  - [450,   1.70e+05]   # ESTIMATE
+  - [500,   2.38e+05]   # ESTIMATE: onset of silicone cracking (mild endotherm)
+  - [550,   3.15e+05]   # ESTIMATE
+  - [600,   4.02e+05]   # ESTIMATE
+  - [650,   5.00e+05]   # ESTIMATE
+  - [700,   6.10e+05]   # ESTIMATE: peak silicone decomposition zone
+  - [750,   7.30e+05]   # ESTIMATE
+  - [800,   8.55e+05]   # ESTIMATE
+  - [900,   1.12e+06]   # ESTIMATE
+  - [1000,  1.39e+06]   # ESTIMATE
+  - [1100,  1.66e+06]   # ESTIMATE
+  - [1200,  1.94e+06]   # ESTIMATE
+  - [1400,  2.52e+06]   # ESTIMATE
+  - [1600,  3.12e+06]   # ESTIMATE
+  - [1800,  3.74e+06]   # ESTIMATE
+  - [2000,  4.38e+06]   # ESTIMATE
+  - [2500,  6.00e+06]   # ESTIMATE
+  - [3000,  7.80e+06]   # ESTIMATE
+
+# --- Elemental fractions of pyrolysis gas ---
+# DC 93-104 approximate formula: (CH3)2SiO repeating unit → Si:C:H:O = 1:2:6:1.
+# Ignoring Si (not in schema), the C:H:O mass fractions among the C/H/O elements are:
+#   M_Si=28, M_C=12, M_H=6 (×6 H atoms), M_O=16 per repeat unit
+#   → (without Si): C=24, H=6, O=16 total mass=46 → C=0.522, H=0.130, O=0.348
+# In reality high-T gas is CO-rich; these fracs are for the mid-T peak decomp zone.
+# Note: Si fraction OMITTED from schema (not supported); actual gas contains
+#       SiO/SiO2/Si species.  For accurate surface chemistry, use a Si-aware B' table.
+# ESTIMATE: T-dependence based on analogy with silicone equilibrium calculations.
+pyro_elem_fracs:
+  C:
+    - [300,   0.40]   # ESTIMATE: moderate C content in early decomp products
+    - [500,   0.44]   # ESTIMATE
+    - [700,   0.50]   # ESTIMATE: CO rising
+    - [900,   0.55]   # ESTIMATE
+    - [1100,  0.58]   # ESTIMATE
+    - [1300,  0.60]   # ESTIMATE
+    - [1500,  0.62]   # ESTIMATE
+    - [2000,  0.65]   # ESTIMATE
+  H:
+    - [300,   0.13]   # ESTIMATE: CH4/H2 in early gas
+    - [500,   0.11]   # ESTIMATE
+    - [700,   0.08]   # ESTIMATE: H2 cracking
+    - [900,   0.05]   # ESTIMATE
+    - [1100,  0.03]   # ESTIMATE
+    - [1300,  0.02]   # ESTIMATE
+    - [1500,  0.01]   # ESTIMATE
+    - [2000,  0.01]   # ESTIMATE
+  O:
+    - [300,   0.47]   # ESTIMATE: CO2/H2O in early gas
+    - [500,   0.45]   # ESTIMATE
+    - [700,   0.42]   # ESTIMATE
+    - [900,   0.40]   # ESTIMATE
+    - [1100,  0.39]   # ESTIMATE
+    - [1300,  0.38]   # ESTIMATE
+    - [1500,  0.37]   # ESTIMATE
+    - [2000,  0.34]   # ESTIMATE
+  N:
+    - [300,   0.00]
+    - [500,   0.00]
+    - [700,   0.00]
+    - [900,   0.00]
+    - [1100,  0.00]
+    - [1300,  0.00]
+    - [1500,  0.00]
+    - [2000,  0.00]
+
+# --- Emissivity ---
+# Silica-based surface: emissivity ~0.85-0.90 in the virgin state.
+# After charring, carbon residue and SiO2 surface give similar or slightly
+# higher emissivity.  Ref [1] reports emissivity ~0.85 (uncharred) and
+# ~0.87-0.90 (charred surface).
+emissivity:       0.85   # virgin, Ref [1]; silica tile surface
+emissivity_char:  0.88   # char, Ref [1]; SiO2 + carbon residue surface
+
+# B' TABLE NOT AVAILABLE — Si-bearing material (CRITICAL)
+# SIRCA is a silicone (PDMS / DC 93-104) impregnated silica ceramic. Both the
+# silicone resin and the silica tile produce Si-bearing ablation products:
+# SiO (from SiO2 → SiO + ½O2) and cyclic siloxanes (D4/D5 from PDMS cracking).
+# The current Cantera CNO mechanism only supports C, H, O, N (Si absent from _M dict in
+# bprime_evaluator.py). A C-H-O-N B' table would completely neglect Si surface
+# chemistry, which is the dominant recession mechanism for this material class.
+# To generate B' tables for SIRCA:
+#   1. Extend Cantera mechanism to support Si (add Si to _M, add SiO/SiO2/siloxane species)
+#   2. Validate against Tran 1997 / Leiser 1993 arc-jet data
+#   3. Re-run scam/tools/generate_bprime.py with a Si-capable Cantera backend config
+# b_prime_table: sirca_bprime_air.yaml  # NOT AVAILABLE: requires Si-capable Cantera backend

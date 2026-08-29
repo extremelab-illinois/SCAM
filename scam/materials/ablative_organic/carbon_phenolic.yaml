@@ -1,0 +1,254 @@
+# SPDX-License-Identifier: MIT
+# CARBON PHENOLIC - Adam Amar thesis Appendix D data
+#
+# Source:
+#   Amar, Adam Joseph (2006), Modeling of One-Dimensional Ablation with
+#   Porous Flow Using Finite Control Volume Procedure, Appendix D,
+#   "Carbon-Phenolic Material Properties".
+#
+# Notes:
+#   - All numerical data below come from Appendix D and have been converted
+#     from the thesis English units to SI.
+#   - Appendix D states that its properties were gathered from different sources
+#     and may not all correspond to the same carbon-phenolic composite; the data
+#     were used by Amar for demonstration/verification calculations, not design.
+#   - Conductivity values in Tables D.3-D.4 are interpreted as Btu/(ft-s-degR),
+#     the standard thermal-conductivity unit consistent with the tabulated values.
+#   - Component densities from Table D.1 are CMA/Amar component concentrations.
+#     The effective bulk contributions below multiply resin components A and B
+#     by Gamma and inert binder C by (1-Gamma), consistent with Eq. 2.16.
+#   - No pyrolysis-gas elemental composition is given in Appendix D; estimated
+#     C/H/O/N gas elemental fractions from the previous file were removed.
+#
+# Unit conversions used:
+#   degR_to_K:                         0.5555555555555556
+#   lbm_per_ft3_to_kg_per_m3:          16.01846337396014
+#   Btu_per_lbm_to_J_per_kg:           2326
+#   Btu_per_lbm_degR_to_J_per_kg_K:    4186.799999999999
+#   Btu_per_ft_s_degR_to_W_per_m_K:    6230.644798937008
+#   ft2_to_m2:                         0.09290304000000001
+#   lbm_per_ft_s_to_Pa_s:              1.488163943569554
+
+name: CARBON_PHENOLIC
+description: "Carbon-phenolic material card converted from Adam Amar thesis Appendix D"
+material_category: ablative_organic
+card_version: "1.0"
+status: provisional
+source: "Amar 2006 thesis, Appendix D: Carbon-Phenolic Material Properties"
+units: SI
+
+material_model:
+  type: "Amar/CMA three-component charring composite"
+  density_equation: "rho_s = Gamma*(rho_A + rho_B) + (1 - Gamma)*rho_C"
+  gamma_definition: "initial resin volume fraction in virgin composite"
+
+# Resin volume fraction Gamma from Table D.2 [-]
+gamma_resin: 0.372000
+
+# Bulk densities computed from Table D.1 and Gamma using Eq. 2.16 [kg/m^3]
+rho_virgin: 1462.472891
+rho_char: 1172.871888
+
+# Heats of formation from Table D.2 [J/kg]. Footnote in the thesis
+# indicates that the following properties come for carbon-phenolic 
+# come from personal communication with Don Potter and David Kuntz 
+# of Sandia National Laboratories.
+h_f_virgin: -844338.000000
+h_f_char: 0.000000
+h_f_gas: 0.000000
+
+# Absolute enthalpy tables [T_K, J/kg] computed as h_f + integral(cp dT from 0 K).
+# h_f_virgin = -844338 J/kg (Amar Table D.2); h_f_char = 0 (char = reference carbon).
+# These activate the h_bar_chemical path in assembly.py so the formation-enthalpy
+# decomposition energy (h_bar_chem ≈ -4.264 MJ/kg, endothermic) is included.
+h_virgin:
+  - [255.555556, -587547.599553]
+  - [422.222222, -378207.600391]
+  - [533.333333, -182823.600586]
+  - [811.111111, 387046.399870]
+  - [1088.888889, 968546.400335]
+  - [1366.666667, 1550046.400800]
+  - [1644.444444, 2131546.399172]
+  - [1922.222222, 2713046.399637]
+  - [2777.777778, 4504066.400568]
+  - [3888.888889, 6830066.400335]
+
+h_char:
+  - [277.777778, 58150.000047]
+  - [477.777778, 104288.536047]
+  - [588.888889, 136759.496014]
+  - [1111.111111, 523103.443850]
+  - [1666.666667, 1238348.444422]
+  - [2222.222222, 2066985.943593]
+  - [2777.777778, 2945632.444296]
+  - [3333.333333, 3857424.443384]
+
+# Decomposing resin components A and B from Table D.1.
+# rho_0 and rho_r are effective bulk contributions [kg/m^3 of composite].
+# rho_*_component are the raw converted Appendix-D component concentrations
+# before multiplication by Gamma [kg/m^3 of initial resin volume].
+components:
+  - name: resin_A
+    source_component: A
+    volume_fraction_scale: 0.372000
+    rho_0_component: 973.121650
+    rho_r_component: 518.998213
+    rho_0: 362.001254
+    rho_r: 193.067335
+    A_rate: 4.48000000e+09
+    E_over_R: 20444.444444       # [K], converted from Table D.1 degR
+    E_act: 169984.569082         # [J/mol]
+    m_exp: 3.000000
+    T_min: 333.333333         # [K]
+
+  - name: resin_B
+    source_component: B
+    volume_fraction_scale: 0.372000
+    rho_0_component: 324.373883
+    rho_r_component: 0.000000
+    rho_0: 120.667085
+    rho_r: 0.000000
+    A_rate: 1.40000000e+04
+    E_over_R: 8555.555556        # [K], converted from Table D.1 degR
+    E_act: 71134.846844          # [J/mol]
+    m_exp: 3.000000
+    T_min: 555.555556          # [K]
+
+# Inert carbon/binder component C from Table D.1.
+# Effective bulk contribution = (1 - Gamma) * raw component concentration.
+inert_components:
+  - name: carbon_binder_C
+    source_component: C
+    volume_fraction_scale: 0.628000
+    rho_0_component: 1560.198333
+    rho_r_component: 1560.198333
+    rho_0: 979.804553
+    rho_r: 979.804553
+    inert: true
+
+# Table D.3 virgin specific heat [T_K, J/kg/K]
+cp_virgin:
+  - [255.555556, 1004.832]
+  - [422.222222, 1507.248]
+  - [533.333333, 2009.664]
+  - [811.111111, 2093.4]
+  - [1088.888889, 2093.4]
+  - [1366.666667, 2093.4]
+  - [1644.444444, 2093.4]
+  - [1922.222222, 2093.4]
+  - [2777.777778, 2093.4]
+  - [3888.888889, 2093.4]
+
+# Table D.3 virgin thermal conductivity [T_K, W/m/K]
+k_virgin:
+  - [255.555556, 0.59191126]
+  - [422.222222, 0.80998382]
+  - [533.333333, 0.88475156]
+  - [811.111111, 1.10905477]
+  - [1088.888889, 1.34581928]
+  - [1366.666667, 1.61996765]
+  - [1644.444444, 1.81311764]
+  - [1922.222222, 2.280416]
+  - [2777.777778, 2.83494338]
+  - [3888.888889, 2.83494338]
+
+# Table D.3 virgin emissivity [T_K, -]
+emissivity_virgin:
+  - [255.555556, 0.85]
+  - [422.222222, 0.85]
+  - [533.333333, 0.85]
+  - [811.111111, 0.85]
+  - [1088.888889, 0.85]
+  - [1366.666667, 0.85]
+  - [1644.444444, 0.85]
+  - [1922.222222, 0.85]
+  - [2777.777778, 0.85]
+  - [3888.888889, 0.85]
+
+# Backward-compatible scalar emissivity for existing simple readers.
+emissivity: 0.85
+
+# Table D.4 char specific heat [T_K, J/kg/K]
+cp_char:
+  - [277.777778, 209.34]
+  - [477.777778, 252.04536]
+  - [588.888889, 332.43192]
+  - [1111.111111, 1147.1832]
+  - [1666.666667, 1427.6988]
+  - [2222.222222, 1555.3962]
+  - [2777.777778, 1607.7312]
+  - [3333.333333, 1674.72]
+
+# Table D.4 char thermal conductivity [T_K, W/m/K]
+k_char:
+  - [277.777778, 0.62306448]
+  - [477.777778, 0.62929512]
+  - [588.888889, 0.6542177]
+  - [1111.111111, 1.01247978]
+  - [1666.666667, 1.35828057]
+  - [2222.222222, 1.71342732]
+  - [2777.777778, 2.07480472]
+  - [3333.333333, 2.42372083]
+
+# Table D.4 char emissivity [T_K, -]
+emissivity_char_table:
+  - [277.777778, 0.85]
+  - [477.777778, 0.85]
+  - [588.888889, 0.85]
+  - [1111.111111, 0.85]
+  - [1666.666667, 0.85]
+  - [2222.222222, 0.85]
+  - [2777.777778, 0.85]
+  - [3333.333333, 0.85]
+
+# Backward-compatible scalar char emissivity for existing simple readers.
+emissivity_char: 0.85
+
+# Table D.5 porosity [extent_of_reaction_beta, -]
+porosity:
+  - [0, 0.01]
+  - [0.25, 0.095]
+  - [0.5, 0.18]
+  - [0.75, 0.265]
+  - [1, 0.35]
+
+# Table D.5 permeability [extent_of_reaction_beta, m^2]
+permeability:
+  - [0, 4.99818355e-20]
+  - [0.25, 3.00076819e-18]
+  - [0.5, 3.00076819e-17]
+  - [0.75, 1.99741536e-16]
+  - [1, 1.00335283e-13]
+
+# Table D.6 pyrolysis-gas enthalpy at P = 1 atm, generated by ACE [T_K, J/kg]
+# The table is converted as given; it is not shifted to make h_g(298 K)=0.
+h_g:
+  - [500, -6.84076600e+06]
+  - [1000, -4.39846600e+06]
+  - [1500, -1.25604000e+06]
+  - [2000, 1.04670000e+06]
+  - [2500, 3.14010000e+06]
+  - [3000, 5.23350000e+06]
+  - [3500, 1.34233460e+07]
+  - [4000, 2.12852260e+07]
+  - [4500, 3.31245660e+07]
+  - [5000, 5.79778760e+07]
+
+# Table D.7 pyrolysis-gas molecular weight [T_K, kg/kmol]
+# Numerical values are unchanged from lbm/lbmole.
+gas_molecular_weight:
+  - [672.222222, 32]
+  - [811.111111, 26]
+
+# Table D.8 pyrolysis-gas dynamic viscosity [T_K, Pa*s]
+gas_viscosity:
+  - [277.777778, 5.00915983e-07]
+  - [400, 6.14165260e-07]
+  - [1600, 1.48637815e-06]
+  - [2000, 1.71287670e-06]
+
+# Appendix D does not provide pyrolysis-gas elemental fractions.
+pyro_elem_fracs: null
+
+# Surface thermochemistry table is explicitly excluded from Appendix D due to length.
+b_prime_table: carbon_phenolic_bprime_air.yaml

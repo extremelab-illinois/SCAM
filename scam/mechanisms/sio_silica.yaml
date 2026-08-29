@@ -1,0 +1,24 @@
+description: |-
+  Minimal Si/O silica ablation equilibrium mechanism for SCAM equilibrium chemistry.
+  Gas species are imported from Cantera's nasa_gas.yaml.
+  Condensed silica is imported from Cantera's nasa_condensed.yaml.
+
+phases:
+- name: sio_gas
+  thermo: ideal-gas
+  elements: [O, Si]
+  species:
+  - nasa_gas.yaml/species: [O, O2, Si, SiO, SiO2]
+  kinetics: none
+  state:
+    T: 300.0
+    P: 101325.0
+
+- name: silica_condensed
+  thermo: fixed-stoichiometry
+  elements: [O, Si]
+  species:
+  - nasa_condensed.yaml/species: [SiO2(L)]
+  state:
+    T: 2000.0
+    P: 101325.0

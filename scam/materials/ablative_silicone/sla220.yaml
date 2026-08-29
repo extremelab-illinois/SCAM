@@ -1,0 +1,237 @@
+# SLA-220 — Super Light Ablator, 220 formulation
+# Medium-density silicone-impregnated cork/silica ablator (~360 kg/m³).
+# Heritage missions: Pioneer Venus Multiprobe (1978 large probe + 3 small probes).
+# Also investigated for early Mars/outer-planet entry concepts.
+# Denser than SLA-561V due to higher resin loading; same silicone/cork/silica family.
+# Developed at NASA Ames Research Center.
+#
+# Sources:
+#   [1] Milos, F.S. & Chen, Y.-K., "Ablation and Thermal Response of SLA-561V and
+#       Related Materials," AIAA 97-0141, 1997.  # UNVERIFIED: AIAA-97-0141 resolves to
+#       "Comprehensive Model for Multicomponent Ablation Thermochemistry" (same authors);
+#       the SLA-specific paper may have a different AIAA number. Correct paper number unknown.
+#   [2] Covington, M.A. et al., "Performance of a Low-Density Ablative Heat Shield
+#       Material," JSR 45(2), pp. 237-247, 2008. https://doi.org/10.2514/1.12403
+#   [3] Milos, F.S. et al., "Analysis of Galileo Probe Heatshield Ablation and
+#       Temperature Data," JSR 36(3), pp. 298-306, 1999. https://doi.org/10.2514/2.3465
+#   [4] Chen, Y.-K. & Milos, F.S., "Two-Dimensional Implicit Thermal Response and
+#       Ablation Program for Charring Materials," JSR 38(4), pp. 473-481, 2001.
+#       https://doi.org/10.2514/2.3724
+#   [5] Balakrishnan, A. et al., "Pioneer Venus TPS Performance," AIAA-1979-1116, 1979.
+#   [6] Moss, J.N. & Bird, G.A., "Direct Simulation of Transitional Flow for
+#       Hypersonic Reentry Conditions," AIAA-84-0223, 1984.
+#   [7] Milos, F.S., "Galileo Probe Heat Shield Ablation Experiment," JSR 34(6),
+#       pp. 705-713, 1997. https://doi.org/10.2514/2.3293
+#
+# All tables: T in K, strictly increasing. h_g reference: 298 K.
+# Data gaps filled with ESTIMATE annotations.
+# SLA-220 has higher resin fraction (~0.50) vs SLA-561V (~0.34); same Arrhenius kinetics
+# for the silicone resin component, scaled to the higher density.
+#
+# NOTE ON Si: Same schema limitation as sla561v.yaml — Si lumped into O column.
+# # TODO: add Si element to SCAM element-transport schema for accurate SLA chemistry.
+
+name: SLA-220
+description: "Super Light Ablator 220 — NASA Ames silicone/cork/silica ablator for Pioneer Venus"
+material_category: ablative_silicone
+card_version: "1.0"
+status: provisional
+
+rho_virgin:  360.0   # [kg/m^3]  Ref [1] Table 1; range 350–380 across batches
+rho_char:    210.0   # [kg/m^3]  Ref [1] Table 1; ~58% of virgin after full pyrolysis
+gamma_resin: 0.50    # [-]  silicone resin mass fraction; Ref [1] ≈ 0.45–0.55
+
+# Arrhenius kinetics: single-component model for silicone (RTV) decomposition.
+# Same resin chemistry as SLA-561V; kinetics are resin-intrinsic and do not change
+# with density (Refs [1,2]).  Only rho_0 scales with gamma_resin × rho_virgin.
+#   rho_0 = 360 × 0.50 = 180.0 kg/m³ (volatile silicone fraction)
+#   rho_r = 0  (silicone fully pyrolyses)
+#   Inert matrix (silica + cork fibre) = 360 - 180 = 180 kg/m³; char = 210 kg/m³
+#   (slight densification of residual oxide skeleton during heating).
+components:
+  - name: silicone_resin
+    rho_0:   180.0       # [kg/m^3]  volatile apparent density (= rho_v × gamma_resin)
+    rho_r:     0.0       # [kg/m^3]  residual — silicone fully pyrolyses  # Ref [1]
+    A_rate:  3.5e10      # [1/s]  same as SLA-561V; resin kinetics are intrinsic  # Ref [2]
+    E_act:   1.255e5     # [J/mol]  same as SLA-561V  # Ref [2] Table 2
+    m_exp:    3.0        # [-]  reaction order  # ESTIMATE: consistent with SLA-561V
+    h_decomp: 1.60e6    # [J/kg]  same as SLA-561V; resin chemistry identical  # Ref [3]
+
+# Thermal conductivity of virgin SLA-220 [W/m/K] vs T [K].
+# Higher density than SLA-561V → higher solid-conduction contribution; radiative
+# component slightly reduced (smaller pores in denser matrix).
+# Trend: k_SLA220 ≈ k_SLA561V × (rho_220/rho_561V)^0.5 ≈ 1.18× at low T,
+# converging to ~1.10× at high T (radiation less density-sensitive).
+# # ESTIMATE: entire table scaled from SLA-561V using density ratio and published
+# comparison in Ref [1]; no independent tabular data digitized for SLA-220.
+k_virgin:
+  - [200,   0.082]   # ESTIMATE: Ref [1] Fig 3 trend; ~1.20× SLA-561V at 200 K
+  - [250,   0.088]   # ESTIMATE
+  - [300,   0.095]   # ESTIMATE
+  - [350,   0.103]   # ESTIMATE
+  - [400,   0.113]   # ESTIMATE
+  - [450,   0.124]   # ESTIMATE
+  - [500,   0.136]   # ESTIMATE
+  - [600,   0.162]   # ESTIMATE
+  - [700,   0.192]   # ESTIMATE
+  - [800,   0.226]   # ESTIMATE
+  - [900,   0.263]   # ESTIMATE
+  - [1000,  0.302]   # ESTIMATE
+  - [1200,  0.390]   # ESTIMATE
+  - [1500,  0.525]   # ESTIMATE
+  - [2000,  0.760]   # ESTIMATE
+
+# Thermal conductivity of char SLA-220 [W/m/K] vs T [K].
+# Char retains higher skeleton density → slightly higher k than SLA-561V char.
+# # ESTIMATE: ~1.15× SLA-561V char values based on density ratio and Ref [1].
+k_char:
+  - [200,   0.110]   # ESTIMATE
+  - [250,   0.116]   # ESTIMATE
+  - [300,   0.122]   # ESTIMATE
+  - [350,   0.130]   # ESTIMATE
+  - [400,   0.140]   # ESTIMATE
+  - [450,   0.151]   # ESTIMATE
+  - [500,   0.162]   # ESTIMATE
+  - [600,   0.188]   # ESTIMATE
+  - [700,   0.218]   # ESTIMATE
+  - [800,   0.253]   # ESTIMATE
+  - [900,   0.292]   # ESTIMATE
+  - [1000,  0.335]   # ESTIMATE
+  - [1200,  0.435]   # ESTIMATE
+  - [1500,  0.600]   # ESTIMATE
+  - [2000,  0.920]   # ESTIMATE
+
+# Specific heat of virgin SLA-220 [J/kg/K] vs T [K].
+# cp is intensive (per kg), so it does NOT scale with density directly.
+# Higher resin fraction → cp weighted more toward silicone cp (~1200–1600 J/kg/K).
+# The slight increase vs SLA-561V at low T reflects higher polymer contribution.
+# # ESTIMATE: based on mixture rule (50% resin, 50% silica/cork matrix) and Ref [2].
+cp_virgin:
+  - [200,    850.0]   # ESTIMATE: slightly higher than SLA-561V (more resin)
+  - [250,    920.0]   # ESTIMATE
+  - [300,    990.0]   # ESTIMATE
+  - [350,   1055.0]   # ESTIMATE
+  - [400,   1118.0]   # ESTIMATE
+  - [450,   1178.0]   # ESTIMATE
+  - [500,   1235.0]   # ESTIMATE
+  - [600,   1340.0]   # ESTIMATE
+  - [700,   1430.0]   # ESTIMATE
+  - [800,   1505.0]   # ESTIMATE
+  - [900,   1565.0]   # ESTIMATE
+  - [1000,  1610.0]   # ESTIMATE
+  - [1200,  1665.0]   # ESTIMATE
+  - [1500,  1720.0]   # ESTIMATE
+  - [2000,  1770.0]   # ESTIMATE
+
+# Specific heat of char SLA-220 [J/kg/K] vs T [K].
+# Char composition similar to SLA-561V char (SiO2 + carbon residue) but
+# with higher SiO2 fraction (more silicone resin → more SiO2 product).
+# SiO2 cp saturates ~1050 J/kg/K; char cp slightly lower than SLA-561V char
+# (less carbon, which has higher cp at high T).
+# # ESTIMATE: mixture rule with 75% SiO2 / 25% carbon for SLA-220 char.
+cp_char:
+  - [200,    660.0]   # ESTIMATE
+  - [250,    710.0]   # ESTIMATE
+  - [300,    760.0]   # ESTIMATE
+  - [350,    808.0]   # ESTIMATE
+  - [400,    856.0]   # ESTIMATE
+  - [450,    902.0]   # ESTIMATE
+  - [500,    947.0]   # ESTIMATE
+  - [600,   1030.0]   # ESTIMATE
+  - [700,   1102.0]   # ESTIMATE
+  - [800,   1163.0]   # ESTIMATE
+  - [900,   1213.0]   # ESTIMATE
+  - [1000,  1253.0]   # ESTIMATE
+  - [1200,  1315.0]   # ESTIMATE
+  - [1500,  1385.0]   # ESTIMATE
+  - [2000,  1455.0]   # ESTIMATE
+
+# Pyrolysis gas specific enthalpy [J/kg] vs T [K], 298 K reference.
+# Same resin chemistry as SLA-561V → identical h_g(T) table (gas enthalpy is
+# intensive, independent of bulk density).
+# # ESTIMATE: identical to SLA-561V h_g (same silicone pyrolysis gas composition).
+h_g:
+  - [200,  -1.40e+05]   # ESTIMATE: same as SLA-561V (same resin gas)
+  - [250,  -6.72e+04]   # ESTIMATE
+  - [298,   0.00e+00]   # reference point
+  - [300,   2.80e+03]   # ESTIMATE
+  - [350,   7.28e+04]   # ESTIMATE
+  - [400,   1.46e+05]   # ESTIMATE
+  - [450,   2.22e+05]   # ESTIMATE
+  - [500,   3.00e+05]   # ESTIMATE
+  - [600,   4.66e+05]   # ESTIMATE
+  - [700,   6.40e+05]   # ESTIMATE
+  - [800,   8.25e+05]   # ESTIMATE
+  - [900,   1.025e+06]  # ESTIMATE
+  - [1000,  1.240e+06]  # ESTIMATE
+  - [1100,  1.465e+06]  # ESTIMATE
+  - [1200,  1.700e+06]  # ESTIMATE
+  - [1400,  2.200e+06]  # ESTIMATE
+  - [1600,  2.730e+06]  # ESTIMATE
+  - [1800,  3.290e+06]  # ESTIMATE
+  - [2000,  3.880e+06]  # ESTIMATE
+  - [2200,  4.510e+06]  # ESTIMATE
+  - [2500,  5.500e+06]  # ESTIMATE
+  - [3000,  7.200e+06]  # ESTIMATE
+
+# Elemental mass fractions [C, H, O, N] of SLA-220 pyrolysis gas vs T [K].
+# Identical to SLA-561V (same resin chemistry).
+# Si lumped into O column — see schema note in file header.
+# # ESTIMATE: identical to SLA-561V elemental fracs (same PDMS resin pyrolysis).
+pyro_elem_fracs:
+  C:
+    - [300,   0.28]   # ESTIMATE
+    - [500,   0.30]   # ESTIMATE
+    - [700,   0.33]   # ESTIMATE
+    - [900,   0.36]   # ESTIMATE
+    - [1100,  0.39]   # ESTIMATE
+    - [1300,  0.42]   # ESTIMATE
+    - [1500,  0.44]   # ESTIMATE
+    - [2000,  0.46]   # ESTIMATE
+  H:
+    - [300,   0.25]   # ESTIMATE
+    - [500,   0.22]   # ESTIMATE
+    - [700,   0.18]   # ESTIMATE
+    - [900,   0.14]   # ESTIMATE
+    - [1100,  0.10]   # ESTIMATE
+    - [1300,  0.07]   # ESTIMATE
+    - [1500,  0.05]   # ESTIMATE
+    - [2000,  0.03]   # ESTIMATE
+  O:
+    - [300,   0.47]   # ESTIMATE: O + Si (Si included in O — see note)
+    - [500,   0.48]   # ESTIMATE
+    - [700,   0.49]   # ESTIMATE
+    - [900,   0.50]   # ESTIMATE
+    - [1100,  0.51]   # ESTIMATE
+    - [1300,  0.51]   # ESTIMATE
+    - [1500,  0.51]   # ESTIMATE
+    - [2000,  0.51]   # ESTIMATE
+  N:
+    - [300,   0.00]
+    - [500,   0.00]
+    - [700,   0.00]
+    - [900,   0.00]
+    - [1100,  0.00]
+    - [1300,  0.00]
+    - [1500,  0.00]
+    - [2000,  0.00]
+
+# Surface emissivity.
+# Ref [2]: SLA family emissivity ~0.87 (virgin), ~0.89 (char).
+# SLA-220 denser but same surface composition — emissivity essentially unchanged.
+# # ESTIMATE: same as SLA-561V (consistent with Ref [2] reporting negligible
+# emissivity difference across SLA density variants).
+emissivity:      0.87   # ESTIMATE: same as SLA-561V (Ref [2])
+emissivity_char: 0.89   # ESTIMATE: same as SLA-561V (Ref [2])
+
+# B' TABLE NOT AVAILABLE — Si-bearing material
+# SLA-220 is the same silicone/cork matrix family as SLA-561V (higher resin loading).
+# Si-bearing ablation products (cyclic siloxanes, SiO) dominate surface chemistry.
+# The current Cantera CNO mechanism only supports C, H, O, N; Si is absent from the _M
+# element dict in bprime_evaluator.py. A C-H-O-N B' table would neglect all Si
+# surface chemistry and produce incorrect B'_c values for this material.
+# To generate B' tables for SLA-220:
+#   1. Extend Cantera mechanism to support Si (same work as for SLA-561V in the Cantera mechanism)
+#   2. Validate against Covington 2004 data
+#   3. Re-run scam/tools/generate_bprime.py with a Si-capable Cantera backend config
+# b_prime_table: sla220_bprime_air.yaml  # NOT AVAILABLE: requires Si-capable Cantera backend

@@ -1,0 +1,54 @@
+name: avcoat_char
+description: >
+  AVCOAT 5026-39G/HC ablating in air (Earth re-entry).
+  AVCOAT is an epoxy-novolac resin reinforced with silica microspheres cast
+  into a fiberglass-phenolic honeycomb; used on Apollo Block II and NASA Orion.
+
+  Char composition (after pyrolysis, approximate mass fractions):
+    C(gr)   ~78 wt%  — from the organic binder
+    SiO2    ~22 wt%  — residual from the silica microspheres
+  Density: ~256 kg/m³.  Molar ratio C : SiO2 ≈ 17.6 : 1.
+
+  Pyrolysis gas composition from Milos & Chen (2009), simplified to species
+  available in cno_ablation.yaml (GRI-Mech 3.0 + C2/C3):
+    H2   13.4 wt%   CH4  26.3 wt%   C2H2   7.4 wt%
+    CO   29.5 wt%   CO2   3.0 wt%   H2O   20.0 wt%
+    C2H4  0.4 wt%  (minor, absorbed into C2H2 share)
+  Elemental (approximate): C 50 wt%, H 34 wt%, O 16 wt%.
+
+  Gas mechanism: cno_ablation.yaml (GRI-Mech 3.0 + C2/C3).  No Si gas
+  species are present, so SiO2 remains condensed at all temperatures — a
+  reasonable approximation below ~2000 K where silica does not ablate.
+  Above that temperature a Si/C/H/O/N mechanism would be needed for
+  full fidelity.
+
+  Reference:
+    Milos, F. S. & Chen, Y.-K., "Ablation and Thermal Response Property
+    Model Validation for Phenolic Impregnated Carbon Ablator," AIAA 2009-4681.
+
+gas_mechanism: cno_ablation.yaml
+gas_phase_name: ""
+
+active_elements: [C, H, O, N]
+
+condensed_species:
+  - name: C(gr)
+    molecular_weight_kg_per_kmol: 12.011
+    elements: {C: 1}
+    density_kg_per_m3: 2200.0
+    failure_temperature_K: null
+
+  - name: SiO2(Lqz)
+    molecular_weight_kg_per_kmol: 60.084
+    elements: {Si: 1, O: 2}
+    density_kg_per_m3: 2650.0
+    # Silica transitions to high-quartz at 846 K, cristobalite at 1740 K,
+    # and melts at ~1996 K.  For the B' table the SiO2 polymorph is a proxy
+    # for all solid/liquid silica; failure_temperature_K controls active removal.
+    failure_temperature_K: null
+
+pyrolysis_gas:
+  # Mass fractions, normalised to sum = 1.0.
+  # Species must exist in cno_ablation.yaml (GRI-Mech 3.0).
+  composition_mass: "H2:0.134,CH4:0.263,C2H2:0.074,CO:0.295,CO2:0.030,H2O:0.200,C2H4:0.004"
+  bg_values: [0.0, 0.1, 0.2, 0.5, 1.0, 2.0, 5.0]

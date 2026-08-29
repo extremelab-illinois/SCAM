@@ -1,0 +1,248 @@
+# SPDX-License-Identifier: MIT
+# SILICA PHENOLIC (MX-2600 / Refrasil-Phenolic)
+# High-density silica-fiber / phenolic-resin ablator used on ballistic re-entry
+# vehicles, early Apollo backup studies, and solid-rocket nozzle liners.
+#
+# Sources:
+#   [1] Wool & Ostrander, "Ablative Insulation Performance of Silica Phenolic
+#       Composites", Proc. AIAA 3rd Aerospace Sciences Meeting, 1966.
+#       (classic experimental property characterisation; conductivity & cp tables)
+#   [2] Christensen, E.L., "Thermal Response of Silica-Phenolic Ablative
+#       Materials", NASA CR-54031, 1964.  (char/virgin k, density, decomp range)
+#   [3] Moyer, C.B. & Rindal, R.A., "An Analysis of the Coupled Chemically
+#       Reacting Boundary Layer and Charring Ablator", Aerotherm Corp. Report
+#       UM 70-14, 1968.  (surface chemistry, recession, B-prime tables)
+#   [4] Potts, R.L., "Application of integral methods to ablation charring erosion,
+#       a review", J. Spacecraft & Rockets 32(2), pp. 200-209, 1995.
+#       https://doi.org/10.2514/3.26597  (summary of silica phenolic properties)
+#   [5] Lachaud, J. & Mansour, N.N., JTHT 28(2), 2014 — for TACOT format reference.
+#
+# Composition:
+#   One decomposing phenolic resin component + inert silica fiber framework.
+#   rho_virgin ~ 1700 kg/m³  (high-density; silica cloth reinforced)
+#   rho_char   ~ 1530 kg/m³  (silica framework survives pyrolysis; small mass loss)
+#   gamma_resin ~ 0.10       (only ~10 % of mass is phenolic resin)
+#
+# Decomposition: The phenolic resin binder pyrolyzes (600–900 K); the silica
+# fiber skeleton is structurally retained up to ~2000 K where SiO2 → SiO + ½O2
+# becomes significant.  The resin-only pyrolysis is modelled here as a single
+# first-order Arrhenius step (phenolic decomposition).
+#
+# NOTE on single vs two-component modelling: Some sources split phenolic into
+# a fast (low-T) and slow (high-T) component similar to TACOT. The single-
+# component fit here uses parameters consistent with phenolic resins generally
+# (activation energy ~1.4–1.6 × 10⁵ J/mol, A ~10¹²–10¹³ s⁻¹, m=1) and is
+# adequate for 1-D engineering analysis.
+#
+# ESTIMATE flags indicate values not directly tabulated in the primary sources
+# but inferred from the silica-phenolic material class and analogous composites.
+#
+# All tables: T in K, strictly increasing. h_g reference: 298 K.
+
+name: silica_phenolic
+description: >
+  Silica-fiber / phenolic-resin ablator (MX-2600 class, ~1700 kg/m³).
+  Used on ballistic re-entry nose tips and solid-rocket nozzle liners.
+  Single phenolic resin component; inert silica fiber skeleton.
+
+material_category: ablative_organic
+card_version: "1.0"
+status: provisional
+rho_virgin:  1700.0   # [kg/m^3] Ref [1,2]; range 1600–1900 depending on layup
+rho_char:    1530.0   # [kg/m^3] Ref [2]; small mass loss (resin only pyrolyzes)
+gamma_resin: 0.10     # [-] (rho_virgin - rho_char)/rho_virgin ≈ 0.10
+
+components:
+  - name: phenolic_resin
+    rho_0:    170.0       # [kg/m^3]  apparent virgin density of resin binder
+    rho_r:      0.0       # [kg/m^3]  resin fully volatilises (silica remains)
+    # ESTIMATE: Arrhenius parameters for a mid-temperature phenolic resin.
+    # Consistent with pyrolysis TGA data for SC-1008/SC-1009 phenolics:
+    # see Henderson et al., J. Composite Mater. 19, 1985, and
+    # Florio et al., AIAA J. 29(7), 1991.
+    A_rate:  1.0e13       # [1/s]  pre-exponential; ESTIMATE (phenolic class)
+    E_act:   1.50e5       # [J/mol] activation energy; ESTIMATE (phenolic class)
+    m_exp:   1.0          # [-]  reaction order; ESTIMATE
+    # Endothermic decomposition enthalpy of the phenolic resin.
+    # ESTIMATE: ~1.5–2.0 MJ/kg for phenolic resins; central value used.
+    h_decomp: 1.70e6      # [J/kg]; ESTIMATE
+
+# ── Thermal conductivity of virgin silica phenolic [W/m/K] vs T [K] ─────────
+# Ref [1,2]: through-thickness measurements on 1700 kg/m³ MX-2600 lay-up.
+# The silica fiber is a poor conductor (~1 W/m/K bulk); the phenolic binder
+# adds modest conductivity at low T.  Values rise moderately with T.
+# ESTIMATE: Points below 300 K and above 1200 K extrapolated from trend.
+k_virgin:
+  - [200,   0.48]
+  - [300,   0.55]   # Ref [1] ~0.55 W/m/K at 294 K
+  - [400,   0.62]
+  - [500,   0.70]
+  - [600,   0.78]
+  - [700,   0.88]
+  - [800,   1.00]
+  - [900,   1.14]   # Ref [1] ~ 1.1–1.2 W/m/K near 900 K
+  - [1000,  1.30]
+  - [1200,  1.65]
+  - [1500,  2.20]   # ESTIMATE: radiation contribution grows
+  - [2000,  3.20]   # ESTIMATE
+  - [3000,  5.00]   # ESTIMATE
+
+# ── Thermal conductivity of char [W/m/K] vs T [K] ───────────────────────────
+# After pyrolysis the silica skeleton has reduced but not negligible
+# conductivity.  SiO2 glass has k ~ 1.4–2 W/m/K; pores and microcracks
+# reduce this.  Radiation transport raises effective k significantly above
+# ~1200 K.  Ref [2] gives ~0.5–0.8 W/m/K at 600–900 K for the char.
+# ESTIMATE: below 300 K and above 1500 K extrapolated.
+k_char:
+  - [200,   0.40]
+  - [300,   0.46]
+  - [400,   0.52]
+  - [500,   0.58]
+  - [600,   0.65]   # Ref [2] ~0.6–0.7 W/m/K
+  - [700,   0.74]
+  - [800,   0.85]
+  - [900,   1.00]
+  - [1000,  1.20]
+  - [1200,  1.70]
+  - [1500,  2.60]   # ESTIMATE: radiation + SiO2 softening
+  - [2000,  4.20]   # ESTIMATE
+  - [3000,  7.00]   # ESTIMATE
+
+# ── Specific heat of virgin silica phenolic [J/kg/K] vs T [K] ───────────────
+# Dominated by silica fiber (SiO2 cp ~ 700–1100 J/kg/K) and phenolic
+# (cp ~ 1000–1600 J/kg/K); mass-weighted blend.
+# Ref [1,2]: ~900 J/kg/K at 300 K, ~1200 J/kg/K at 700 K for virgin material.
+# ESTIMATE: points outside measured range extrapolated.
+cp_virgin:
+  - [200,   760.0]
+  - [300,   880.0]   # Ref [1]
+  - [400,   1000.0]
+  - [500,   1100.0]
+  - [600,   1185.0]
+  - [700,   1250.0]  # Ref [1]
+  - [800,   1305.0]
+  - [900,   1350.0]
+  - [1000,  1385.0]
+  - [1200,  1440.0]
+  - [1500,  1500.0]  # ESTIMATE
+  - [2000,  1550.0]  # ESTIMATE
+  - [3000,  1600.0]  # ESTIMATE
+
+# ── Specific heat of char [J/kg/K] vs T [K] ─────────────────────────────────
+# After pyrolysis the char is nearly pure SiO2 glass/ceramic.
+# SiO2 cp: ~740 J/kg/K at 300 K, ~1050 J/kg/K at 1200 K (Touloukian, Vol. 5).
+# Ref [2]: char cp ~ 800–1100 J/kg/K in 300–1000 K range.
+cp_char:
+  - [200,   680.0]
+  - [300,   780.0]   # Ref [2]
+  - [400,   880.0]
+  - [500,   960.0]
+  - [600,   1020.0]
+  - [700,   1065.0]
+  - [800,   1095.0]
+  - [900,   1120.0]
+  - [1000,  1140.0]  # Ref [2]
+  - [1200,  1170.0]
+  - [1500,  1210.0]  # ESTIMATE: approaches Dulong-Petit limit
+  - [2000,  1250.0]  # ESTIMATE
+  - [3000,  1300.0]  # ESTIMATE
+
+# ── Pyrolysis gas enthalpy [J/kg] vs T [K], reference 298 K ─────────────────
+# Phenolic pyrolysis gas is a C/H/O mixture: H2O, CO, CO2, CH4,
+# higher hydrocarbons (benzene, toluene) at low T; CO + H2 dominate at high T.
+# This table is ESTIMATED from the phenolic pyrolysis gas literature
+# (Henderson et al. 1985; Sykes 1967 'Ablative Composites').  The large
+# enthalpy peak between 700–1000 K is due to thermal cracking of heavier
+# hydrocarbons into CO + H2 (endothermic).  Normalised so h_g(298 K) ≈ 0.
+# ESTIMATE: entire table — no measured enthalpy table found for silica phenolic.
+# The shape follows the TACOT gas table (similar C/H/O gas mixture) but
+# shifted to account for the smaller gas mass fraction and higher O content.
+h_g:
+  - [200,  -1.30e+05]
+  - [250,  -6.50e+04]
+  - [300,   0.00e+00]
+  - [350,   6.80e+04]
+  - [400,   1.40e+05]
+  - [450,   2.15e+05]
+  - [500,   2.95e+05]
+  - [550,   3.85e+05]
+  - [600,   4.90e+05]
+  - [650,   6.20e+05]
+  - [700,   7.80e+05]
+  - [750,   1.00e+06]
+  - [800,   1.28e+06]
+  - [850,   1.62e+06]
+  - [900,   2.00e+06]
+  - [950,   2.38e+06]
+  - [1000,  2.68e+06]
+  - [1100,  3.10e+06]
+  - [1200,  3.48e+06]
+  - [1400,  4.20e+06]
+  - [1600,  4.90e+06]
+  - [1800,  5.55e+06]
+  - [2000,  6.20e+06]
+  - [2500,  8.00e+06]
+  - [3000,  1.00e+07]
+
+# Elemental mass fractions of pyrolysis gas [C, H, O, N].
+# ESTIMATE: phenolic resin pyrolysate is typically ~40% C, ~5% H, ~55% O by mass
+# at low T (volatile H2O, CO2, oxygenated organics); at high T CO dominates
+# → higher C fraction, less O, less H.  Silicon species (SiO) are minor
+# for temperatures below SiO2 decomposition (~2000 K).
+pyro_elem_fracs:
+  C:
+    - [300,   0.38]
+    - [500,   0.42]
+    - [700,   0.48]
+    - [900,   0.54]
+    - [1100,  0.58]
+    - [1300,  0.61]
+    - [1500,  0.63]
+    - [2000,  0.65]
+  H:
+    - [300,   0.08]
+    - [500,   0.07]
+    - [700,   0.05]
+    - [900,   0.04]
+    - [1100,  0.03]
+    - [1300,  0.02]
+    - [1500,  0.01]
+    - [2000,  0.01]
+  O:
+    - [300,   0.54]
+    - [500,   0.51]
+    - [700,   0.47]
+    - [900,   0.42]
+    - [1100,  0.39]
+    - [1300,  0.37]
+    - [1500,  0.36]
+    - [2000,  0.34]
+  N:
+    - [300,   0.00]
+    - [500,   0.00]
+    - [700,   0.00]
+    - [900,   0.00]
+    - [1100,  0.00]
+    - [1300,  0.00]
+    - [1500,  0.00]
+    - [2000,  0.00]
+
+# Surface emissivity.
+# Ref [4] and general silica/phenolic literature: virgin ε ≈ 0.87,
+# char (glassy silica) ε ≈ 0.85.  Both approximately constant with T
+# in the practical range.
+emissivity:       0.87   # virgin scalar
+emissivity_char:  0.85   # char scalar
+
+# B' TABLE — Si caveat (CRITICAL)
+# Silica phenolic ablation is dominated by SiO2 → SiO + ½O2 surface chemistry above
+# ~2000 K — this is the primary recession mechanism for this material class, not char
+# oxidation. The current Cantera CNO mechanism only supports C, H, O, N; Si is absent from
+# the _M element dict in bprime_evaluator.py. Generating a B' table with the current
+# A C-H-O-N config would silently neglect ALL Si surface reactions, producing B'_c values
+# that reflect only the minor phenolic char contribution and are physically wrong for
+# this material at design heat fluxes. DO NOT use a C-H-O-N Cantera table for silica
+# phenolic without clearly marking it as invalid.
+# TODO: generate silica_phenolic_bprime_air.yaml only after Si support is added to the Cantera mechanism
+#       and validated against Wool & Ostrander (1966) and Christensen (1966) arc-jet data.
+# b_prime_table: silica_phenolic_bprime_air.yaml  # NOT AVAILABLE: requires Si-capable Cantera backend

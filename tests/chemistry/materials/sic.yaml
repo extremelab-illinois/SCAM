@@ -1,0 +1,32 @@
+name: sic
+description: >
+  Silicon carbide (SiC) ablating in air.  Multicomponent condensed
+  phase: SiC, C(gr), and SiO2 compete at the surface.  No pyrolysis gas.
+  Intended for Phase 4/5 (multiple condensed species, surface-element
+  constraints).  Mechanism placeholder — update to a Si/C/O/N mechanism
+  when available.
+
+gas_mechanism: cno_ablation.yaml
+gas_phase_name: ""
+
+active_elements: [Si, C, O, N]
+
+condensed_species:
+  - name: SiC(s)
+    molecular_weight_kg_per_kmol: 40.097
+    elements: {Si: 1, C: 1}
+    density_kg_per_m3: 3210.0
+    failure_temperature_K: null   # SiC decomposes ~2830 K at 1 atm
+
+  - name: C(gr)
+    molecular_weight_kg_per_kmol: 12.011
+    elements: {C: 1}
+    density_kg_per_m3: 2200.0
+    failure_temperature_K: null
+
+  - name: SiO2(l)
+    molecular_weight_kg_per_kmol: 60.084
+    elements: {Si: 1, O: 2}
+    density_kg_per_m3: 2200.0
+    # Silica fails (actively oxidizes/evaporates) above ~2000 K.
+    failure_temperature_K: 2000.0

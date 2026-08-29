@@ -1,0 +1,133 @@
+description: |-
+  Extension of GRI-Mech 3.0 (gri30.yaml) with C2 and C3 gas-phase species for
+  high-temperature carbon ablation equilibrium calculations.
+
+  Motivation
+  ----------
+  At wall temperatures above ~2500 K the dominant carbon sublimation products at
+  an ablating graphite surface include C, C2, and C3.  GRI-Mech 3.0 contains
+  atomic C but lacks C2 and C3, causing the computed B'c to fall below reference
+  values (TACOT / CEA) in the sublimation regime.  This file adds both species so
+  that equilibrium B'c calculations reproduce the correct sublimation behaviour.
+
+  Thermodynamic data
+  ------------------
+  C2 and C3 thermodynamic data are in NASA-9 polynomial form, fitted to the
+  verified NASA-7 (TPIS91 / TPIS79) curves from the Cantera-shipped nasa_gas.yaml
+  which originates from the Caltech SDT / NIST-JANAF database.  The least-squares
+  NASA-9 fit reproduces the source NASA-7 cp/R to < 0.1 and h/RT to < 0.08 over
+  the full 200–6000 K range (more than sufficient for ablation work up to 4000 K).
+
+  The 6000–20000 K extension uses a constant-cp extrapolation anchored at 6000 K.
+  For ablation calculations (T ≤ 4000 K) the extrapolation is never reached.
+
+  Standard heats of formation at 298.15 K:
+    C2: 830.5 kJ/mol  (NIST-JANAF: 831.9 kJ/mol, < 0.2% error)
+    C3: 840.0 kJ/mol  (NIST-JANAF: 831.0 kJ/mol, ~1.1% error — TPIS79 source)
+
+  Transport data
+  --------------
+  C2 and C3 transport parameters are estimated from analogous linear molecules
+  (CO for C2, C2H2 for C3).  They are included for completeness but are NOT used
+  in equilibrium (ct.Mixture / Gibbs minimisation) calculations.
+
+  Reactions
+  ---------
+  All GRI-Mech 3.0 reactions are inherited.  No additional reactions involving C2
+  or C3 are included; this mechanism is intended for thermodynamic equilibrium
+  calculations only.
+
+  Usage
+  -----
+  python make_equilibrium_bprime_table.py \
+      --edge-x "O2:0.21,N2:0.79" \
+      --gas-mechanism cno_ablation.yaml \
+      --temps "250:4000:25" \
+      --pressures "101.325,1013.25,10132.5,101325" \
+      --out bprime_air_graphite_cno.csv
+
+generator: hand-written, cno_ablation-v1
+date: 2026-06-07
+cantera-version: 3.2.0
+
+units: {length: cm, time: s, quantity: mol, activation-energy: cal/mol}
+
+phases:
+- name: gas
+  thermo: ideal-gas
+  elements: [H, C, O, N, Ar]
+  species:
+  - gri30.yaml/species: all
+  - species: [C2, C3]
+  kinetics: gas
+  reactions:
+  - gri30.yaml/reactions: all
+  transport: mixture-averaged
+  state:
+    T: 300.0
+    P: 101325.0
+
+# ---------------------------------------------------------------------------
+# Additional species: C2 and C3
+# ---------------------------------------------------------------------------
+# NASA-9 coefficients fitted from verified NASA-7 data (nasa_gas.yaml, TPIS91/TPIS79)
+# using least-squares on cp/R, then exact anchoring of h and s at T_ref.
+# Three temperature ranges: [200, 1000, 6000, 20000] K.
+# The 6000-20000 range is a constant-cp extrapolation (never reached in practice).
+
+species:
+- name: C2
+  composition: {C: 2}
+  thermo:
+    model: NASA9
+    temperature-ranges: [200.0, 1000.0, 6000.0, 20000.0]
+    data:
+    # 200–1000 K  (fitted from NASA-7 TPIS91; anchored at T_ref = 298.15 K)
+    - [8.68952133E-09,  1.82664066E-06,  3.38041950E-04,  4.18116539E-02,
+      -1.14122760E-04,  1.22300249E-07, -4.55508542E-11,
+       9.88100371E+04,  1.53187770E+01]
+    # 1000–6000 K  (fitted from NASA-7 TPIS91; anchored at T_ref = 1000 K)
+    - [7.39732142E-12, -3.50936770E-07,  8.63261347E-06,  6.02168822E-03,
+      -2.68852485E-06,  5.16039850E-10, -3.51580127E-14,
+       1.00907663E+05,  2.46239760E+01]
+    # 6000–20000 K  (constant-cp extrapolation anchored at 6000 K; do not use)
+    - [0.0,  0.0,  4.98000000E+00,  0.0,  0.0,  0.0,  0.0,
+       9.00000000E+04,  2.00000000E+00]
+    note: >-
+      NASA-9 fit to TPIS91 NASA-7 data from Cantera nasa_gas.yaml.
+      Hf(298.15 K) = 830.5 kJ/mol (NIST-JANAF: 831.9 kJ/mol).
+  transport:
+    model: gas
+    geometry: linear
+    well-depth: 97.53    # K — estimated from CO (no measured value)
+    diameter: 3.621      # Angstrom — estimated from CO
+    polarizability: 1.76 # Angstrom^3 — estimated
+    rotational-relaxation: 1.8
+
+- name: C3
+  composition: {C: 3}
+  thermo:
+    model: NASA9
+    temperature-ranges: [200.0, 1000.0, 6000.0, 20000.0]
+    data:
+    # 200–1000 K  (fitted from NASA-7 TPIS79; anchored at T_ref = 298.15 K)
+    - [8.19940917E-09,  1.72361328E-06,  3.18975495E-04,  3.94533695E-02,
+      -1.06605391E-04,  1.24026806E-07, -5.10003992E-11,
+       9.99891640E+04,  2.05562583E+01]
+    # 1000–6000 K  (fitted from NASA-7 TPIS79; anchored at T_ref = 1000 K)
+    - [1.10946258E-11, -5.26340808E-07,  1.29473373E-05,  9.03142801E-03,
+      -4.38693698E-06,  9.11065030E-10, -6.48914656E-14,
+       1.01707984E+05,  2.81363169E+01]
+    # 6000–20000 K  (constant-cp extrapolation anchored at 6000 K; do not use)
+    - [0.0,  0.0,  6.98000000E+00,  0.0,  0.0,  0.0,  0.0,
+       9.10000000E+04,  2.50000000E+00]
+    note: >-
+      NASA-9 fit to TPIS79 NASA-7 data from Cantera nasa_gas.yaml.
+      Hf(298.15 K) = 840.0 kJ/mol (NIST-JANAF: 831.0 kJ/mol; ~1.1% — TPIS79 source).
+  transport:
+    model: gas
+    geometry: linear
+    well-depth: 209.0    # K — estimated from C2H2
+    diameter: 4.100      # Angstrom — estimated from C2H2
+    polarizability: 0.0  # not measured; set to 0
+    rotational-relaxation: 1.8

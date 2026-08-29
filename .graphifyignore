@@ -1,0 +1,9 @@
+# graphify-specific excludes (merged with .gitignore; these patterns win on conflict)
+
+# Codex's copy of the graphify skill — duplicates .claude/skills/graphify (which
+# .gitignore already hides via .claude/) and was polluting the graph with ~30
+# near-duplicate reference-doc nodes for a skill that isn't part of SCAM itself.
+.codex/
+
+# graphify's own output — never index its own artifacts.
+graphify-out/

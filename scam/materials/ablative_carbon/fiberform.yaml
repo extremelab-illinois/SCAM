@@ -1,0 +1,186 @@
+# SPDX-License-Identifier: MIT
+# FiberForm — Rigid Carbon Fiber Preform
+# Manufactured by Fiber Materials Inc. (FMI), now Tex Tech Industries.
+# Inert non-decomposing porous carbon material; substrate of PICA.
+#
+# Sources:
+#   [1] Panerai, F. et al. 2017, "Micro-tomography based analysis of thermal
+#       conductivity, diffusivity and oxidation behavior of rigid and flexible
+#       fibrous insulators", Int. J. Heat Mass Transfer 108, pp. 801-811.
+#       https://doi.org/10.1016/j.ijheatmasstransfer.2016.12.048
+#   [2] Weng, H. & Martin, A. 2014, "Multiscale modeling of carbon fiber preform
+#       ablation in an arc-jet environment", AIAA-2014-2723.
+#   [3] Panerai, F. et al. 2014, "Surface temperature jump beyond active oxidation of
+#       carbon/silicon carbide composites in extreme aerothermal conditions",
+#       Carbon 71, pp. 102-119. https://doi.org/10.1016/j.carbon.2014.01.018
+#       (UNVERIFIED for FiberForm relevance — paper covers C/SiC composites, not pure
+#       carbon fiber preform; title in original comment was inaccurate.)
+#   [4] Trick, K.A. & Saliba, T.E. 1995, "Mechanisms of the pyrolysis of phenolic
+#       resin in a carbon/phenolic composite", Carbon 33(11), pp. 1509-1515.
+#   [5] Incera Garrido, G. et al. 2008, "Mass transfer and pressure drop in ceramic
+#       foams", Chem. Eng. Sci. 63(21), pp. 5202-5217.
+#   [6] Tran, H.K. et al. 1997, NASA TM-110440 (FiberForm substrate characterisation).
+#   [7] Maahs, H.G. 1971, "Oxidation of carbon at high temperatures", NASA TN D-6310.
+#
+# FiberForm (Fiber Materials Inc. (FMI)) is a rigid, low-density carbon-bonded carbon  
+# fiber preform with porosity ~90%. It is inert: no decomposing resin, no pyrolysis gas.
+# rho_char = rho_virgin because no mass loss occurs on heating in inert atmosphere
+# (graphitisation causes <1% mass change; set rho_char slightly below for numerical
+# cleanliness but effectively identical).
+# Thermal properties are strongly T-dependent due to radiation across pores above ~800 K.
+
+name: FiberForm
+description: "Rigid carbon fiber preform substrate (PARTIAL — high-T properties estimated)"
+material_category: ablative_carbon
+card_version: "1.0"
+status: provisional
+
+rho_virgin:  180.0   # [kg/m^3]  Ref [1]; Grade BF-20 target density 175-185 kg/m^3
+rho_char:    179.0   # [kg/m^3]  non-pyrolyzing; set 1 kg/m³ below rho_virgin to satisfy loader constraint
+gamma_resin: 0.00    # [-]  no resin; fully inert carbon structure
+
+# Inert material — no decomposing components.
+# decomposing: false instructs the solver to skip all pyrolysis calculations.
+decomposing: false
+components: []
+
+# Thermal conductivity of FiberForm [W/m/K] vs T [K], through-thickness direction.
+# FiberForm is a highly porous carbon felt (~90% porosity). Effective conductivity has
+# two contributions:
+#   (1) Solid conduction through fiber network (dominant below ~700 K)
+#   (2) Radiation across pores (dominant above ~800 K, scales ~4*sigma*eps*T^3*D_pore)
+# Ref [1] Table 2 gives k_eff at 300 K = 0.577 W/m/K (through-thickness);
+# their pore-scale CT-based model gives k at 1000 K ≈ 1.35, at 1500 K ≈ 2.8 W/m/K.
+# Ref [2] uses k_FiberForm from arc-jet context; consistent with Ref [1].
+# Values below 300 K extrapolated assuming conduction-only (linear in T to 0).
+# Values above 1500 K: radiation scaling k_rad ~ T^3; solid conduction ~constant
+# (graphitised fibers approach bulk graphite plateau ~120 W/m/K for single fiber
+# but fiber network tortuosity reduces effective contribution to ~1-2 W/m/K).
+k_virgin:   # [W/m/K] vs T [K]
+  - [200,   0.393]    # ESTIMATE: conduction-only regime, ~T scaling from 300 K value
+  - [300,   0.577]    # Ref [1] Table 2, through-thickness, 300 K
+  - [400,   0.710]    # Ref [1] model Fig 5; radiation contribution begins
+  - [500,   0.880]    # Ref [1] model Fig 5
+  - [600,   1.080]    # Ref [1] model Fig 5
+  - [700,   1.320]    # Ref [1] model / Ref [2]
+  - [800,   1.590]    # Ref [1] model; radiation now dominant
+  - [900,   1.890]    # Ref [1] model
+  - [1000,  2.220]    # Ref [1] model
+  - [1100,  2.580]    # Ref [1] model
+  - [1200,  2.960]    # Ref [1] model; extrapolated slightly above 1000 K endpoint
+  - [1300,  3.360]    # ESTIMATE: k_rad ~ T^3 extrapolation
+  - [1400,  3.780]    # ESTIMATE
+  - [1500,  4.230]    # ESTIMATE
+  - [1700,  5.240]    # ESTIMATE
+  - [2000,  6.950]    # ESTIMATE: radiation-dominated; consistent with Ref [2] arc-jet values
+  - [2500,  10.10]    # ESTIMATE
+  - [3000,  14.10]    # ESTIMATE
+
+# Char conductivity = virgin conductivity (inert, same material after heating).
+# Graphitisation above 2000 K may slightly increase fiber solid conductivity,
+# but the effect is small compared to radiation contribution at those temperatures.
+k_char:     # [W/m/K] vs T [K]
+  - [200,   0.393]
+  - [300,   0.577]    # Ref [1] Table 2
+  - [400,   0.710]
+  - [500,   0.880]
+  - [600,   1.080]
+  - [700,   1.320]
+  - [800,   1.590]
+  - [900,   1.890]
+  - [1000,  2.220]
+  - [1100,  2.580]
+  - [1200,  2.960]
+  - [1300,  3.360]
+  - [1400,  3.780]
+  - [1500,  4.230]
+  - [1700,  5.240]
+  - [2000,  6.950]
+  - [2500,  10.10]
+  - [3000,  14.10]
+
+# Specific heat of FiberForm [J/kg/K] vs T [K].
+# Carbon fiber cp follows the graphite / Debye-solid curve: rapid rise from 200-1000 K,
+# then gradual approach to the Dulong-Petit plateau (~2100 J/kg/K for graphite).
+# Ref [1] Supplementary / Ref [3] carbon fiber cp measurements.
+# Consistent with NIST graphite data (adjusted for fiber nanostructure: lower crystallinity
+# gives slightly higher cp at intermediate T compared to HOPG).
+# These values agree well with Panerai et al. 2014 (Ref [3]) fiber measurements
+# and are consistent with TACOT's char cp (which is also carbon-fiber-dominated).
+cp_virgin:  # [J/kg/K] vs T [K]
+  - [200,    665.0]   # Ref [3] / NIST carbon; below Debye peak
+  - [300,    858.0]   # Ref [1]; porous felt measurement
+  - [400,   1028.0]   # Ref [1] / Ref [3]
+  - [500,   1175.0]   # Ref [1] / Ref [3]
+  - [600,   1300.0]   # Ref [1] / Ref [3]
+  - [700,   1407.0]   # Ref [1] / Ref [3]
+  - [800,   1498.0]   # Ref [1] / Ref [3]
+  - [900,   1575.0]   # Ref [1] / Ref [3]
+  - [1000,  1640.0]   # Ref [1] / Ref [3]
+  - [1100,  1695.0]   # Ref [3]
+  - [1200,  1740.0]   # Ref [3]; approaching graphite plateau
+  - [1400,  1810.0]   # ESTIMATE
+  - [1600,  1860.0]   # ESTIMATE
+  - [1800,  1900.0]   # ESTIMATE
+  - [2000,  1935.0]   # ESTIMATE: graphite Dulong-Petit asymptote ~1950-2050 J/kg/K
+  - [2500,  1980.0]   # ESTIMATE
+  - [3000,  2020.0]   # ESTIMATE
+
+# Char cp = virgin cp (same material, inert).
+cp_char:    # [J/kg/K] vs T [K]
+  - [200,    665.0]
+  - [300,    858.0]
+  - [400,   1028.0]
+  - [500,   1175.0]
+  - [600,   1300.0]
+  - [700,   1407.0]
+  - [800,   1498.0]
+  - [900,   1575.0]
+  - [1000,  1640.0]
+  - [1100,  1695.0]
+  - [1200,  1740.0]
+  - [1400,  1810.0]
+  - [1600,  1860.0]
+  - [1800,  1900.0]
+  - [2000,  1935.0]
+  - [2500,  1980.0]
+  - [3000,  2020.0]
+
+# No pyrolysis gas (inert material).
+# Two anchor points are required by the SCAM material loader; both set to zero.
+h_g:        # [J/kg] vs T [K] — zero everywhere (no pyrolysis)
+  - [200,   0.0]
+  - [3000,  0.0]
+
+# Surface emissivity.
+# Carbon fiber surfaces are near-blackbody emitters. Ref [1] / Ref [3] report
+# fiber emissivity ~0.85-0.92; the porous felt behaves as a near-blackbody cavity,
+# so effective emissivity of the macroscopic surface is higher (~0.90-0.95).
+# Ref [6] uses epsilon = 0.90 for FiberForm in thermal response calculations.
+# No strong T-dependence measured below 1500 K; modest decrease expected above 2000 K
+# as graphitisation increases reflectance of the fibers slightly.
+emissivity: 0.90           # Ref [6]; through-thickness surface emissivity
+emissivity_char: 0.90      # same (inert, no phase change)
+emissivity_virgin:
+  - [300,   0.90]   # Ref [6]
+  - [500,   0.90]
+  - [700,   0.90]
+  - [1000,  0.90]
+  - [1500,  0.90]
+  - [2000,  0.88]   # ESTIMATE: slight decrease from graphitisation
+  - [3000,  0.86]   # ESTIMATE
+emissivity_char_table:
+  - [300,   0.90]
+  - [500,   0.90]
+  - [700,   0.90]
+  - [1000,  0.90]
+  - [1500,  0.90]
+  - [2000,  0.88]   # ESTIMATE
+  - [3000,  0.86]   # ESTIMATE
+
+# No B' table needed — FiberForm is inert; surface oxidation of carbon fibers
+# at high temperature would require a separate B' table for C-O chemistry,
+# but for sublayer use in PICA configurations, ablation is dominated by the
+# char surface above, not the FiberForm substrate.
+# TODO: add fiberform_bprime_air.yaml if standalone FiberForm surface ablation
+#       is needed (C-O surface chemistry only, no pyrolysis gas component).

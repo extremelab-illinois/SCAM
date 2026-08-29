@@ -1,0 +1,45 @@
+# SPDX-License-Identifier: MIT
+# B' configuration for first-pass PTFE/Teflon fluorine chemistry.
+#
+# This is a fixed-composition PTFE pyrolysis model. It uses C2F4 as the nominal
+# pyrolysis/surface-source gas and solves a fluorine-target B' balance using the
+# local Cantera NASA gas species database. It is not a validated PTFE ablation
+# model; use generated tables as estimate-only diagnostics until compared with
+# PTFE TGA, arc-jet, or independent equilibrium data.
+#
+# Usage (from the SCAM repo root):
+#   python3 -m scam.tools.generate_bprime \
+#       --config scam/materials/ablative_organic/teflon_bprime_config.yaml \
+#       --output scam/materials/ablative_organic/teflon_bprime_air.yaml
+
+generator:
+  edge_x: "O2:0.21,N2:0.79"
+  pyro_x: "C2F4:1.0"
+
+  # Coarse default grid for estimate-only PTFE diagnostics. Refine after the
+  # chemistry model is validated.
+  temps:     "300, 500, 750, 1000, 1250, 1500, 1750, 2000, 2500, 3000, 3500, 4000"
+  pressures: "1013.25,10132.5,101325"
+  bg:        "1e-6, 1e-4, 1e-2, 1e-1, 1"
+
+  gas_mechanism: ptfe_fluorine_ablation.yaml
+  gas_phase_name: ptfe_fluorine_gas
+  carbon_phase: graphite.yaml
+  carbon_moles: 0.0
+  solver: gibbs
+
+  # Generic B' balance metadata. For PTFE, the surface source is C2F4, whose
+  # fluorine mass fraction is 4*M_F / (2*M_C + 4*M_F) ~= 0.7598.
+  target_element: F
+  surface_source_target_fraction: 0.759805
+
+  outdir: /tmp/scam_bprime_teflon
+  out: bprime_teflon_air.csv
+  out_wide: ""
+  verbose: false
+
+plot:
+  enabled: false
+
+compare:
+  enabled: false

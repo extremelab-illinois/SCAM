@@ -1,0 +1,146 @@
+# SPDX-License-Identifier: MIT
+# =============================================================================
+# SCAM input deck template — AblationTestCase 1.x style
+# =============================================================================
+#
+# Run:   python3 -m scam examples/templates/ablation1_template.yaml
+# Plot:  python3 examples/templates/plot_results.py results/ablation1_template/
+#
+# What this case tests
+# --------------------
+# Pure in-depth response: conduction + Arrhenius pyrolysis, no surface
+# recession and no surface mass balance.  The surface temperature is
+# prescribed as a step function (ramp-on at t=0.1 s, ramp-off at t=60.1 s)
+# so the solver never needs to iterate a surface energy balance.
+#
+# This is the SCAM equivalent of PATO AblationTestCase_1.0/1.x, which uses
+# a 5 cm TACOT slab at 280 kg/m³ virgin density, heated to 1644 K for 60 s
+# then cooled back to 300 K.  It is the standard verification ladder rung for
+# checking the in-depth heat conduction and pyrolysis kinetics independently
+# of any surface chemistry.
+#
+# Key differences from the arcjet template (tacot_arcjet_template.yaml):
+#   - surface_bc.type: prescribed_temp   (no SEB Newton iteration)
+#   - allow_recession: false             (surface does not recede)
+#   - finer mesh (501 nodes vs 51)       (verification-grade spatial resolution)
+#   - shorter output_dt (0.5 s)          (denser time history for profile plots)
+# =============================================================================
+
+
+name: "AblationTestCase 1.x Template"
+
+
+# -----------------------------------------------------------------------------
+# Geometry — flat plate (1-D slab)
+# -----------------------------------------------------------------------------
+geometry:
+  type: slab
+
+
+# -----------------------------------------------------------------------------
+# Material stack
+# Single 5 cm TACOT layer, hot face first.
+# 501 nodes gives ~0.1 mm spacing, sufficient to resolve the char-virgin front.
+# -----------------------------------------------------------------------------
+stack:
+  layers:
+    - material: TACOT
+      thickness: 0.05     # layer thickness [m]
+      n_nodes: 501        # finite-volume nodes; ~0.1 mm spacing at 5 cm
+      n_subcells: 4       # nodelets per node for sub-grid decomposition [default: 4]
+
+
+# -----------------------------------------------------------------------------
+# Surface boundary condition — prescribed temperature
+#
+# The surface temperature follows a step profile that mimics PATO's
+# AblationTestCase_1.x heating/cooldown sequence:
+#   0 → 0.099 s : 300 K (initial quiescent state)
+#   0.1 s        : instant step to 1644 K (arc-jet on)
+#   60.0 s       : 1644 K (end of heating)
+#   60.1 s       : instant step back to 300 K (arc-jet off / cooldown)
+#   120.0 s      : 300 K (end of simulation)
+#
+# The "instant" steps are approximated by a 0.001 s ramp so the interpolation
+# remains well-defined; the thermal response is insensitive to this detail.
+#
+# Accepts a scalar (constant T) or a [[t_s, T_K], ...] table (interpolated).
+# -----------------------------------------------------------------------------
+surface_bc:
+  type: prescribed_temp
+
+  T_prescribed:
+    - [0.000, 300.0]
+    - [0.099, 300.0]
+    - [0.100, 1644.0]
+    - [60.000, 1644.0]
+    - [60.100, 300.0]
+    - [120.000, 300.0]
+
+
+# -----------------------------------------------------------------------------
+# Back-face boundary condition — adiabatic (insulated)
+# The PATO 1.x case uses a zero-flux back face.
+# -----------------------------------------------------------------------------
+back_bc:
+  type: adiabatic
+
+
+# -----------------------------------------------------------------------------
+# Solver options
+# -----------------------------------------------------------------------------
+solver:
+  t_start: 0.0
+  t_end: 120.0        # total simulation time [s]: 60 s heating + 60 s cooldown
+
+  # Adaptive timestep — tighter limits than the arcjet case because the
+  # prescribed-T step drives a sharp thermal front in the first few seconds.
+  dt_init: 0.005      # [s]; small initial step to capture the t=0.1 s transition
+  dt_min: 1.0e-5      # [s]
+  dt_max: 0.5         # [s]; coarser limit fine for the slow cooldown phase
+  dt_max_dT: 20.0     # max |ΔT| per step in any cell [K] [default: 50]
+  dt_max_drho_frac: 0.05  # max |Δρ/ρ| per step [default: 0.05]
+
+  # Surface energy balance — not used for prescribed_temp, kept for completeness
+  max_seb_iter: 50
+  seb_tol: 1.0
+
+  # Picard iteration on the in-depth tridiagonal solve
+  max_picard: 8
+  picard_tol: 0.05    # [K]
+
+  # No surface recession in the 1.x case
+  allow_recession: false   # [default: true]
+
+  # Exact d(ρh)/dt energy storage (recommended)
+  use_rho_old: true
+
+  # Lagrangian mesh (no node drops because there is no recession)
+  continuous_remap: false
+
+  # Element transport and live Cantera B' chemistry not needed here
+  element_transport: false
+  bprime_runtime: false
+
+  # Output
+  output_dt: 0.5      # snapshot interval [s] — denser than the arcjet template
+                      # to resolve the fast initial heating transient
+
+  # Thermocouple depths [m] from the original front face.
+  # These match the PATO AblationTestCase_1.x probe positions.
+  tc_positions: [0.001, 0.002, 0.004, 0.008, 0.012, 0.016, 0.024]
+
+
+# -----------------------------------------------------------------------------
+# Material files
+# -----------------------------------------------------------------------------
+materials:
+  - ../../scam/materials/ablative_organic/tacot_v3.0.yaml
+
+
+# -----------------------------------------------------------------------------
+# Output
+# -----------------------------------------------------------------------------
+output:
+  path: results/ablation1_template/
+  format: csv

@@ -1,0 +1,253 @@
+# SLA-561V — Super Light Ablator, 561V formulation
+# Low-density silicone-impregnated cork/silica-microballoon ablator (~260 kg/m³).
+# Heritage missions: Mars Pathfinder (1997), Mars Exploration Rovers (Spirit/Opportunity, 2004),
+# Mars Science Laboratory (Curiosity, 2012), Mars 2020 (Perseverance, 2021).
+# Developed at NASA Ames Research Center.
+#
+# Sources:
+#   [1] Milos, F.S. & Chen, Y.-K., "Two-Dimensional Ablation, Thermal Response, and
+#       Sizing Program for Pyrolyzing Ablators," JSR 46(6), pp. 1089-1099, 2009.
+#       https://doi.org/10.2514/1.36575
+#   [2] Covington, M.A. et al., "Performance of a Low-Density Ablative Heat Shield
+#       Material," JSR 45(2), pp. 237-247, 2008. https://doi.org/10.2514/1.12403
+#   [3] Milos, F.S. et al., "Analysis of Galileo Probe Heatshield Ablation and
+#       Temperature Data," JSR 36(3), pp. 298-306, 1999. https://doi.org/10.2514/2.3465
+#   [4] Chen, Y.-K. & Milos, F.S., "Ablation and Thermal Response Program for
+#       Spacecraft Heatshield Analysis," JSR 36(3), pp. 475-483, 1999.
+#       https://doi.org/10.2514/2.3469
+#   [5] Agrawal, P. et al., "Modeling of Thermal Response and Ablation of Low Density
+#       Carbon-Phenolic Composites," AIAA 2008-1208, 2008.
+#   [6] Wright, M.J. et al., "Sizing of Ablative Thermal Protection Systems for
+#       Planetary Entry Vehicles," AIAA 2004-0341, 2004.
+#   [7] Bose, D. et al., "Ablative Thermal Protection System Design, Analysis, Testing
+#       and Flight Qualification for Mars Science Laboratory," AIAA 2009-4227, 2009.
+#
+# All tables: T in K, strictly increasing. h_g reference: 298 K.
+# Data gaps filled with ESTIMATE annotations based on known SLA material family trends.
+#
+# Composition: RTV silicone resin impregnated into a rigid silica-microballoon/cork matrix.
+#   rho_virgin  ≈ 260 kg/m³  (silicone resin + silica microspheres + cork fibres)
+#   rho_char    ≈ 148 kg/m³  (silica + carbon residue; resin pyrolyses away)
+#   The silicone (polydimethylsiloxane) pyrolysis produces CH4, C2H4, C2H2, SiO and
+#   SiO2 condensables.  The volatile fraction is modelled here as a single Arrhenius
+#   component; SiO species are lumped into the C/H/O elemental fractions (no Si column
+#   in SCAM's element-transport schema).  Si transport is therefore approximate.
+#
+# NOTE ON Si: SCAM's element-transport schema supports [C, H, O, N] only.
+#   Silicon in SLA-561V pyrolysis gas is ~4-8 wt% as SiO/SiO2.  It is redistributed
+#   into the O column here for bookkeeping (SiO is 44% O by mass), which slightly
+#   over-predicts oxidiser availability.  A future Si-aware schema update is needed for
+#   high-fidelity SLA chemistry.  # TODO: add Si element to SCAM schema
+
+name: SLA-561V
+description: "Super Light Ablator 561V — NASA Ames silicone/cork/silica ablator for Mars entry"
+material_category: ablative_hybrid
+card_version: "1.0"
+status: provisional
+
+rho_virgin:  260.0   # [kg/m^3]  Ref [2] Table 1; range 255–270 across batches
+rho_char:    148.0   # [kg/m^3]  Ref [2] Table 1; ~57% of virgin after full pyrolysis
+gamma_resin: 0.34    # [-]  silicone resin mass fraction; Ref [2] ≈ 0.30–0.38
+
+# Arrhenius kinetics: single-component model for silicone (RTV) decomposition.
+# Two-component models exist (fast/slow) but single is adequate for Mars re-entry rates.
+# Kinetics from Ref [2] Table 2 (silicone TGA, N2, ~5–20 K/min).
+# rho_0 = rho_virgin × gamma_resin = 260 × 0.34 = 88.4 kg/m³ (volatile part)
+# rho_r = 0 (silicone pyrolyses completely, leaving only SiO2 filler / cork char)
+# Note: remaining inert mass (silica + cork fibre) = 260 - 88.4 = 171.6; this
+# portion is captured by rho_char = 148 (some further densification occurs).
+components:
+  - name: silicone_resin
+    rho_0:    88.4       # [kg/m^3]  volatile apparent density (= rho_v × gamma_resin)
+    rho_r:     0.0       # [kg/m^3]  residual — silicone fully pyrolyses  # Ref [2]
+    A_rate:  3.5e10      # [1/s]  # Ref [2] Table 2; silicone TGA fit
+    E_act:   1.255e5     # [J/mol]  # Ref [2] Table 2; ~30 kcal/mol
+    m_exp:    3.0        # [-]  reaction order; # ESTIMATE: standard for silicone RTV (Ref [2])
+    h_decomp: 1.60e6    # [J/kg]  endothermic silicone decomposition; # ESTIMATE: ~1.4–1.8 MJ/kg
+                         # (Ref [3] reports ~1.5 MJ/kg for similar silicone ablators;
+                         #  includes latent heat of volatilisation of silicone oligomers)
+
+# Thermal conductivity of virgin SLA-561V [W/m/K] vs T [K].
+# Very low density → low k dominated by solid conduction in the silica/cork matrix
+# plus radiation through the porous microstructure (radiative term ∝ T³ at high T).
+# Primary source: Ref [2] Table 3; extended to high T by trend (# ESTIMATE at T>900 K).
+# Note: FIAT/GIANTS code uses these same tabular values for MSL analysis (Ref [7]).
+k_virgin:
+  - [200,   0.068]   # Ref [2] Table 3
+  - [250,   0.073]   # Ref [2] Table 3
+  - [300,   0.079]   # Ref [2] Table 3
+  - [350,   0.086]   # Ref [2] Table 3
+  - [400,   0.094]   # Ref [2] Table 3
+  - [450,   0.103]   # Ref [2] Table 3
+  - [500,   0.113]   # Ref [2] Table 3
+  - [600,   0.136]   # Ref [2] Table 3
+  - [700,   0.163]   # Ref [2] Table 3
+  - [800,   0.193]   # Ref [2] Table 3
+  - [900,   0.226]   # Ref [2] Table 3
+  - [1000,  0.261]   # ESTIMATE: radiative + conductive trend continues
+  - [1200,  0.340]   # ESTIMATE: ~T^1.2 scaling (radiation dominates at high T)
+  - [1500,  0.462]   # ESTIMATE
+  - [2000,  0.680]   # ESTIMATE
+
+# Thermal conductivity of char SLA-561V [W/m/K] vs T [K].
+# Char is silica + residual carbon; k higher than virgin at low T (denser skeleton),
+# strong radiative increase at high T.
+# Source: Ref [2] Table 3 (char layer data); # ESTIMATE at T>1000 K.
+k_char:
+  - [200,   0.095]   # Ref [2] Table 3
+  - [250,   0.100]   # Ref [2] Table 3
+  - [300,   0.105]   # Ref [2] Table 3
+  - [350,   0.112]   # Ref [2] Table 3
+  - [400,   0.120]   # Ref [2] Table 3
+  - [450,   0.129]   # Ref [2] Table 3
+  - [500,   0.139]   # Ref [2] Table 3
+  - [600,   0.162]   # Ref [2] Table 3
+  - [700,   0.190]   # Ref [2] Table 3
+  - [800,   0.222]   # Ref [2] Table 3
+  - [900,   0.258]   # Ref [2] Table 3
+  - [1000,  0.298]   # ESTIMATE: consistent with silica-carbon char trend
+  - [1200,  0.390]   # ESTIMATE
+  - [1500,  0.540]   # ESTIMATE
+  - [2000,  0.830]   # ESTIMATE
+
+# Specific heat of virgin SLA-561V [J/kg/K] vs T [K].
+# Dominated by cork/silica matrix contribution (cp ~800–1300 J/kg/K) plus
+# silicone contribution (~1200–1600 J/kg/K).
+# Source: Ref [2] Table 4; # ESTIMATE where noted.
+cp_virgin:
+  - [200,    820.0]   # Ref [2] Table 4
+  - [250,    890.0]   # Ref [2] Table 4
+  - [300,    960.0]   # Ref [2] Table 4
+  - [350,   1025.0]   # Ref [2] Table 4
+  - [400,   1088.0]   # Ref [2] Table 4
+  - [450,   1148.0]   # Ref [2] Table 4
+  - [500,   1205.0]   # Ref [2] Table 4
+  - [600,   1310.0]   # Ref [2] Table 4
+  - [700,   1400.0]   # Ref [2] Table 4
+  - [800,   1475.0]   # Ref [2] Table 4
+  - [900,   1535.0]   # Ref [2] Table 4
+  - [1000,  1580.0]   # ESTIMATE: approach Dulong-Petit limit for mixed oxide/carbon
+  - [1200,  1640.0]   # ESTIMATE
+  - [1500,  1700.0]   # ESTIMATE
+  - [2000,  1750.0]   # ESTIMATE
+
+# Specific heat of char SLA-561V [J/kg/K] vs T [K].
+# Char is predominantly amorphous SiO2 (~70%) + carbon residue (~30%).
+# SiO2 cp: 730 J/kg/K at 300 K → ~1050 J/kg/K at 1500 K.
+# Carbon cp: 710 J/kg/K at 300 K → ~2100 J/kg/K at 2000 K.
+# Weighted average matches the values below.
+# Source: Ref [2] Table 4 (lower T); # ESTIMATE at T>900 K.
+cp_char:
+  - [200,    680.0]   # Ref [2] Table 4
+  - [250,    730.0]   # Ref [2] Table 4
+  - [300,    780.0]   # Ref [2] Table 4
+  - [350,    830.0]   # Ref [2] Table 4
+  - [400,    880.0]   # Ref [2] Table 4
+  - [450,    928.0]   # Ref [2] Table 4
+  - [500,    975.0]   # Ref [2] Table 4
+  - [600,   1060.0]   # Ref [2] Table 4
+  - [700,   1135.0]   # Ref [2] Table 4
+  - [800,   1200.0]   # Ref [2] Table 4
+  - [900,   1255.0]   # Ref [2] Table 4
+  - [1000,  1300.0]   # ESTIMATE: SiO2 dominated char trend
+  - [1200,  1370.0]   # ESTIMATE
+  - [1500,  1450.0]   # ESTIMATE
+  - [2000,  1530.0]   # ESTIMATE
+
+# Pyrolysis gas specific enthalpy [J/kg] vs T [K], 298 K reference.
+# SLA-561V silicone pyrolysis produces primarily: CH4, C2H4, C2H2, H2, CO, SiO, H2O.
+# At low T (300–600 K): condensable silicone oligomers, mostly hydrocarbons.
+# At high T (>800 K): lighter species dominate (CH4, H2, CO).
+# ESTIMATE: constructed from cp_g integral (cp_g ~ 1400–2200 J/kg/K for silicone gas mix),
+# calibrated to give h_g(298 K) ≈ 0 and broadly consistent with Ref [3] silicone gas
+# enthalpy data for similar RTV-based ablators. The curve shape is shallower than TACOT
+# because silicone gas lacks the large thermal-cracking peak at 800-950 K.
+# # ESTIMATE: entire table — no published digitised h_g(T) table found for SLA-561V.
+h_g:
+  - [200,  -1.40e+05]   # ESTIMATE: cp_g ≈ 1400 J/kg/K below 298 K
+  - [250,  -6.72e+04]   # ESTIMATE
+  - [298,   0.00e+00]   # reference point
+  - [300,   2.80e+03]   # ESTIMATE
+  - [350,   7.28e+04]   # ESTIMATE: cp_g ~ 1456 J/kg/K (hydrocarbon gas mix)
+  - [400,   1.46e+05]   # ESTIMATE
+  - [450,   2.22e+05]   # ESTIMATE
+  - [500,   3.00e+05]   # ESTIMATE: cp_g ~ 1560 J/kg/K
+  - [600,   4.66e+05]   # ESTIMATE
+  - [700,   6.40e+05]   # ESTIMATE: cp_g ~ 1740 J/kg/K (mild cracking begins)
+  - [800,   8.25e+05]   # ESTIMATE
+  - [900,   1.025e+06]  # ESTIMATE: some endothermic cracking (less severe than TACOT)
+  - [1000,  1.240e+06]  # ESTIMATE
+  - [1100,  1.465e+06]  # ESTIMATE
+  - [1200,  1.700e+06]  # ESTIMATE: cp_g ~ 2350 J/kg/K (cracking complete)
+  - [1400,  2.200e+06]  # ESTIMATE
+  - [1600,  2.730e+06]  # ESTIMATE
+  - [1800,  3.290e+06]  # ESTIMATE
+  - [2000,  3.880e+06]  # ESTIMATE
+  - [2200,  4.510e+06]  # ESTIMATE
+  - [2500,  5.500e+06]  # ESTIMATE
+  - [3000,  7.200e+06]  # ESTIMATE
+
+# Elemental mass fractions [C, H, O, N] of SLA-561V pyrolysis gas vs T [K].
+# Silicone (PDMS) empirical formula: (C2H6OSi)_n.  Full decomposition gives:
+#   C: 24.2 wt%, H: 7.6 wt%, O: 16.0 wt%, Si: 28.0 wt% → remaining 24.2% polymer backbone.
+# Silicon is NOT in SCAM schema; Si is distributed to O here (conservative overestimate).
+# Effective C:H:O (excluding Si as a condensed-SiO2 sink) ≈ C:0.35, H:0.25, O:0.40.
+# At high T, CO formation increases C fraction; H2 increases H; SiO stays condensed.
+# # ESTIMATE: elemental fractions from PDMS stoichiometry + equilibrium trend.
+# # TODO: add Si column to SCAM element-transport schema for accurate SLA chemistry.
+pyro_elem_fracs:
+  C:
+    - [300,   0.28]   # ESTIMATE: PDMS low-T (CH4 + C2-hydrocarbons dominant)
+    - [500,   0.30]   # ESTIMATE
+    - [700,   0.33]   # ESTIMATE
+    - [900,   0.36]   # ESTIMATE
+    - [1100,  0.39]   # ESTIMATE
+    - [1300,  0.42]   # ESTIMATE: CO builds up
+    - [1500,  0.44]   # ESTIMATE
+    - [2000,  0.46]   # ESTIMATE
+  H:
+    - [300,   0.25]   # ESTIMATE: large H from CH4, C2H6 at low T
+    - [500,   0.22]   # ESTIMATE
+    - [700,   0.18]   # ESTIMATE
+    - [900,   0.14]   # ESTIMATE
+    - [1100,  0.10]   # ESTIMATE
+    - [1300,  0.07]   # ESTIMATE
+    - [1500,  0.05]   # ESTIMATE
+    - [2000,  0.03]   # ESTIMATE
+  O:
+    - [300,   0.47]   # ESTIMATE: O + Si (Si included in O bucket — see note above)
+    - [500,   0.48]   # ESTIMATE
+    - [700,   0.49]   # ESTIMATE
+    - [900,   0.50]   # ESTIMATE
+    - [1100,  0.51]   # ESTIMATE
+    - [1300,  0.51]   # ESTIMATE
+    - [1500,  0.51]   # ESTIMATE
+    - [2000,  0.51]   # ESTIMATE
+  N:
+    - [300,   0.00]
+    - [500,   0.00]
+    - [700,   0.00]
+    - [900,   0.00]
+    - [1100,  0.00]
+    - [1300,  0.00]
+    - [1500,  0.00]
+    - [2000,  0.00]
+
+# Surface emissivity.
+# Ref [2]: measured TPS coupon emissivity ε ≈ 0.87 (virgin cork/silica surface).
+# Char emissivity ε ≈ 0.88–0.90 (silica-rich char, similar to carbon black char).
+# Temperature dependence weak for silica; use scalar values.
+emissivity:      0.87   # virgin  # Ref [2]
+emissivity_char: 0.89   # char    # Ref [2]; # ESTIMATE slight increase with charring
+
+# B' TABLE NOT AVAILABLE — Si-bearing material
+# SLA-561V is a silicone (RTV) impregnated cork/silica matrix. The silicone resin
+# pyrolyzes to cyclic siloxanes (D4/D5) and SiO at high wall temperatures.
+# The current Cantera CNO mechanism only supports C, H, O, N; Si is absent from the _M
+# element dict in bprime_evaluator.py. A C-H-O-N B' table would neglect all Si
+# surface chemistry and produce incorrect B'_c values for this material.
+# To generate B' tables for SLA-561V:
+#   1. Extend Cantera mechanism to support Si (add Si to _M, add SiO/SiO2/siloxane species)
+#   2. Validate against Covington 2004 / Milos 1999 arc-jet data
+#   3. Re-run scam/tools/generate_bprime.py with a Si-capable Cantera backend config
+# b_prime_table: sla561v_bprime_air.yaml  # NOT AVAILABLE: requires Si-capable Cantera backend

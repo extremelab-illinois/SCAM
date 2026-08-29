@@ -1,0 +1,112 @@
+# SPDX-License-Identifier: MIT
+# Carbon-Carbon — Amar (2006) thesis Table 8.12
+#
+# Non-decomposing carbon-carbon composite used in §8.7 of Amar (2006):
+#   "Thermochemical Ablation of a Non-Decomposing Material"
+#
+# Source:
+#   Amar, Adam Joseph (2006), "Modeling of One-Dimensional Ablation with Porous
+#   Flow Using Finite Control Volume Procedure," PhD thesis, Table 8.12 (p.107).
+#   The thesis notes that k and Cp data come from personal communication with
+#   Don Potter and David Kuntz, Sandia National Laboratories.
+#
+# Property conversions (BTU → SI):
+#   Btu/lbm/°R → J/kg/K  : × 4186.8
+#   Btu/ft/s/°R → W/m/K  : × 6230.64
+#   °R → K               : × 5/9
+#
+# Density not listed in Table 8.12.  100 lbm/ft³ = 1602 kg/m³ is the standard
+# value for dense C/C composites of this era (CMA legacy default).
+#
+# Emissivity 0.8 is stated in §8.7.1 (p.106) of the thesis.
+#
+# Surface chemistry: carbon-in-air equilibrium (same as Calcarb).  B′_c depends
+# only on edge pressure and wall temperature for a non-pyrolyzing carbon surface.
+# The calcarb_bprime_air.yaml table covers p_e = 0.001–1 atm; the §8.7 BC peak
+# pressure is ~2 atm, so BPrimeTable pressure clamping to 1 atm will apply near
+# peak heating.  Carbon-in-air B′_c is insensitive to pressure in this range.
+
+name: CARBON_CARBON_AMAR2006
+description: "Carbon-carbon composite from Amar (2006) Table 8.12, non-decomposing"
+material_category: ablative_carbon
+card_version: "1.0"
+status: provisional
+source: "Amar 2006 PhD thesis Table 8.12; k and Cp from Potter & Kuntz (Sandia NL)"
+
+rho_virgin:  1602.0   # [kg/m³]  100 lbm/ft³, standard dense C/C composite
+rho_char:    1601.0   # [kg/m³]  non-decomposing; set 1 kg/m³ below virgin to satisfy loader
+gamma_resin: 0.00     # [-]  no resin; fully inert carbon structure
+
+decomposing: false
+components: []
+
+# Thermal conductivity [W/m/K] vs T [K] — Table 8.12 converted from Btu/ft/s/°R
+k_virgin:
+  - [  255.56,  64.18]   #  460°R, 0.010300 Btu/ft/s/°R
+  - [  533.33,  64.80]   #  960°R, 0.010400 Btu/ft/s/°R
+  - [  811.11,  53.58]   # 1460°R, 0.008600 Btu/ft/s/°R
+  - [ 1088.89,  46.11]   # 1960°R, 0.007400 Btu/ft/s/°R
+  - [ 1366.67,  39.25]   # 2460°R, 0.006300 Btu/ft/s/°R
+  - [ 1644.44,  34.89]   # 2960°R, 0.005600 Btu/ft/s/°R
+  - [ 1922.22,  31.79]   # 3460°R, 0.005100 Btu/ft/s/°R
+  - [ 2200.00,  30.54]   # 3960°R, 0.004900 Btu/ft/s/°R
+  - [ 2477.78,  29.91]   # 4460°R, 0.004800 Btu/ft/s/°R
+  - [ 2755.56,  29.29]   # 4960°R, 0.004700 Btu/ft/s/°R
+  - [ 3033.33,  29.28]   # 5460°R, 0.004700 Btu/ft/s/°R
+  - [ 5555.56,  29.28]   # 10000°R, extrapolated flat
+
+k_char:
+  - [  255.56,  64.18]
+  - [  533.33,  64.80]
+  - [  811.11,  53.58]
+  - [ 1088.89,  46.11]
+  - [ 1366.67,  39.25]
+  - [ 1644.44,  34.89]
+  - [ 1922.22,  31.79]
+  - [ 2200.00,  30.54]
+  - [ 2477.78,  29.91]
+  - [ 2755.56,  29.29]
+  - [ 3033.33,  29.28]
+  - [ 5555.56,  29.28]
+
+# Specific heat [J/kg/K] vs T [K] — Table 8.12 converted from Btu/lbm/°R
+cp_virgin:
+  - [  255.56,   544.4]  #  460°R, 0.1300 Btu/lbm/°R
+  - [  533.33,   921.1]  #  960°R, 0.2200 Btu/lbm/°R
+  - [  811.11,  1318.8]  # 1460°R, 0.3150 Btu/lbm/°R
+  - [ 1088.89,  1624.1]  # 1960°R, 0.3879 Btu/lbm/°R
+  - [ 1366.67,  1775.2]  # 2460°R, 0.4240 Btu/lbm/°R
+  - [ 1644.44,  2009.7]  # 2960°R, 0.4800 Btu/lbm/°R
+  - [ 1922.22,  2080.8]  # 3460°R, 0.4970 Btu/lbm/°R
+  - [ 2200.00,  2139.0]  # 3960°R, 0.5109 Btu/lbm/°R
+  - [ 2477.78,  2122.9]  # 4460°R, 0.5070 Btu/lbm/°R
+  - [ 2755.56,  2143.6]  # 4960°R, 0.5120 Btu/lbm/°R
+  - [ 3033.33,  2177.1]  # 5460°R, 0.5200 Btu/lbm/°R
+  - [ 5555.56,  2177.1]  # 10000°R, extrapolated flat
+
+cp_char:
+  - [  255.56,   544.4]
+  - [  533.33,   921.1]
+  - [  811.11,  1318.8]
+  - [ 1088.89,  1624.1]
+  - [ 1366.67,  1775.2]
+  - [ 1644.44,  2009.7]
+  - [ 1922.22,  2080.8]
+  - [ 2200.00,  2139.0]
+  - [ 2477.78,  2122.9]
+  - [ 2755.56,  2143.6]
+  - [ 3033.33,  2177.1]
+  - [ 5555.56,  2177.1]
+
+# No pyrolysis gas (inert non-decomposing material).
+h_g:
+  - [255.56, 0.0]
+  - [5555.56, 0.0]
+
+emissivity:      0.8   # §8.7.1 text (p.106)
+emissivity_char: 0.8
+
+# Carbon-in-air equilibrium B' table — full Cantera CNO (C, C2, C3 species).
+# Multi-pressure: 0.001/0.01/0.1/1/2/5 atm.  Covers the Amar §8.7 peak of ~1.6 atm.
+# See carbon_carbon_amar2006_ace.yaml for the ACE-style (no C2/C3) variant.
+b_prime_table: calcarb_bprime_air_mp.yaml

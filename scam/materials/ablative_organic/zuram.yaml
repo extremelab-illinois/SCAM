@@ -1,0 +1,241 @@
+# SPDX-License-Identifier: MIT
+# ZURAM® 18/50 — Low-density carbon-phenolic ablator, DLR
+# Mersen Calcarb CBCF 18/2000 fiber preform impregnated with phenolic resin.
+# Used on ESA entry mission TPS studies (AblaNTIS characterization campaign).
+#
+# Sources (as numbered in zuram_official.txt):
+#   [1] Zuram_aged_data_en.xlsx (Zuber, Reimer, DLR) — LFA thermal diffusivity
+#       of virgin ZURAM pre-charred at different temperatures; k fits valid to 500 K.
+#   [2] DLR_updated_data.ods (Zuber, Reimer, DLR) — permeabilities, volume fractions.
+#   [3] TACOT_3.0.xls (Lachaud et al.) — emissivity values.
+#   [4] VKI_ZURAM_characterization_v1-5.ods (Turchi, Torres, VKI) — densities,
+#       volume fractions, elemental compositions, resin formation enthalpy.
+#   [5] AblaNTIS TN-2.2 (Torres, Helber, Turchi, VKI) — cp and char k fits.
+#   [6] LFA_charred_ZURAM_Summary.xlsx (Pintsuk, FZJ) — LFA on pre-charred ZURAM.
+#
+# Structural data (Ref [4]):
+#   Volume fractions — virgin: gas=0.707, fibers=0.130, resin=0.163
+#                    — char:   gas=0.769, fibers=0.130, resin(char)=0.101
+#   Intrinsic densities: fibers=1580 kg/m³, resin(virgin)=1320 kg/m³,
+#                        resin(char)=1320 kg/m³
+#   Average density — virgin=419 kg/m³, char=338 kg/m³
+#   Resin mass fraction of TGA sample: 0.5418
+#
+# Note on k fit validity:
+#   Virgin k fit (a/T + b) valid to 500 K only (Ref [1] LFA in He); extrapolated
+#   above 500 K. The formula underestimates radiation contribution at high T.
+#   Char k fit (a/T + b + cT + dT² + eT³) from Refs [5][6]; valid to ~1500 K.
+#
+# Note on cp fit validity:
+#   Virgin cp formula (a + bT + c/T) valid to ~500 K (Ref [5]); overestimates
+#   at high T because the TGA apparent cp includes pyrolysis enthalpy contributions
+#   absorbed in the Arrhenius component h_decomp terms. Above 500 K treat as
+#   extrapolation — the material is actively charring in that range anyway.
+#   Char cp same formula as Calcarb CBCF 18/2000 (expected: same fiber skeleton).
+
+name: ZURAM
+description: "ZURAM 18/50 — DLR carbon-phenolic (Calcarb CBCF 18/2000 + phenolic resin); AblaNTIS characterization"
+material_category: ablative_organic
+card_version: "2.0"
+status: provisional
+
+rho_virgin: 419.0   # [kg/m³]  Ref [4]; fiber 1580*0.130 + resin 1320*0.163 = 419 kg/m³
+rho_char:   338.0   # [kg/m³]  Ref [4]; fiber 1580*0.130 + charred resin 1320*0.101 = 338 kg/m³
+gamma_resin: 0.514  # [-]  resin mass fraction in virgin = 1320*0.163/419; Ref [4]
+                    # Note: only 19.5% (81/419) of virgin density decomposes to gas;
+                    # the remaining resin fraction (62%) forms carbonaceous char residue.
+
+# Porous medium parameters (Ref [2])
+eps_g_virgin: 0.707   # [-]  gas volume fraction, virgin; Ref [4]
+eps_g_char:   0.769   # [-]  gas volume fraction, char; Ref [4]
+permeability: 3.97e-8 # [m²]  char permeability; Ref [2]
+                      # (virgin permeability = 1.06e-11 m²; increases ~3700× on charring)
+tortuosity:   1.10    # [-]  char tortuosity; Ref [2] (virgin = 1.20)
+
+# Arrhenius kinetics — 4-reaction phenolic decomposition model; Ref [5]
+# f_i = fraction of resin apparent density (215.16 kg/m³) that reaction i decomposes.
+# Σ f_i * rho_resin = 0.38024 * 215.16 = 81.8 kg/m³ = rho_virgin - rho_char = 81 kg/m³ ✓
+# log10(A) converted to A [1/s]; E/R [K] converted to E_act [J/mol] = E/R * 8.314.
+# Residual density rho_r = 0 for each reaction (the charred residue is the non-reacting
+# fraction of the resin matrix, already accounted for in rho_char).
+# h_decomp = 2.144 MJ/kg per reaction from phenolic resin formation enthalpy Ref [4]:
+#   H_f(resin) = -2.144 MJ/kg; H_f(char) = 0 → ΔH = +2.144 MJ/kg (endothermic).
+components:
+  - name: phenolic_r1
+    rho_0:    7.55      # [kg/m³]  f=0.03507 * 215.16; Ref [5]
+    rho_r:    0.0       # fully decomposes to gas
+    A_rate:   2.138e5   # [1/s]  10^5.330; Ref [5]
+    E_act:    68009     # [J/mol]  8180 K * 8.314; Ref [5]
+    m_exp:    4.30      # [-]  Ref [5]
+    h_decomp: 2.144e6   # [J/kg]  Ref [4]
+
+  - name: phenolic_r2
+    rho_0:    5.96      # [kg/m³]  f=0.02769 * 215.16; Ref [5]
+    rho_r:    0.0
+    A_rate:   4.898e8   # [1/s]  10^8.690; Ref [5]
+    E_act:    133855    # [J/mol]  16100 K * 8.314; Ref [5]
+    m_exp:    3.70      # [-]  Ref [5]
+    h_decomp: 2.144e6   # [J/kg]  Ref [4]
+
+  - name: phenolic_r3
+    rho_0:    20.65     # [kg/m³]  f=0.09598 * 215.16; Ref [5]
+    rho_r:    0.0
+    A_rate:   3.981e10  # [1/s]  10^10.60; Ref [5]
+    E_act:    179582    # [J/mol]  21600 K * 8.314; Ref [5]
+    m_exp:    2.57      # [-]  Ref [5]
+    h_decomp: 2.144e6   # [J/kg]  Ref [4]
+
+  - name: phenolic_r4
+    rho_0:    47.66     # [kg/m³]  f=0.2215 * 215.16; Ref [5]
+    rho_r:    0.0
+    A_rate:   4.677e11  # [1/s]  10^11.67; Ref [5]
+    E_act:    219490    # [J/mol]  26400 K * 8.314; Ref [5]
+    m_exp:    4.63      # [-]  Ref [5]
+    h_decomp: 2.144e6   # [J/kg]  Ref [4]
+
+# Thermal conductivity — through-thickness [W/m/K] vs T [K].
+# Virgin: k = a/T + b; a=-31.39, b=0.2443 — LFA in He, Ref [1], valid to 500 K.
+# Values above 500 K are extrapolations; formula underestimates radiation at high T.
+k_virgin:   # [W/m/K] vs T [K]
+  - [  200, 0.0873]    # formula
+  - [  300, 0.1397]    # formula
+  - [  400, 0.1658]    # formula
+  - [  500, 0.1815]    # formula; upper limit of Ref [1] fit
+  - [  600, 0.1920]    # EXTRAPOLATED: formula
+  - [  700, 0.1995]    # EXTRAPOLATED
+  - [  800, 0.2051]    # EXTRAPOLATED
+  - [ 1000, 0.2129]    # EXTRAPOLATED
+  - [ 1200, 0.2181]    # EXTRAPOLATED
+  - [ 1500, 0.2234]    # EXTRAPOLATED
+  - [ 2000, 0.2286]    # EXTRAPOLATED
+  - [ 3000, 0.2338]    # EXTRAPOLATED
+
+# Char: k = a/T + b + cT + dT² + eT³; a=-56.02, b=0.3812, c=5.354e-4, d=-3.605e-7,
+#       e=1.267e-10 — LFA in He, Refs [5][6], valid to ~1500 K.
+k_char:     # [W/m/K] vs T [K]
+  - [  200, 0.1948]    # formula
+  - [  300, 0.3261]    # formula
+  - [  400, 0.4057]    # formula
+  - [  500, 0.4626]    # formula
+  - [  600, 0.5067]    # formula
+  - [  700, 0.5428]    # formula
+  - [  800, 0.5736]    # formula
+  - [  900, 0.6012]    # formula
+  - [ 1000, 0.6268]    # formula
+  - [ 1200, 0.6768]    # formula
+  - [ 1500, 0.7634]    # formula; upper limit of Refs [5][6] fit
+  - [ 2000, 0.9956]    # EXTRAPOLATED: formula
+  - [ 2500, 1.4239]    # EXTRAPOLATED
+  - [ 3000, 2.1451]    # EXTRAPOLATED
+
+# In-plane conductivity tables (stored; not used by 1-D SCAM solver).
+# Virgin: k = a/T + b; a=-108.1, b=0.8784 — Ref [1], valid to 500 K.
+# Char:   k = a/T + b + cT + dT² + eT³; a=-470, b=2.476, c=-9.128e-4, d=1.606e-7,
+#         e=8.523e-11 — Refs [5][6], valid to ~1500 K.
+k_virgin_ip:   # [W/m/K] vs T [K]
+  - [  200, 0.3379]
+  - [  300, 0.5181]
+  - [  400, 0.6081]
+  - [  500, 0.6622]    # upper limit of Ref [1] fit
+  - [  600, 0.6982]    # EXTRAPOLATED
+  - [  800, 0.7433]    # EXTRAPOLATED
+  - [ 1000, 0.7703]    # EXTRAPOLATED
+  - [ 1500, 0.8063]    # EXTRAPOLATED
+  - [ 3000, 0.8424]    # EXTRAPOLATED
+
+k_char_ip:   # [W/m/K] vs T [K]
+  - [  300, 0.6522]
+  - [  400, 0.9670]
+  - [  500, 1.1304]
+  - [  700, 1.2735]
+  - [ 1000, 1.3390]
+  - [ 1200, 1.3675]
+  - [ 1500, 1.4425]    # upper limit of Refs [5][6] fit
+  - [ 2000, 1.7396]    # EXTRAPOLATED
+  - [ 3000, 3.3275]    # EXTRAPOLATED
+
+# Specific heat — virgin [J/kg/K] vs T [K].
+# Formula: cp = a + bT + c/T; a=1725, b=0.656, c=-3.11e5 — Ref [5], valid to ~500 K.
+# Formula gives negative values below ~272 K; table starts at 300 K.
+# Above 500 K the formula is extrapolated and overestimates cp (TGA apparent cp
+# includes pyrolysis enthalpy; true sensible cp is lower). The Arrhenius h_decomp
+# terms in the components carry the chemical energy; cp_virgin here should be the
+# sensible cp only. Use these values with caution above 500 K.
+cp_virgin:  # [J/kg/K] vs T [K]
+  - [  300,  885.1]    # formula
+  - [  400, 1209.9]    # formula
+  - [  500, 1431.0]    # formula; upper limit of Ref [5] fit
+  - [  600, 1600.3]    # EXTRAPOLATED: formula
+  - [  700, 1739.9]    # EXTRAPOLATED
+  - [  800, 1861.1]    # EXTRAPOLATED
+  - [ 1000, 2070.0]    # EXTRAPOLATED
+  - [ 1200, 2253.0]    # EXTRAPOLATED
+  - [ 1500, 2501.7]    # EXTRAPOLATED
+  - [ 2000, 2881.5]    # EXTRAPOLATED
+  - [ 3000, 3589.3]    # EXTRAPOLATED; significantly above graphite plateau ~2100 J/kg/K
+
+# Specific heat — char [J/kg/K] vs T [K].
+# Formula: cp = a + bT + c/T; a=1850, b=0.248, c=-3.94e5 — Ref [5].
+# Same formula as Calcarb CBCF 18/2000 (expected: char is the same carbon fiber skeleton).
+cp_char:    # [J/kg/K] vs T [K]
+  - [  300,  611.1]    # formula
+  - [  400,  964.2]    # formula
+  - [  500, 1186.0]    # formula
+  - [  600, 1342.1]    # formula
+  - [  700, 1460.7]    # formula
+  - [  800, 1555.9]    # formula
+  - [  900, 1635.4]    # formula
+  - [ 1000, 1704.0]    # formula
+  - [ 1200, 1819.3]    # formula
+  - [ 1500, 1959.3]    # formula
+  - [ 2000, 2149.0]    # EXTRAPOLATED
+  - [ 3000, 2462.7]    # EXTRAPOLATED
+
+# Pyrolysis gas enthalpy [J/kg] vs T [K], 298 K reference.
+# ZURAM pyrolysis gas elemental composition (Ref [4]):
+#   C: 0.171, H: 0.722, O: 0.107 (mole fracs) → C: 0.457, H: 0.162, O: 0.381 (mass fracs)
+# Represented as CH4:0.5697, CO:0.1180, H2O:0.3123 (species mole fracs).
+# h_g table estimated from phenolic cracking curve (similar to PICA/ASTERM).
+# TODO: compute from Cantera equilibrium using ZURAM pyro composition.
+h_g:
+  - [200,  -1.10e5]   # ESTIMATE: phenolic gas cp ~1400 J/kg/K below 298 K
+  - [250,  -5.50e4]   # ESTIMATE
+  - [298,   0.00]
+  - [350,   6.00e4]   # ESTIMATE
+  - [400,   1.30e5]   # ESTIMATE
+  - [500,   3.00e5]   # ESTIMATE
+  - [600,   5.20e5]   # ESTIMATE
+  - [700,   8.50e5]   # ESTIMATE: onset of cracking
+  - [800,   1.60e6]   # ESTIMATE: cracking peak region
+  - [900,   2.80e6]   # ESTIMATE
+  - [1000,  3.80e6]   # ESTIMATE
+  - [1200,  5.10e6]   # ESTIMATE
+  - [1500,  6.80e6]   # ESTIMATE
+  - [2000,  9.20e6]   # ESTIMATE
+  - [3000,  1.40e7]   # ESTIMATE
+
+# Elemental mass fractions of ZURAM pyrolysis gas (Ref [4]).
+# Single representative composition (T-independent per official data):
+#   C: 0.457, H: 0.162, O: 0.381 (mass fracs) = C: 0.171, H: 0.722, O: 0.107 (mole fracs)
+# Slight T-dependence estimated by analogy with phenolic gas cracking.
+pyro_elem_fracs:
+  C:
+    - [300,   0.457]  # Ref [4]
+    - [3000,  0.457]  # T-independent per official data
+  H:
+    - [300,   0.162]  # Ref [4]
+    - [3000,  0.162]
+  O:
+    - [300,   0.381]  # Ref [4]
+    - [3000,  0.381]
+  N:
+    - [300,   0.000]  # phenolic resin contains no significant N
+    - [3000,  0.000]
+
+# Surface emissivity — Ref [3]
+emissivity:      0.80   # virgin; Ref [3]
+emissivity_char: 0.90   # char;   Ref [3]
+
+# B' table for surface ablation chemistry in air.
+# Generated by zuram_bprime_config.yaml using pyro_y = CH4:0.5697,CO:0.1180,H2O:0.3123.
+b_prime_table: zuram_bprime_air.yaml
