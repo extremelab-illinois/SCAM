@@ -241,7 +241,7 @@ MPLBACKEND=Agg python3 examples/verification/ablation2/compare_pato_ablation2.py
 
 See `docs/verification/pato_validation.md` for a detailed record of the physics fixes and residual verification gaps.
 
-**Note on PATO reference data:** [PATO](https://pato.ac) is a separate project (built on OpenFOAM, GPL-licensed) and is not redistributed here. This repository ships only small, derived numerical outputs (e.g. `PATO_Energy_TestCase_2.2.txt`) used as reference values for the code-to-code comparisons above — not PATO source code. Obtain PATO itself from its own repository under its own license if you need to reproduce the reference runs.
+**Note on PATO reference data:** [PATO](https://pato.ac/) is a separate project (built on OpenFOAM, GPL-licensed) and is not redistributed here. This repository ships only small, derived numerical outputs (e.g. `PATO_Energy_TestCase_2.2.txt`) used as reference values for the code-to-code comparisons above — not PATO source code. Obtain PATO itself from its own repository under its own license if you need to reproduce the reference runs.
 
 ---
 
