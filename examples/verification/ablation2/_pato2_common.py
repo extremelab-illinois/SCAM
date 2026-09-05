@@ -22,7 +22,13 @@ import numpy as np
 # ---------------------------------------------------------------------------
 PATO_DIR  = Path.home() / "PATO-dev"
 PATO_TUTS = PATO_DIR / "tutorials/1D"
-PATO_REF  = PATO_DIR / "src/applications/utilities/tests/testsuites/tutorials/ref/1D"
+_LOCAL_REF = Path(__file__).resolve().parent / "pato_reference"
+# Repo-bundled copy of the small PATO reference outputs (see README's "Note on
+# PATO reference data") is used when present; falls back to a local PATO-dev
+# checkout for regenerating/extending the bundled set.
+PATO_REF  = _LOCAL_REF if _LOCAL_REF.exists() else (
+    PATO_DIR / "src/applications/utilities/tests/testsuites/tutorials/ref/1D"
+)
 PATO_MAT  = PATO_DIR / "data/Materials/Composites/TACOT"
 REPO      = Path(__file__).resolve().parent.parent.parent.parent
 

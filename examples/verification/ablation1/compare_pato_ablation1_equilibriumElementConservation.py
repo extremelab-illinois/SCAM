@@ -161,13 +161,21 @@ def _T_surf(t: float) -> float:
 # ---------------------------------------------------------------------------
 # Reference data (PATO run with equilibrium element conservation gas model)
 # ---------------------------------------------------------------------------
+# Repo-bundled copies of the small PATO reference outputs (see README's "Note
+# on PATO reference data") are used when present; falls back to a local
+# PATO-dev checkout for regenerating/extending the bundled set.
+_LOCAL_REF_DIR = Path(__file__).resolve().parent / "pato_reference"
 _REF_BASE = (
+    _LOCAL_REF_DIR / "AblationTestCase_1.0_equilibriumElementConservation/output/porousMat/scalar"
+    if (_LOCAL_REF_DIR / "AblationTestCase_1.0_equilibriumElementConservation").exists() else
     Path.home()
     / "PATO-dev/src/applications/utilities/tests/testsuites/tutorials/ref"
     / "1D/AblationTestCase_1.0_equilibriumElementConservation/output/porousMat/scalar"
 )
 # Tabulated PATO reference (base case) for comparison of gas-model effect
 _BASE_CASE = (
+    _LOCAL_REF_DIR / "AblationTestCase_1.0/output/porousMat/scalar"
+    if (_LOCAL_REF_DIR / "AblationTestCase_1.0").exists() else
     Path.home()
     / "PATO-dev/src/applications/utilities/tests/testsuites/tutorials/ref"
     / "1D/AblationTestCase_1.0/output/porousMat/scalar"

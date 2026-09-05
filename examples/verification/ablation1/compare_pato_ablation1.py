@@ -31,7 +31,11 @@ from scam.solvers.material_response import run
 # Paths
 # ---------------------------------------------------------------------------
 PATO_CASE = Path.home() / "PATO-dev/tutorials/1D/AblationTestCase_1.0"
-PATO_REF_CASE = Path.home() / (
+_LOCAL_REF_CASE = Path(__file__).resolve().parent / "pato_reference/AblationTestCase_1.0"
+# Repo-bundled copy of the small PATO reference outputs (see README's "Note on
+# PATO reference data") is used when present; falls back to a local PATO-dev
+# checkout for regenerating/extending the bundled set.
+PATO_REF_CASE = _LOCAL_REF_CASE if _LOCAL_REF_CASE.exists() else Path.home() / (
     "PATO-dev/src/applications/utilities/tests/testsuites/tutorials/ref/1D/AblationTestCase_1.0"
 )
 PATO_MAT = Path.home() / "PATO-dev/data/Materials/Composites/TACOT"

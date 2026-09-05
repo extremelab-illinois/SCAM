@@ -128,7 +128,14 @@ def _T_surf(t: float) -> float:
 # ---------------------------------------------------------------------------
 # PATO reference data
 # ---------------------------------------------------------------------------
-_REF = (
+_LOCAL_REF = (
+    Path(__file__).resolve().parent
+    / "pato_reference/AblationTestCase_1.0_multiPorousMat/output"
+)
+# Repo-bundled copy of the small PATO reference outputs (see README's "Note on
+# PATO reference data") is used when present; falls back to a local PATO-dev
+# checkout for regenerating/extending the bundled set.
+_REF = _LOCAL_REF if _LOCAL_REF.exists() else (
     Path.home()
     / "PATO-dev/src/applications/utilities/tests/testsuites/tutorials/ref"
     / "1D/AblationTestCase_1.0_multiPorousMat/output"
