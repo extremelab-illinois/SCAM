@@ -1,0 +1,69 @@
+name: Save Clone & View History
+
+on:
+  schedule:
+    - cron: '0 0 * * 0'   # every Sunday 00:00 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  track-traffic:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Fetch traffic data
+        run: |
+          curl -sSL -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+               -H "Accept: application/vnd.github.v3+json" \
+               "https://api.github.com/repos/${{ github.repository }}/traffic/clones" \
+               -o clones.json
+          curl -sSL -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+               -H "Accept: application/vnd.github.v3+json" \
+               "https://api.github.com/repos/${{ github.repository }}/traffic/views" \
+               -o views.json
+
+      - name: Merge into analytics branch
+        id: merge
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          # copy the merge script + fetched JSON out of the tree before we
+          # switch branches, since .github/scripts/ doesn't exist on analytics
+          mkdir -p /tmp/traffic
+          cp .github/scripts/merge_traffic.py clones.json views.json /tmp/traffic/
+
+          git fetch origin analytics || true
+          if git show-ref --verify --quiet refs/remotes/origin/analytics; then
+            git checkout -B analytics origin/analytics
+          else
+            git checkout --orphan analytics
+            git rm -rf . >/dev/null 2>&1 || true
+          fi
+
+          mkdir -p analytics
+          python3 /tmp/traffic/merge_traffic.py \
+            --clones /tmp/traffic/clones.json --views /tmp/traffic/views.json \
+            --csv analytics/traffic_history.csv \
+            --summary-out /tmp/traffic/summary.txt
+
+          {
+            echo "SLACK_SUMMARY<<EOF"
+            cat /tmp/traffic/summary.txt
+            echo "EOF"
+          } >> "$GITHUB_ENV"
+
+          git add analytics/traffic_history.csv
+          git commit -m "Traffic snapshot: $(date -u +%Y-%m-%d)" || echo "NO_CHANGES=1" >> "$GITHUB_ENV"
+          git push origin analytics
+
+      - name: Slack summary
+        if: env.NO_CHANGES != '1'
+        run: |
+          payload=$(python3 -c 'import json, os; print(json.dumps({"text": os.environ["SLACK_SUMMARY"]}))')
+          curl -sSL -X POST -H "Content-type: application/json" \
+            --data "$payload" \
+            "${{ secrets.SLACK_WEBHOOK_URL }}"
