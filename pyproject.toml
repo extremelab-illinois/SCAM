@@ -5,20 +5,10 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "scam"
-version = "0.1.0"
+version = "0.2.0"
 description = "Simple Code for Ablative Materials — 1-D charring ablation solver"
-readme = "README.md"
 license = "MIT"
-authors = [
-    { name = "Francesco Panerai", email = "fpaneraiai@gmail.com" },
-]
 requires-python = ">=3.10"
-classifiers = [
-    "Development Status :: 4 - Beta",
-    "Intended Audience :: Science/Research",
-    "Programming Language :: Python :: 3",
-    "Topic :: Scientific/Engineering :: Physics",
-]
 dependencies = [
     "numpy>=1.24",
     "scipy>=1.10",
@@ -26,16 +16,17 @@ dependencies = [
     "matplotlib>=3.7",
 ]
 
-[project.urls]
-# TODO: update once the public repository location is finalized.
-Homepage = "https://github.com/fpanerai/scam"
-Repository = "https://github.com/fpanerai/scam"
-
 [project.optional-dependencies]
 dev = ["pytest>=7.0", "pytest-cov", "h5py>=3.8"]
 hdf5 = ["h5py>=3.8"]
 bprime = ["cantera>=3.0", "pandas>=1.5"]
+# NOTE: Mutation++ is intentionally NOT listed here. It is a compiled C++ library
+# with its own CMake build and has no pip distribution, so it cannot be expressed
+# as a dependency. It is optional (Cantera covers every live-chemistry path);
+# only compare_pato_ablation2_live_vs_pretab.py and the *_mpp_config.yaml cards
+# use it. See the "Optional: Mutation++" section of README.md.
 jax = ["jax[cpu]>=0.6"]
+2d = ["jax[cpu]>=0.6", "h5py>=3.8"]
 
 [project.scripts]
 scam = "scam.cli.main:main"
@@ -43,7 +34,6 @@ scam = "scam.cli.main:main"
 [tool.setuptools.packages.find]
 where = ["."]
 include = ["scam*"]
-exclude = ["scam.mesh2d*", "scam.physics2d*", "scam.numerics2d*", "scam.solvers2d*", "scam.state2d*"]
 
 [tool.setuptools.package-data]
 "scam.materials" = ["**/*.yaml", "**/*.xml"]

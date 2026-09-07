@@ -12,8 +12,23 @@
 #   - Appendix D states that its properties were gathered from different sources
 #     and may not all correspond to the same carbon-phenolic composite; the data
 #     were used by Amar for demonstration/verification calculations, not design.
-#   - Conductivity values in Tables D.3-D.4 are interpreted as Btu/(ft-s-degR),
-#     the standard thermal-conductivity unit consistent with the tabulated values.
+#   - Conductivity values in Tables D.3-D.4 are interpreted as Btu/(ft-s-degR).
+#     NOTE: the thesis PDF literally prints "Conductivity (Btu/ft2-s)" in the
+#     headers of BOTH D.3 and D.4 — an ft^2 (not ft) denominator, and no degR at
+#     all. That header is wrong, and is a thesis error rather than a transcription
+#     artifact: Amar's own Table 8.12 (carbon-carbon) in the same document
+#     correctly prints Btu/(ft-s-degR). Fourier's law fixes the dimension of k as
+#     energy/(length*time*temperature); an ft^2 denominator would instead be the
+#     dimension of a film coefficient h, which cannot be a bulk material property.
+#     Confirmed against an independent source: Sutton, NASA TN D-5930 (1970),
+#     Table VI(a), which tabulates carbon-phenolic virgin k in an explicit
+#     Btu/(ft-sec-degR) and lands within ~6% of Amar's D.3 value at the one
+#     directly overlapping low-temperature point (9.0e-5 vs 9.5e-5 at 460 degR).
+#     A hidden length-scale factor would have shown up as a large constant
+#     offset there; it does not. The ft^1 conversion below is therefore correct.
+#   - Table D.4's specific-heat column is believed to be ERRONEOUS and is NOT used;
+#     it is superseded by Sutton NASA TN D-5930 Table VI(b). See the long note at
+#     cp_char for the evidence and the verification result.
 #   - Component densities from Table D.1 are CMA/Amar component concentrations.
 #     The effective bulk contributions below multiply resin components A and B
 #     by Gamma and inert binder C by (1-Gamma), consistent with Eq. 2.16.
@@ -30,11 +45,11 @@
 #   lbm_per_ft_s_to_Pa_s:              1.488163943569554
 
 name: CARBON_PHENOLIC
-description: "Carbon-phenolic material card converted from Adam Amar thesis Appendix D"
+description: "Carbon-phenolic material card from Adam Amar thesis Appendix D, with char cp from Sutton NASA TN D-5930"
 material_category: ablative_organic
-card_version: "1.0"
+card_version: "1.1"
 status: provisional
-source: "Amar 2006 thesis, Appendix D: Carbon-Phenolic Material Properties"
+source: "Amar 2006 thesis, Appendix D: Carbon-Phenolic Material Properties; char cp from Sutton, NASA TN D-5930 (1970), Table VI(b)"
 units: SI
 
 material_model:
@@ -73,15 +88,26 @@ h_virgin:
   - [2777.777778, 4504066.400568]
   - [3888.888889, 6830066.400335]
 
+# h_char is the integral of the CORRECTED cp_char (Sutton NASA TN D-5930
+# Table VI(b)) — see the long note at cp_char below. h_f_char = 0, so
+# h_char == integral(cp_char dT from 0 K) exactly, and h_bar_chemical
+# (= rho_v*h_f_v/(rho_v-rho_c) = -4.264 MJ/kg) is unaffected by this table.
+# Regenerate with scam.physics.properties.build_sensible_enthalpy_table(cp_char).
 h_char:
-  - [277.777778, 58150.000047]
-  - [477.777778, 104288.536047]
-  - [588.888889, 136759.496014]
-  - [1111.111111, 523103.443850]
-  - [1666.666667, 1238348.444422]
-  - [2222.222222, 2066985.943593]
-  - [2777.777778, 2945632.444296]
-  - [3333.333333, 3857424.443384]
+  - [277.777778, 279120.000000]
+  - [555.555556, 610575.000000]
+  - [811.111111, 993085.700000]
+  - [1088.888889, 1475730.700000]
+  - [1366.666667, 2013618.200000]
+  - [1644.444444, 2580580.700000]
+  - [1922.222222, 3162080.700000]
+  - [2200.000000, 3755210.700000]
+  - [2477.777778, 4357063.200000]
+  - [2755.555556, 4964730.700000]
+  - [3033.333333, 5578213.200000]
+  - [3311.111111, 6197510.700000]
+  - [3588.888889, 6822623.200000]
+  - [3866.666667, 7453550.700000]
 
 # Decomposing resin components A and B from Table D.1.
 # rho_0 and rho_r are effective bulk contributions [kg/m^3 of composite].
@@ -138,7 +164,7 @@ cp_virgin:
   - [1922.222222, 2093.4]
   - [2777.777778, 2093.4]
   - [3888.888889, 2093.4]
-
+ 
 # Table D.3 virgin thermal conductivity [T_K, W/m/K]
 k_virgin:
   - [255.555556, 0.59191126]
@@ -168,16 +194,57 @@ emissivity_virgin:
 # Backward-compatible scalar emissivity for existing simple readers.
 emissivity: 0.85
 
-# Table D.4 char specific heat [T_K, J/kg/K]
+# Char specific heat [T_K, J/kg/K]
+#
+# *** NOT from Amar Table D.4 — D.4's specific-heat column is believed to be erroneous. ***
+#
+# Amar's Table D.4 tabulates char cp as 0.05 Btu/lbm-degR at 500 degR
+# (= 209 J/kg/K at 278 K), rising to 0.400 at 6000 degR. The low-temperature
+# end is physically impossible for a carbonized char: real graphite is
+# ~700 J/kg/K at 300 K, and carbon does not fall to 209 J/kg/K until roughly
+# 100-130 K. The whole column runs 4.8x low at 500 degR, converging to 0.75x
+# by 6000 degR.
+#
+# Superseded here by Kenneth Sutton, "An Experimental Study of a Carbon-Phenolic
+# Ablation Material," NASA TN D-5930 (1970), Table VI(b) "Charred material" —
+# an independent measurement of the same material class, physically sane, and
+# plausibly the source Amar's Appendix D was compiled from (Sutton's
+# virgin cp of 0.238 Btu/lbm-degR at 460 degR matches Amar's D.3 virgin cp of
+# 0.24 almost exactly).
+#
+# Verification evidence (examples/verification/amar_thesis/compare_amar_cp.py,
+# see docs/verification/verification.md 8.8): with D.4's cp column the back-face
+# temperature overshoots Amar's Fig 8.29 reference by +169 degR at t=50 s and
+# grows monotonically from t=36 s; with Sutton's values the gap is within
+# +/-10 degR across the entire transient. Peak surface temperature (6207 ->
+# 6206 degR) and total recession (0.1419 -> 0.1413 in) are unchanged, so this
+# is a clean thermal-mass correction and not a retuning of the surface closure.
+# Because h_f_char = 0, h_bar_chemical = rho_v*h_f_v/(rho_v-rho_c) is
+# independent of cp_char (verified identical to 3e-13 relative), so the
+# decomposition energy source is untouched by this substitution.
+#
+# Only the cp column is superseded. k_char below is retained from Table D.4:
+# it agrees with Sutton to ~1% at 2000 degR, and the verification result above
+# is obtained with D.4's conductivity, so there is no evidence to change it.
+# Char emissivity is likewise left at Amar's 0.85 (Sutton reports 0.7, but 0.85
+# is what reproduces the Fig 8.28 surface history).
+#
+# Values below: Sutton Table VI(b), Btu/lbm-degR * 4186.8 -> J/kg/K.
 cp_char:
-  - [277.777778, 209.34]
-  - [477.777778, 252.04536]
-  - [588.888889, 332.43192]
-  - [1111.111111, 1147.1832]
-  - [1666.666667, 1427.6988]
-  - [2222.222222, 1555.3962]
-  - [2777.777778, 1607.7312]
-  - [3333.333333, 1674.72]
+  - [277.777778, 1004.832]      # 500 R,  0.240 Btu/lbm-R
+  - [555.555556, 1381.644]      # 1000 R, 0.330
+  - [811.111111, 1611.918]      # 1460 R, 0.385
+  - [1088.888889, 1863.126]     # 1960 R, 0.445
+  - [1366.666667, 2009.664]     # 2460 R, 0.480
+  - [1644.444444, 2072.466]     # 2960 R, 0.495
+  - [1922.222222, 2114.334]     # 3460 R, 0.505
+  - [2200.000000, 2156.202]     # 3960 R, 0.515
+  - [2477.777778, 2177.136]     # 4460 R, 0.520
+  - [2755.555556, 2198.070]     # 4960 R, 0.525
+  - [3033.333333, 2219.004]     # 5460 R, 0.530
+  - [3311.111111, 2239.938]     # 5960 R, 0.535
+  - [3588.888889, 2260.872]     # 6460 R, 0.540
+  - [3866.666667, 2281.806]     # 6960 R, 0.545
 
 # Table D.4 char thermal conductivity [T_K, W/m/K]
 k_char:
@@ -251,4 +318,24 @@ gas_viscosity:
 pyro_elem_fracs: null
 
 # Surface thermochemistry table is explicitly excluded from Appendix D due to length.
+#
+# *** B' TABLE IS UNVALIDATED — AND ITS STATED PROVENANCE IS ORPHANED. ***
+# carbon_phenolic_bprime_air.yaml was generated (2026-06-13) from
+# carbon_phenolic_bprime_config.yaml, whose `pyro_y` was derived from the
+# `pyro_elem_fracs` that used to live in THIS file (C=0.600, H=0.240, O=0.160 at
+# 700 K). Those fractions were subsequently deleted as unfounded — Appendix D
+# gives no pyrolysis-gas elemental composition, and `pyro_elem_fracs` is now
+# null (see above). The B' table therefore rests on an input this card no longer
+# asserts, and both companion files carry their own "PROVISIONAL / NOT
+# VALIDATED" warnings.
+#
+# Circumstantial evidence that it is nonetheless not badly wrong: the Amar §8.8
+# comparison, whose recession is driven by B'_c, matches the reference to +3%
+# (0.141 vs ~0.137 in). That is indirect and does not constitute validation.
+# To supersede: re-derive pyro_y from a published carbon-phenolic pyrolysis-gas
+# composition and regenerate with scam/tools/generate_bprime.py.
+#
+# The "MX-4926 class" label in those two companion files is likewise an
+# unsourced assertion: Amar Appendix D never names the composite and explicitly
+# states its properties may come from different carbon-phenolic composites.
 b_prime_table: carbon_phenolic_bprime_air.yaml

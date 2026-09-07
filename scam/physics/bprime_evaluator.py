@@ -222,7 +222,7 @@ class BprimeEvaluator:
         """Instantiate from a bprime config YAML (same file used by generate_bprime.py)."""
         import yaml
 
-        with open(config_path) as f:
+        with open(config_path, encoding="utf-8") as f:
             cfg: dict[str, Any] = yaml.safe_load(f)
 
         gen = cfg.get("generator", cfg)

@@ -131,6 +131,16 @@ back_bc:
   # type: adiabatic       — zero heat flux (thermally insulated) [default]
   # type: prescribed_temp — hold the back face at a fixed temperature
   # type: prescribed_flux — inject heat from behind (positive = into material)
+  # type: radiation       — the back face re-radiates to an enclosure, and/or
+  #                         loses heat through a convective film:
+  #                             q_loss = eps*sigma*F*(T_back^4 - T_env_back^4)
+  #                                      + h_back*(T_back - T_env_back)
+  #                         Requires emissivity_back and/or h_back.  Example:
+  #   type: radiation
+  #   emissivity_back: 0.85     # [-]  back-face emissivity (0 disables the T^4 term)
+  #   T_env_back: 300.0         # [K]  enclosure temperature (accepts a [[t,v],...] table)
+  #   view_factor_back: 1.0     # [-]  optional, default 1
+  #   h_back: 0.0               # [W/m^2/K] optional free-convection film
   type: adiabatic
 
   # Used when type: prescribed_temp.  Accepts a scalar or [[t, T], ...] table.

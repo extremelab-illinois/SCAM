@@ -9,7 +9,7 @@ then find the multi-phase equilibrium at (T, P, Z_wall) and read off B'c from
 the gas-phase carbon fraction.  They differ in thermodynamic databases and
 species sets:
 
-  Mutation++ (current, /opt/Mutationpp/):
+  Mutation++ (current; install located via $MPP_DIRECTORY, else ~/Mutationpp):
     - NASA-9 thermodynamic database
     - 35-species TACOT/air gas mixture + C(gr) condensed phase
     - Multi-phase equilibrium: MultiPhaseEquilSolver partitions C between gas

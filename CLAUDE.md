@@ -3,7 +3,76 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-See `.claude/skills/handoff/SKILL.md` for handoff procedures.
+## Remotes and public-release branch (open-source split)
+
+This repo is private and holds the complete history (2D solver, WIP verification
+cases, everything). A sanitized subset is maintained for public release on a
+separate branch and remote:
+
+- **`origin`** — the private remote (this repo, as today). Every branch pushes
+  here as usual, including `feature/2d-development` and `wip/verification-cases`.
+- **`public`** — the public GitHub remote, `https://github.com/extremelab-illinois/SCAM.git`. **Only the
+  `public-release` branch is ever pushed there**, always as a fast-forward,
+  never force-pushed, never any other branch. `public-release` started as a
+  single orphan commit (v0.1.0) excluding `scam/*2d`, `scam/config/case2d.py`,
+  `scam/io/case_loader_2d.py`, their tests/examples/docs, the then-WIP
+  verification cases, `graphify-out/`, and hardcoded personal paths.
+- **What is currently excluded from `public-release`** (keep this list current
+  when promoting):
+  - the 2-D solver and everything downstream of it: `scam/*2d`,
+    `scam/config/case2d.py`, `scam/io/case_loader_2d.py`, their tests, examples
+    and docs, and `examples/verification/ablation3/` (it also needs a live
+    PATO-dev tree, which public users will not have)
+  - `docs/planning/` — private notes on future SCAM development, not shipped
+  - `examples/verification/amar_thesis/compare_amar_cc.py` — the §8.7
+    carbon-carbon case, still unresolved. The §8.8 carbon-phenolic case **is**
+    published; the machinery both share lives in `_amar_common.py` precisely so
+    §8.8 does not drag in §8.7. **Do not let `compare_amar_cp.py` import
+    `compare_amar_cc` again** — that would re-couple them.
+  - `examples/verification/bianchi_thesis/` — not yet configured
+  - `graphify-out/`, and any hardcoded personal path
+- **Third-party data that IS published, and its terms** — check before adding
+  more: the Amar digitized figure data is our own digitization of a publicly
+  distributed thesis; the CHyPS reference data is courtesy of Dr. Blaine Vollmer
+  (UIUC), redistributed with permission and credited in
+  `examples/verification/chyps/README.md`. Reference data from a third party
+  needs explicit clearance before it goes public — an `SPDX: MIT` header on a
+  file does not make its *contents* ours to license.
+- **Files that INTENTIONALLY differ between `main` and `public-release`** —
+  never promote these by wholesale copy; reconcile them by hand. Copying
+  `main`'s version over the public one silently breaks each:
+  - **`.gitignore`** — `main` *commits* the graphify outputs (`graph.json`,
+    `GRAPH_REPORT.md`, …) and ignores only local/intermediate graphify state.
+    `public-release` ignores **`graphify-out/` wholesale**. Overwriting it makes
+    the public repo start tracking the knowledge graph.
+  - **`pyproject.toml`** — the `version` field is per-track. `main` carries the
+    internal version (bare `vX.Y.Z` tags); `public-release` carries the public
+    one (`public-vX.Y.Z` tags). They are not the same number and must not be
+    synchronised: as of 2026-09-07, `main` is 0.3.0 and `public-release` is
+    0.2.0.
+  - **`README.md`** — `public-release` carries a licensing statement that
+    `main` does not: PATO is GPL and is *not* redistributed (only small derived
+    numerical outputs are), and the CHyPS reference data is Dr. Vollmer's,
+    used with permission. Preserve it.
+  - `CHANGELOG.md`, `CONTRIBUTING.md` and `.github/` exist **only** on
+    `public-release`; a promotion must not delete them.
+  When promoting, diff `public-release..main` per file rather than copying the
+  tree, and check this list first.
+- **Tag namespace**: this repo's own internal version tags are bare `vX.Y.Z`
+  (e.g. `v0.3.0`). The public track uses `public-vX.Y.Z` to avoid collision
+  (tags are a single shared namespace across the whole repository).
+- **Promoting work to `public-release`**: clean, self-contained commits can be
+  cherry-picked directly (`git checkout public-release && git cherry-pick <sha>`).
+  Commits that touch both included and excluded paths: cherry-pick with `-n`,
+  then `git checkout HEAD -- <excluded paths>` before committing. A finished
+  chunk of branch work (e.g. once 2D or a WIP case is validated): copy the
+  finished files over and commit once, rather than replaying messy WIP history.
+  After any promotion: bump semver, update `CHANGELOG.md` (it lives only on
+  `public-release`, not on `main`), tag `public-vX.Y.Z`,
+  `git push public public-release:main`, then `git push public public-vX.Y.Z`.
+  **Never `git push public --tags`** — that uploads every local tag regardless
+  of branch, including internal `vX.Y.Z` tags that point into private history,
+  and forces the underlying private commit objects to be transferred too.
 
 ## Commands
 
@@ -17,14 +86,15 @@ pip install -e ".[hdf5]"
 # For live Cantera surface chemistry
 pip install -e ".[bprime]"
 
-# Run all tests
-~/.local/bin/pytest tests/ -q
+# Run all tests  (use `python3 -m pytest`, not a bare `pytest`: it guarantees the
+# pytest matching the active interpreter/venv, and avoids any stale console script)
+python3 -m pytest tests/ -q
 
 # Run a single test file
-~/.local/bin/pytest tests/unit/test_decomposition.py -v
+python3 -m pytest tests/unit/test_decomposition.py -v
 
 # Run a single test by name
-~/.local/bin/pytest tests/unit/test_tridiagonal.py::test_thomas_simple -v
+python3 -m pytest tests/unit/test_tridiagonal.py::test_thomas_simple -v
 
 # Run examples (must use Agg backend to avoid blocking on plt.show())
 MPLBACKEND=Agg python3 examples/other_examples/flat_plate_no_ablation.py
@@ -151,7 +221,7 @@ core/constants, core/errors
 
 The surface solver needs an object with a `lookup(T_wall, p_e, B'_g, Z_C_pyro=None) -> (B'_c, h_wall)` method; two interchangeable backends implement it and are passed in the `b_prime_tables` dict (keyed by material name):
 
-- **`BPrimeTable`** (defined in `io/material_loader.py`, re-exported by `physics/chemistry.py`) — a `RegularGridInterpolator` over a pre-computed YAML table. TACOT 3.0 uses `scam/materials/ablative_organic/tacot_v3.0_bprime_air.yaml`; element-transport cases use live Cantera with the transported `Z_C_pyro`. Tables are generated by `scam/tools/generate_bprime.py` (run with `python3 scam/tools/generate_bprime.py --help`). Fast; no Cantera at runtime.
+- **`BPrimeTable`** (defined in `io/material_loader.py`, re-exported by `physics/chemistry.py`) — a `RegularGridInterpolator` over a pre-computed YAML table. TACOT 3.0 uses `scam/materials/ablative_organic/tacot_v3.0_bprime_air.yaml`; element-transport cases use live Cantera with the transported `Z_C_pyro`. Tables are generated by `scam/tools/generate_bprime.py` (run with `python3 scam/tools/generate_bprime.py --help`). Fast; no Cantera at runtime. **Out-of-range lookups are SILENTLY CLAMPED to the table edge** (`np.clip` on T_wall, p_e, B'_g and Z_C_pyro in `BPrimeTable.lookup`) — there is no warning and no extrapolation. So a table whose pressure axis stops at 1 atm will quietly return 1-atm chemistry for a 2-atm boundary layer. Check the axis coverage against the case: `calcarb_bprime_air.yaml` spans only 101 Pa–1 atm, whereas `calcarb_bprime_air_mp.yaml` and `calcarb_bprime_ace_air.yaml` span 101 Pa–5 atm. Ballistic-reentry cases (Amar §8.7) peak near 1.6 atm and must use a 5-atm table.
 - **`BprimeEvaluator`** (`physics/bprime_evaluator.py`) — live Cantera equilibrium, a drop-in for `BPrimeTable` (same `lookup`). Build with `BprimeEvaluator.from_config("scam/materials/ablative_organic/tacot_v3.0_bprime_config.yaml")`. Warm-started (~0.3 ms/call in the current TACOT verification path; about 3–4 s total for ~11.6k lookups). Requires Cantera (`pip install -e ".[bprime]"`). **Only** this backend exposes `surface_enthalpies(...)`, which activates the SEB advective terms (see above). `examples/verification/ablation2/compare_pato_ablation2.py` uses it for live chemistry modes; use `chemistry_mode="table"` for the explicit table-only diagnostic. **CRITICAL:** `_TACOT_PYRO_X_NOMINAL` and `tacot_v3.0_bprime_config.yaml` must use `pyro_y: "CH4:0.5551,CO:0.2418,H2O:0.2031"` — this is the ONLY composition that matches PATO's tacot26 elemental fracs (C:0.206, H:0.679, O:0.115). The old preset `CH4:0.4600,...` gave C:0.227/H:0.622/O:0.151 and over-predicted B'_c by 15–140% depending on B'_g. TACOT v2.2 and v3.0 share identical pyro gas composition; `tacot_v2.2_bprime_config.yaml` is therefore equivalent.
 
 ### Material data
@@ -167,6 +237,8 @@ B′ companion file naming convention for TACOT (and similarly for other materia
 
 TACOT v2.2 and v3.0 share the same pyrolysis gas elemental composition (C:0.206, H:0.679, O:0.115); their bprime configs and `_bprime_air.yaml` files are chemically equivalent. The XLS reference tables differ because v2.2 was computed with Mutation++ / CEA thermodynamic database (25-species, 1 atm only) while v3.0 used Mutation++ at 4 pressure levels.
 
+**Carbon-carbon (Amar 2006 §8.7).** `ablative_carbon/carbon_carbon_amar2006.yaml` holds the Table 8.12 properties and pairs with `calcarb_bprime_air_mp.yaml` (full Cantera CNO: C, C2, C3; 6 pressures, 0.001–5 atm); `carbon_carbon_amar2006_ace.yaml` is the same material against `calcarb_bprime_ace_air.yaml` (ACE-style gri30, C only, no C2/C3, same pressure range). Two B′ variants exist because Cantera/JANAF predicts carbon sublimation onset at ~3200 K through C2/C3, while ACE — used by CMA, SODDIT and Amar — keeps B′_c on the diffusion plateau (~0.175) to ~3600 K. Cantera is thermodynamically more complete; ACE better matches experiment because real sublimation is kinetically suppressed. **Which table to prefer is currently an open question, not a settled recommendation:** an earlier note here advised ACE for code-to-code comparison, but that preference was compensating for a mass-only `Ω_hw` asymmetry since fixed. With the faithful hot-wall correction, CNO gives more recession than ACE (7.41 vs 6.93 ×10⁻³ in/s) yet **neither** reaches the 9.251×10⁻³ reference. See `docs/verification/verification.md` §8.7.
+
 Materials are organized into subdirectories by class: `ablative_organic/` (TACOT, PICA, AVCOAT, HEEET, cork, carbon phenolic, ASTERM, ZURAM, NorCoat Liège), `ablative_carbon/` (FiberForm), `ablative_hybrid/` (SLA-561V), `ablative_silicone/` (RTV560, SIRCA, SLA-220), `ablative_silica/` (see README), `subsurface/` (see README). Each ablative material may have a companion `*_bprime_air.yaml` B′ table and `*_bprime_config.yaml` for the live Cantera backend. `material_loader.py` resolves companion paths relative to the material file's directory.
 
 **Versioning fields** (metadata only, not used by solver): every card carries `card_version` (SCAM-internal revision, start `"1.0"`), `status` (`verified` | `provisional` | `estimate`), and optionally `dataset_version` (upstream release, e.g. `"3.0"` for TACOT 3.0 — omitted when no single authoritative version exists). **Naming convention**: `{material}_v{X}.yaml` when multiple dataset versions coexist; `_{variant}` suffix for model variants of the same dataset (e.g. `tacot_v3.0_3rxn.yaml`). Full inventory: `scam/materials/MATERIALS.md`.
@@ -180,7 +252,7 @@ Materials are organized into subdirectories by class: `ablative_organic/` (TACOT
 - `physics/darcy_flow.py` — gas expansion flux and energy source for porous materials with `gas_porosity > 0`
 - `physics/pressure_darcy.py` — pressure-driven Darcy flow: solves 1-D gas pressure field and returns gas mass flux + energy source. Key entry points: `solve_pressure_and_flux(...)` (combined call; preferred) and `pressure_darcy_energy_source(...)`. Permeability at each node is computed by `_node_permeability()`: blends virgin (`permeability_virgin`) and char (`permeability`) values by local virgin fraction, then applies the Klinkenberg slip correction `K_app = K·(1 + klinkenberg_b/p)` when `klinkenberg_b > 0`. Both new fields are in `MaterialCard` and loaded from YAML; TACOT v3 carries estimated values (`permeability_virgin=1.6e-11`, `permeability=2.0e-11`, `klinkenberg_b=6000 Pa`). **Pressure-aware gas properties (stage 1):** when `MaterialCard.gas_properties_pT` is set (full PATO gasProperties (p,T) table: axes `p`/`T` + `M`/`h_g`/`mu` arrays; bilinear `properties.py::interp_gas_pT`, shared with the 2D path), μ and M use bilinear (T,p) lookups and ρ_g uses the local solved pressure; otherwise the legacy Sutherland-air μ / scalar `gas_molar_mass` path is used and results are bit-identical. The surface-face flux gradient now uses the passed `p_surface` (was a hardcoded 101325 Pa — only visible for sub-atmospheric runs). **Stage 2 (h_g):** `gas_enthalpy.py::pyrolysis_gas_enthalpy_abs(mat, T, p=None)` is the single reference-safe entry point for absolute h_g — pT table → bilinear h_g(T,p) with NO `h_g_abs_offset` re-application (the table is already absolute; double-application trap, pato_validation.md §11); else sensible table + offset (legacy, bit-identical). Used by the 1D assembly `h_g_cache` and gas-storage term (at the card's ambient `gas_pressure` — consistent with how those terms treat ρ_g) and by the SEB `q_adv` at `(T_w, p_e)` (PATO's boundary h_g field). `pressure_darcy_energy_source` transports `h_abs(T,p_local) − h0` when the table is present. Acceptance: pT 1-atm slice matches card `h_g_table+offset` to 0.24 %, and ablation2 (1 atm) with the table injected shifts T_wall by < ~1 K.
 
-**`gas_properties_pT` is loaded routinely from the material card.** `io/material_loader.py::_load_gas_properties_pT` reads an optional `gas_properties_pT: <file>.yaml` companion-file key (same resolution convention as `b_prime_table`: relative to the card's directory) into the dict `{"p", "T", "M", "h_g", "mu"}` consumed by `interp_gas_pT`. `tacot_v3.0.yaml` carries `gas_properties_pT: tacot_v3.0_gasProperties_pT.yaml` — a repo-committed conversion of PATO's `data/Materials/Composites/TACOT/gasProperties` (5 pressure levels × 152 temperatures), so it works without the PATO-dev tree present. `tacot_v3.0_3rxn.yaml` and `tacot_v2.2.yaml` do NOT carry it (they also lack the 1-atm `gas_molar_mass_table`/`gas_viscosity_table` slices — no regression risk since their behavior is unchanged either way). Verified safe for every consumer of `tacot_v3.0.yaml`: full test suite unchanged (504 passed); `test_tacot_benchmark.py` (sub-atmospheric, p_e=10 kPa) shifts T_wall by 0.6 K and stays within its plausibility bounds; ablation1 (prescribed-T, no SEB) TC probes shift ≤0.5 K except the deepest (24 mm) at 6 K — small, physically expected, and none of these are regression-pinned to exact values.
+**`gas_properties_pT` is loaded routinely from the material card.** `io/material_loader.py::_load_gas_properties_pT` reads an optional `gas_properties_pT: <file>.yaml` companion-file key (same resolution convention as `b_prime_table`: relative to the card's directory) into the dict `{"p", "T", "M", "h_g", "mu"}` consumed by `interp_gas_pT`. `tacot_v3.0.yaml` carries `gas_properties_pT: tacot_v3.0_gasProperties_pT.yaml` — a repo-committed conversion of PATO's `data/Materials/Composites/TACOT/gasProperties` (5 pressure levels × 152 temperatures), so it works without the PATO-dev tree present. `tacot_v3.0_3rxn.yaml` and `tacot_v2.2.yaml` do NOT carry it (they also lack the 1-atm `gas_molar_mass_table`/`gas_viscosity_table` slices — no regression risk since their behavior is unchanged either way). Verified safe for every consumer of `tacot_v3.0.yaml`: full test suite unchanged (504 passed); `test_tacot_benchmark.py` (sub-atmospheric, p_e=10 kPa) shifts T_wall by 0.6 K and stays within its plausibility bounds; ablation1 (prescribed-T, no SEB) TC probes shift ≤0.5 K except the deepest (24 mm) at 6 K — small, physically expected, and none of these are regression-pinned to exact values. `examples/verification/ablation3/compare_pato_ablation3.py` no longer injects the table manually; it reads it from `load_material()` and only falls back to the live PATO-dev tree if a card lacks the field.
 - `numerics/nonlinear.py` — scalar Newton and bisection solvers (used by `surface_solver.py`)
 - `geometry/area.py` — area/conductance helpers: `build_area_function`, harmonic conductivity, interface conductance, nodelet cumulative volume (used by `numerics/assembly.py` and `mesh/`)
 - `geometry/fvm.py` — FVM face-area averaging used by the assembly to handle non-slab geometries
@@ -198,12 +270,14 @@ PATO comparison scripts live in `examples/verification/ablation1/` and `examples
 
 Ablation1 variants: `_grading` (approximates depth-varying density via a multilayer stack), `_multiPorousMat` (pyrolyzing TACOT porous layer over inert cork; PATO `porousMat1` uses `PyrolysisType LinearArrhenius`, so do not model it as inert char), `_function` (time-varying BC via Python callables), `_equilibriumElementConservation` (element transport with 4-D B′ table). All ablation1 scripts load material from `scam/materials/ablative_organic/tacot_v3.0.yaml` via `load_material()`; no hardcoded material tables. The base script is `compare_pato_ablation1.py` (PATO AblationTestCase_1.0, prescribed surface T, no ablation). Ablation2 variants: `_multiMat` (3-layer TACOT + inert sublayers), `_chemistryOff` (no B′ lookup), `_equilibriumElementConservation` (Cantera + element transport), `_beta` (diagnostic: per-component β_i and bulk β vs depth profiles + mean density vs time comparing exact `d(ρh)/dt` storage vs PATO-style `ρ·dh/dt` approximation; uses `SolverOptions.use_rho_old=False` for the latter). `compare_tacot_v3_vs_3rxn.py` — kinetics sensitivity study: runs TACOT v3.0 2-rxn and 3-rxn on the ablation2 setup; confirms they differ by < 4.5 K surface and < 0.004 mm recession (h_bar is flat with T so timing differences in dρ/dt wash out).
 
+**CHyPS BlaineTest comparison:** `examples/verification/chyps/compare_chyps_blaine.py` compares SCAM against the CHyPS code on a 5 cm TACOT slab (two-phase heating 0–90 s + cooldown) using `tacot_v3.0.yaml` and live Cantera (the 3-rxn card gives an equivalent result). Input deck: `examples/verification/chyps/blaine_test.yaml`. Reference data in `examples/verification/chyps/BlaineTest_chyps_results/`. **Status: VERIFIED (re-measured 2026-09-07)** — surface within 3.2 K during the high-flux phase, recession within 0.45%, deep probes T6 (16 mm) / T7 (24 mm) within ~6 K at t=60–90 s. The old "~126 K colder at deep probes, attributed to CHyPS omitting h_bar" note is **obsolete and its root cause disproven**: nulling `h_bar_chemical` now makes SCAM 220–275 K *too hot* at depth, so the decomposition sink is required for the match and CHyPS must carry an equivalent one. The 126 K was a SCAM-side bug since fixed (likely the `h_g_abs_offset` reference fix, `a43e31d`). See `docs/verification/verification.md` §CHyPS BlaineTest.
+
 Conduction verification scripts are in `examples/verification/conduction/` (V1–V3). Pyropy kinetics verification scripts are in `examples/verification/pyropy/`; pyropy is developed by Francisco Torres Herrador ([github.com/Fratorhe/pyropy](https://github.com/Fratorhe/pyropy)) and is a separate package — not a SCAM dependency. Run `python3 examples/clean_outputs.py` to remove all generated PNGs and results directories.
 
 Key design docs (read before touching the matched physics):
 
 - `docs/verification/pato_validation.md` — the SCAM↔PATO fixes term by term (blowing, emissivity, h_bar/pyrolysis energy §7, SEB advective terms §8, recession), with the residual-gap analysis. Numbered sections are referenced from the code comments.
-- `docs/verification/verification.md` — the V1–V5 verification ladder rationale and per-rung criteria.
+- `docs/verification/verification.md` — the V1–V5 verification ladder rationale and per-rung criteria; also contains the open CHyPS BlaineTest comparison notes.
 - `docs/reference/pato_material_recession_summary.md`, `docs/reference/pato_receding_pyrolyzing_internal_energy_balance.md` — extracted PATO formulations (recession `s_dot=ṁ_char/ρ_s`; the `Pyrolysis` energy model the `h_bar` term must match). SCAM is verified consistent with these.
 - `docs/physics/energy_formulation_comparison.md` — side-by-side comparison of Amar (2006), PATO, and SCAM energy equations; explains why `h_decomp` and enthalpy fields cannot be transplanted between codes without conversion.
 - `docs/physics/tacot_kinetics_2rxn_vs_3rxn.md` — derivation of PATO's 3-reaction kinetics (from `constantProperties`) and the correct merge to 2 components (`tacot_v3.0.yaml`); explains the 9× rate error that results from misinterpreting the inert 60 kg/m³ matrix residual as a pyrolysis product.

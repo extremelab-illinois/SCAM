@@ -26,7 +26,7 @@ def pyrolysis_gas_enthalpy_abs(
 ) -> float | NDArray:
     """Absolute-reference pyrolysis gas enthalpy h_g_abs [J/kg].
 
-    Resolution order:
+    Resolution order (mirrors ``physics2d/gas_transport_2d.py``):
 
     * ``mat.gas_properties_pT`` present → bilinear h_g(T, p) from the PATO
       gasProperties table, which is ALREADY on the absolute (formation)

@@ -55,6 +55,7 @@ from typing import Optional, Callable
 import numpy as np
 from numpy.typing import NDArray
 
+from scam.core.constants import SIGMA_SB
 from scam.config.material import MaterialCard
 from scam.config.stack import StackConfig
 from scam.config.boundary import BackBCConfig, BackBCType, eval_bc
@@ -96,6 +97,7 @@ def _build_system(
     T_prev: Optional[NDArray] = None,
     h_old: Optional[NDArray] = None,
     T_old_rhs: Optional[NDArray] = None,
+    p_surface: float = 101325.0,
 ) -> TridiagSystem:
     """Build the tridiagonal system without applying the surface flux term.
 
@@ -220,7 +222,7 @@ def _build_system(
         has_perm = any(mat_list[int(l)].permeability > 0.0 for l in np.unique(lid))
         if has_perm:
             from scam.physics.pressure_darcy import pressure_darcy_energy_source
-            Q_darcy = pressure_darcy_energy_source(mat_list, mesh, T, rho, dTdt)
+            Q_darcy = pressure_darcy_energy_source(mat_list, mesh, T, rho, dTdt, p_surface)
         else:
             from scam.physics.darcy_flow import gas_expansion_energy_source
             Q_darcy = gas_expansion_energy_source(mat_list, mesh, T, rho, dTdt)
@@ -261,12 +263,41 @@ def _build_system(
     # Back BC
     if back_bc.bc_type == BackBCType.PRESCRIBED_FLUX:
         q_back = eval_bc(back_bc.q_back, time)
-        Dc[N - 1] -= q_back * A_n[N - 1]
+        # Sign: q_back > 0 is heat flowing INTO the material, per BackBCType's
+        # documented convention, this function's own docstring above, and
+        # diagnostics/conservation.py (which adds q_back_cumulative to energy IN).
+        # This was `-=` until 2026-09-07, which silently inverted the BC: a
+        # positive q_back cooled the back face. Same class of error as the
+        # historical F_cond sign bug.
+        Dc[N - 1] += q_back * A_n[N - 1]
     elif back_bc.bc_type == BackBCType.PRESCRIBED_TEMP:
         T_back = eval_bc(back_bc.T_back, time)
         G_bc    = 1.0e12
         Bc[N - 1] += G_bc
         Dc[N - 1] += G_bc * T_back
+
+    elif back_bc.bc_type == BackBCType.RADIATION:
+        # Back face radiates (and optionally convects) to an enclosure at T_env.
+        #   q_loss(T) = eps*sigma*F*(T^4 - T_env^4) + h*(T - T_env)      [W/m^2]
+        # This is nonlinear in T, so linearise about the previous iterate T*
+        # (Newton form):
+        #   q_loss(T) ≈ q_loss(T*) + q'(T*)·(T - T*),
+        #   q'(T*)    = 4*eps*sigma*F*T*^3 + h
+        # A loss is a sink, so it enters as  B += q'·A  and  D += (q'·T* - q(T*))·A
+        # (consistent with the PRESCRIBED_FLUX sign: D += q_in·A).
+        T_env = eval_bc(back_bc.T_env_back, time)
+        h_b   = eval_bc(back_bc.h_back, time)
+        eps_b = float(back_bc.emissivity_back) * float(back_bc.view_factor_back)
+
+        # Linearisation point: the previous iterate if available, else current T.
+        T_star = float(T_prev[N - 1]) if T_prev is not None else float(T[N - 1])
+        T_star = max(T_star, 1.0)   # guard against nonphysical/zero temperatures
+
+        q_star  = eps_b * SIGMA_SB * (T_star**4 - T_env**4) + h_b * (T_star - T_env)
+        dq_dT   = 4.0 * eps_b * SIGMA_SB * T_star**3 + h_b
+
+        Bc[N - 1] += dq_dT * A_n[N - 1]
+        Dc[N - 1] += (dq_dT * T_star - q_star) * A_n[N - 1]
 
     return TridiagSystem(A=Ac, B=Bc, C=Cc, D=Dc)
 
@@ -287,11 +318,13 @@ def assemble_energy_system(
     T_prev: Optional[NDArray] = None,
     h_old: Optional[NDArray] = None,
     T_old_rhs: Optional[NDArray] = None,
+    p_surface: float = 101325.0,
 ) -> TridiagSystem:
     """Assemble the full tridiagonal system for the energy equation."""
     sys = _build_system(
         state, mat_list, stack, dt, back_bc, time,
         drho_dt_y, m_dot_g, drho_dt_y_comp, rho_old, T_prev, h_old, T_old_rhs,
+        p_surface,
     )
     A_surface = float(state.mesh.area_nodes[0])
     if T_surface_dirichlet is not None:
@@ -322,6 +355,7 @@ def compute_F_cond(
     h_old: Optional[NDArray] = None,
     T_old_rhs: Optional[NDArray] = None,
     backend: str = "numpy",
+    p_surface: float = 101325.0,
 ) -> tuple[float, float, TridiagSystem]:
     """Compute the linear F_cond relationship: q_cond = alpha_F * T_wall + beta_F.
 
@@ -336,6 +370,7 @@ def compute_F_cond(
     sys = _build_system(
         state, mat_list, stack, dt, back_bc, time,
         drho_dt_y, m_dot_g, drho_dt_y_comp, rho_old, T_prev, h_old, T_old_rhs,
+        p_surface,
     )
     N       = state.mesh.n_nodes_total
     A_n     = state.mesh.area_nodes

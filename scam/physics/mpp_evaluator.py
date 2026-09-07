@@ -28,10 +28,22 @@ from typing import Any
 import numpy as np
 from scipy.interpolate import RegularGridInterpolator
 
-# Default Mutation++ installation paths
-_MPP_BIN_DEFAULT  = Path("/opt/Mutationpp/install/bin/bprime")
-_MPP_DATA_DEFAULT = Path("/opt/Mutationpp/data")
-_MPP_LIB_DEFAULT  = Path("/opt/Mutationpp/install/lib")
+# Default Mutation++ installation paths.
+#
+# Resolved from the environment so this package carries no machine-specific
+# path.  Both variables below are Mutation++'s own, set by its `install.sh` /
+# environment script, so a standard upstream install needs no extra setup:
+#
+#   MPP_DIRECTORY       Mutation++ root (the cloned/installed tree)
+#   MPP_DATA_DIRECTORY  data directory (mixtures/, thermo/, transport/)
+#
+# The fallback is ~/Mutationpp, which is the layout Mutation++'s install guide
+# produces.  Any of the three can still be overridden per-call or per-config
+# via the `mpp_bin` / `mpp_data` / `mpp_lib` keys.
+_MPP_ROOT = Path(os.environ.get("MPP_DIRECTORY") or Path.home() / "Mutationpp")
+_MPP_BIN_DEFAULT  = _MPP_ROOT / "install" / "bin" / "bprime"
+_MPP_DATA_DEFAULT = Path(os.environ.get("MPP_DATA_DIRECTORY") or _MPP_ROOT / "data")
+_MPP_LIB_DEFAULT  = _MPP_ROOT / "install" / "lib"
 
 # Mechanism files directory for Cantera surface_enthalpies
 _MECHANISMS_DIR = Path(__file__).resolve().parent.parent / "mechanisms"
@@ -111,7 +123,7 @@ class MutationppEvaluator:
         import yaml
         from scam.chemistry.grids import parse_number_grid
 
-        with open(config_path) as f:
+        with open(config_path, encoding="utf-8") as f:
             cfg: dict = yaml.safe_load(f)
 
         mpp = cfg.get("mpp", cfg)

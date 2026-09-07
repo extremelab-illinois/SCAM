@@ -230,7 +230,7 @@ def cases_to_scam_yaml(
         print("Surface enthalpies stored in table.")
 
     output_path.parent.mkdir(parents=True, exist_ok=True)
-    with open(output_path, "w") as f:
+    with open(output_path, "w", encoding="utf-8") as f:
         yaml.dump(doc, f, default_flow_style=None, sort_keys=False, width=120)
     print(f"SCAM B' YAML written → {output_path}")
 
@@ -393,7 +393,7 @@ def csv_to_scam_yaml_4d(
         print("Composition-dependent surface enthalpies stored in table.")
 
     output_path.parent.mkdir(parents=True, exist_ok=True)
-    with open(output_path, "w") as f:
+    with open(output_path, "w", encoding="utf-8") as f:
         yaml.dump(doc, f, default_flow_style=None, sort_keys=False, width=120)
     print(f"SCAM 4-D B' YAML written → {output_path}")
 
@@ -477,7 +477,7 @@ def main(argv: list[str] | None = None) -> None:
     print(f"Backend: scam.chemistry (Cantera)")
     print(f"Config:  {config_path}")
 
-    with open(config_path) as f:
+    with open(config_path, encoding="utf-8") as f:
         cfg_base = yaml.safe_load(f)
 
     # Parse optional Z_C_pyro sweep

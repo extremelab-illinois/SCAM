@@ -23,6 +23,7 @@ class BackBCType(Enum):
     ADIABATIC = auto()         # zero heat flux (insulated back face)
     PRESCRIBED_TEMP = auto()   # fixed or time-varying temperature [K]
     PRESCRIBED_FLUX = auto()   # fixed or time-varying flux [W/m^2] (+ into material)
+    RADIATION = auto()         # re-radiation to an environment at T_env_back
 
 
 @dataclass
@@ -103,6 +104,21 @@ class BackBCConfig:
     bc_type: BackBCType = BackBCType.ADIABATIC
     T_back: ScalarBC = 300.0    # [K], used for PRESCRIBED_TEMP
     q_back: ScalarBC = 0.0      # [W/m^2] into material, used for PRESCRIBED_FLUX
+
+    # --- RADIATION back face ---------------------------------------------
+    # Net loss  q = eps_back * sigma * view_factor_back * (T_N^4 - T_env_back^4),
+    # i.e. the back face radiates to an enclosure at ``T_env_back``.  Positive
+    # net loss cools the back face.  Optionally add a convective film via
+    # ``h_back`` to model free convection on a backshell:
+    #     q_extra = h_back * (T_N - T_env_back)
+    # Both are combined and applied as a single temperature-dependent flux.
+    #
+    # The T^4 term is linearised about the previous iterate each Picard/timestep
+    # pass (Newton form), so it is stable without an inner iteration.
+    emissivity_back: float = 0.0        # [-] 0 disables the radiative term
+    T_env_back: ScalarBC = 300.0        # [K] environment/enclosure temperature
+    view_factor_back: float = 1.0       # [-]
+    h_back: ScalarBC = 0.0              # [W/m^2/K] optional convective film
 
 
 def eval_bc(param: ScalarBC, t: float) -> float:

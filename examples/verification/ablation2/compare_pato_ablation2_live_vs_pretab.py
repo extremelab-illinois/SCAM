@@ -1,5 +1,16 @@
 # SPDX-License-Identifier: MIT
-"""Compare live Cantera, pretabulated, and live Mutation++ backends."""
+"""Compare live Cantera, pretabulated, and live Mutation++ backends.
+
+REQUIRES MUTATION++. Unlike the other ablation1/ablation2 comparison scripts —
+which run against repo-bundled PATO reference output and need no external
+install — this one exercises the live `MutationppEvaluator` backend and so needs
+a Mutation++ build present. It is located via `$MPP_DIRECTORY` (Mutation++'s own
+environment variable), falling back to `~/Mutationpp`; without it the script
+exits with `FileNotFoundError: Mutation++ bprime binary not found: ...`.
+
+Cantera (`pip install -e ".[bprime]"`) is enough for every other case, including
+the live-chemistry ones.
+"""
 
 from __future__ import annotations
 

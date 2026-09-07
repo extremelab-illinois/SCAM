@@ -1,0 +1,304 @@
+# SPDX-License-Identifier: MIT
+# NARMCO 4028 CARBON PHENOLIC - Sutton (NASA TN D-5930) data only
+#
+# Source:
+#   Kenneth Sutton (1970), "An Experimental Study of a Carbon-Phenolic Ablation
+#   Material," NASA TN D-5930, Langley Research Center, September 1970.
+#   TABLE VI - "THERMAL PROPERTIES USED IN COMPUTER PREDICTIONS":
+#     (a) Virgin material    (p. 21)
+#     (b) Charred material   (p. 22)
+#     (c) Pyrolysis gas      (p. 23)
+#
+# Scope:
+#   EVERY property below comes from Sutton Table VI and nothing else. This card
+#   is deliberately single-source, in contrast to `carbon_phenolic.yaml`, which
+#   is Amar (2006) Appendix D with Sutton's char cp patched in. Do not merge
+#   values from Amar's Appendix D into this file — keeping the two provenances
+#   separate is the point of having both cards.
+#
+# Unit conversions used:
+#   degR_to_K:                       0.5555555555555556
+#   lbm_per_ft3_to_kg_per_m3:        16.01846337396014
+#   Btu_per_lbm_to_J_per_kg:         2326
+#   Btu_per_lbm_degR_to_J_per_kg_K:  4186.8
+#   Btu_per_ft_s_degR_to_W_per_m_K:  6230.644798937008
+#   cal_per_mole_to_J_per_mole:      4.184
+#   lbm_per_ft2_to_kg_per_m2:        4.882427636
+#
+# ---------------------------------------------------------------------------
+# KNOWN GAPS AND ASSUMPTIONS  (read before using this card quantitatively)
+# ---------------------------------------------------------------------------
+# Sutton's Table VI is a thermal-property table, not a complete CMA input deck.
+# The thermal properties are fully specified; the DECOMPOSITION KINETICS are
+# not. Items marked [ASSUMED] are NOT Sutton data:
+#
+# 1. [FLAGGED] Char density. Table VI(b) prints "62 lbm/ft3 (1184 kg/m3)", but
+#    62 lbm/ft3 = 993.1 kg/m3, not 1184. One of the two columns is a typo.
+#    Every other English->SI conversion in Table VI is correct (virgin density
+#    87 lbm/ft3 -> 1392; both degradation frequency factors; the char surface
+#    kinetics frequency factor), so this line is the anomaly, not the report's
+#    conversion factor. This card uses the SI value 1184 kg/m3 because it gives
+#    an 85.1% char yield, typical for a carbon-reinforced phenolic, and matches
+#    the char density of Amar's (different) carbon phenolic to ~1%; 993 kg/m3
+#    would be a 71.3% yield, low for this material class. CHECK THE PDF and
+#    correct if 62 lbm/ft3 is the true value — it changes the decomposable mass
+#    by a factor of ~1.9 and hence every A_rate below.
+#
+# 2. [ASSUMED] Component mass split. Table VI(a) gives two degradation
+#    reactions (first/second frequency factor + activation energy) but NOT the
+#    per-component densities or a resin volume fraction, so there is no way to
+#    tell how the 208 kg/m3 of decomposable mass divides between them. This
+#    card splits it 50/50 as a transparent placeholder.
+#    *** A_rate DEPENDS ON THIS SPLIT *** — see item 3.
+#
+# 3. [DERIVED] A_rate conversion. Sutton quotes frequency factors in
+#    lbm/ft3-sec (kg/m3-s), i.e. the rate form
+#        drho_i/dt = -A_sutton * exp(-E/RT) * ((rho_i - rho_r)/rho_0)^m
+#    SCAM's ComponentCard uses (scam/physics/decomposition.py)
+#        drho_i/dt = -A_rate  * exp(-E/RT) * rho_0 * ((rho_i - rho_r)/rho_0)^m
+#    so  A_rate [1/s] = A_sutton [kg/m3-s] / rho_0 [kg/m3].  Because rho_0 comes
+#    from the assumed 50/50 split, A_rate is only as good as that assumption.
+#    Re-derive both A_rate values if the split is corrected.
+#
+# 4. [ASSUMED] Reaction order m_exp = 3.0. Table VI(a) gives no order for the
+#    two degradation reactions (the 0.5 order it does quote belongs to the char
+#    SURFACE oxidation kinetics, recorded as metadata below). 3.0 is the
+#    standard CMA/Aerotherm value for phenolic resin components.
+#
+# 5. [ASSUMED] Virgin emissivity. Sutton specifies only "Char surface
+#    emissivity 0.7"; Table VI(a) lists no virgin emissivity. Both are set to
+#    0.7 here. For an ablating case the surface is charred over the period of
+#    interest, so the char value dominates.
+#
+# 6. [ASSUMED] gas_molar_mass = 0.022 kg/mol (SCAM default). Sutton gives the
+#    pyrolysis-gas specific heat but no molecular weight.
+#
+# 7. [NOT PROVIDED] No B' surface-thermochemistry table. Sutton closes the
+#    surface with FINITE-RATE char oxidation kinetics (recorded under
+#    `sutton_surface_kinetics` below), which SCAM's surface solver does not
+#    consume — it needs a `lookup(T_wall, p_e, B'_g)` backend. Running an
+#    ablating (ENERGY_BALANCE) case with this card therefore requires supplying
+#    a B' table or the live Cantera backend separately. Conduction-only and
+#    PRESCRIBED_TEMP cases work as-is.
+#
+# 8. [NOT PROVIDED] No porosity or permeability. `permeability` is left unset,
+#    so the pressure-driven Darcy solver stays off and SCAM uses the simple
+#    gas-expansion path.
+#
+# 9. [NOT PROVIDED] No heats of formation, so this card uses the per-component
+#    `h_decomp` path (Sutton's 200 Btu/lbm heat of pyrolysis) rather than
+#    absolute `h_virgin`/`h_char` enthalpy tables. Consequently h_bar is 0 and
+#    the decomposition energy is carried entirely by h_decomp. See
+#    docs/physics/energy_formulation_comparison.md before comparing this card's
+#    energy balance against a card that does carry enthalpy tables.
+
+name: NARMCO_4028
+description: "Narmco 4028 carbon phenolic, single-source card from Sutton NASA TN D-5930 (1970) Table VI"
+material_category: ablative_organic
+card_version: "1.0"
+status: estimate
+dataset_version: "TN D-5930"
+source: "Sutton, K. (1970), An Experimental Study of a Carbon-Phenolic Ablation Material, NASA TN D-5930, Table VI"
+units: SI
+
+material_model:
+  type: "Two-reaction charring composite (Sutton TN D-5930)"
+  note: >-
+    Thermal properties are fully specified by Table VI. The kinetics component
+    split, reaction order, virgin emissivity and gas molar mass are assumptions,
+    not Sutton data — see the KNOWN GAPS block at the top of this file.
+
+# Decomposable mass fraction, 208/1392. NOT a measured resin volume fraction —
+# Sutton gives no Gamma. Metadata only; SCAM never uses this in the physics.
+gamma_resin: 0.149425
+
+# Table VI(a) / VI(b) bulk densities [kg/m^3].
+# rho_virgin: 87 lbm/ft^3; the report's SI value 1392 is used (87*16.0185=1393.6).
+# rho_char:   see KNOWN GAPS item 1 — the report's English and SI values disagree.
+rho_virgin: 1392.0
+rho_char: 1184.0
+
+# ---------------------------------------------------------------------------
+# Decomposition kinetics — Table VI(a) "Rate constants for thermal degradation"
+#
+#   First  frequency factor  2.9311e15 lbm/ft3-sec  (4.70e16 kg/m3-s)
+#   First  activation energy 4.88e4 calories/mole   (0.204 MJ/mole)
+#   Second frequency factor  3.0975e13 lbm/ft3-sec  (4.96e14 kg/m3-s)
+#   Second activation energy 5.01e4 calories/mole   (0.209 MJ/mole)
+#
+# rho_0/rho_r below are the ASSUMED 50/50 split of the 208 kg/m^3 decomposable
+# mass (KNOWN GAPS item 2); A_rate = A_sutton / rho_0 (item 3).
+# h_decomp = 200 Btu/lbm = 465200 J/kg, Table VI(a) "Heat of pyrolysis"
+# (endothermic, positive by SCAM's ComponentCard convention).
+# ---------------------------------------------------------------------------
+components:
+  - name: reaction_1
+    rho_0: 104.0                 # [ASSUMED] half of 208 kg/m^3
+    rho_r: 0.0
+    A_rate: 4.513827e+14         # = 4.694383e16 kg/m3-s / 104.0  -> [1/s]
+    E_act: 204179.2              # 4.88e4 cal/mole * 4.184
+    m_exp: 3.0                   # [ASSUMED] CMA convention, not in Table VI
+    h_decomp: 465200.0           # 200 Btu/lbm, endothermic
+    sutton_A_kg_m3_s: 4.694383e+16
+  - name: reaction_2
+    rho_0: 104.0                 # [ASSUMED] half of 208 kg/m^3
+    rho_r: 0.0
+    A_rate: 4.770500e+12         # = 4.961320e14 kg/m3-s / 104.0  -> [1/s]
+    E_act: 209618.4              # 5.01e4 cal/mole * 4.184
+    m_exp: 3.0                   # [ASSUMED] CMA convention, not in Table VI
+    h_decomp: 465200.0           # 200 Btu/lbm, endothermic
+    sutton_A_kg_m3_s: 4.961320e+14
+
+# Non-decomposing reinforcement/residue carrying the char density.
+# DOCUMENTATION ONLY — `material_loader.py` reads no top-level
+# `inert_components` key (it only parses `components`, skipping inert entries
+# found there). The inert mass is derived by the solver instead, as
+#     fiber = rho_char - sum_i(rho_r_i) = 1184 - 0 = 1184 kg/m^3
+# giving nodal density fiber + sum_i(rho_i): 1392 virgin, 1184 fully charred.
+# Verified against the loader. This block mirrors the style of
+# carbon_phenolic.yaml, where it is likewise inert documentation.
+inert_components:
+  - name: carbon_residue
+    rho_0: 1184.0
+    rho_r: 1184.0
+    inert: true
+
+# ---------------------------------------------------------------------------
+# Table VI(a) - Virgin material
+# ---------------------------------------------------------------------------
+
+# Virgin specific heat [T_K, J/kg/K]   (Btu/lbm-degR * 4186.8)
+cp_virgin:
+  - [255.555556, 996.458]      # 460 R,  0.238 Btu/lbm-R
+  - [311.111111, 1222.546]     # 560 R,  0.292
+  - [366.666667, 1327.216]     # 660 R,  0.317
+  - [422.222222, 1390.018]     # 760 R,  0.332
+  - [477.777778, 1448.633]     # 860 R,  0.346
+  - [533.333333, 1507.248]     # 960 R,  0.360
+  - [588.888889, 1565.863]     # 1060 R, 0.374
+  - [644.444444, 1624.478]     # 1160 R, 0.388
+  - [700.000000, 1683.094]     # 1260 R, 0.402
+  - [811.111111, 1800.324]     # 1460 R, 0.430
+
+# Virgin thermal conductivity [T_K, W/m/K]   (Btu/(ft-s-degR) * 6230.6448)
+# NOTE: non-monotonic — peaks at 860-960 R then falls. That is Sutton's data as
+# printed (his own W/m-K column agrees: 0.561 ... 0.774 ... 0.479), not an error
+# in transcription. It is a real difference from Amar's Appendix D Table D.3,
+# which rises monotonically over the same range.
+k_virgin:
+  - [255.555556, 0.560758]     # 460 R,  0.90e-4 Btu/(ft-s-R)  [report: 0.561]
+  - [311.111111, 0.635526]     # 560 R,  1.02e-4              [report: 0.636]
+  - [366.666667, 0.691602]     # 660 R,  1.11e-4              [report: 0.693]
+  - [422.222222, 0.741447]     # 760 R,  1.19e-4              [report: 0.742]
+  - [477.777778, 0.772600]     # 860 R,  1.24e-4              [report: 0.774]
+  - [533.333333, 0.772600]     # 960 R,  1.24e-4              [report: 0.774]
+  - [588.888889, 0.741447]     # 1060 R, 1.19e-4              [report: 0.742]
+  - [644.444444, 0.697832]     # 1160 R, 1.12e-4              [report: 0.698]
+  - [700.000000, 0.629295]     # 1260 R, 1.01e-4              [report: 0.630]
+  - [811.111111, 0.479760]     # 1460 R, 0.77e-4              [report: 0.479]
+
+# [ASSUMED] Sutton gives no virgin emissivity; char value 0.7 used. See gaps item 5.
+emissivity_virgin:
+  - [255.555556, 0.7]
+  - [811.111111, 0.7]
+emissivity: 0.7
+
+# ---------------------------------------------------------------------------
+# Table VI(b) - Charred material
+# ---------------------------------------------------------------------------
+
+# Char specific heat [T_K, J/kg/K]   (Btu/lbm-degR * 4186.8)
+cp_char:
+  - [277.777778, 1004.832]     # 500 R,  0.240 Btu/lbm-R
+  - [555.555556, 1381.644]     # 1000 R, 0.330
+  - [811.111111, 1611.918]     # 1460 R, 0.385
+  - [1088.888889, 1863.126]    # 1960 R, 0.445
+  - [1366.666667, 2009.664]    # 2460 R, 0.480
+  - [1644.444444, 2072.466]    # 2960 R, 0.495
+  - [1922.222222, 2114.334]    # 3460 R, 0.505
+  - [2200.000000, 2156.202]    # 3960 R, 0.515
+  - [2477.777778, 2177.136]    # 4460 R, 0.520
+  - [2755.555556, 2198.070]    # 4960 R, 0.525
+  - [3033.333333, 2219.004]    # 5460 R, 0.530
+  - [3311.111111, 2239.938]    # 5960 R, 0.535
+  - [3588.888889, 2260.872]    # 6460 R, 0.540
+  - [3866.666667, 2281.806]    # 6960 R, 0.545
+
+# Char thermal conductivity [T_K, W/m/K]   (Btu/(ft-s-degR) * 6230.6448)
+k_char:
+  - [277.777778, 0.809984]     # 500 R,  0.13e-3 Btu/(ft-s-R)  [report: 0.810]
+  - [555.555556, 0.872290]     # 1000 R, 0.14e-3              [report: 0.872]
+  - [811.111111, 0.934597]     # 1460 R, 0.15e-3              [report: 0.935]
+  - [1088.888889, 0.996903]    # 1960 R, 0.16e-3              [report: 0.977]
+  - [1366.666667, 1.121516]    # 2460 R, 0.18e-3              [report: 1.128]
+  - [1644.444444, 1.183823]    # 2960 R, 0.19e-3              [report: 1.189]
+  - [1783.333333, 1.308435]    # 3210 R, 0.21e-3              [report: 1.314]
+  - [1922.222222, 1.495355]    # 3460 R, 0.24e-3              [report: 1.502]
+  - [2200.000000, 2.056113]    # 3960 R, 0.33e-3              [report: 2.065]
+  - [2477.777778, 2.679177]    # 4460 R, 0.43e-3              [report: 2.790]
+  - [2616.666667, 2.990710]    # 4710 R, 0.48e-3              [report: 3.002]
+  - [2755.555556, 3.489161]    # 4960 R, 0.56e-3              [report: 3.502]
+  - [3033.333333, 4.859903]    # 5460 R, 0.78e-3              [report: 4.880]
+  - [3311.111111, 6.355258]    # 5960 R, 1.02e-3              [report: 6.390]
+  - [3555.555556, 7.352161]    # 6400 R, 1.18e-3              [report: 7.380]
+  - [3777.777778, 9.283661]    # 6800 R, 1.49e-3              [report: 9.325]
+
+# Table VI(b) "Char surface emissivity 0.7"
+emissivity_char_table:
+  - [277.777778, 0.7]
+  - [3777.777778, 0.7]
+emissivity_char: 0.7
+
+# ---------------------------------------------------------------------------
+# Table VI(c) - Pyrolysis gas
+# ---------------------------------------------------------------------------
+
+# Pyrolysis gas enthalpy [T_K, J/kg], SENSIBLE reference (h_g(298.15 K) = 0),
+# obtained by integrating Sutton's Table VI(c) specific heat from 0 K and
+# shifting. Sutton tabulates cp_g, not h_g, so this table is DERIVED (the
+# integration is exact for his piecewise-linear cp; no other input was used).
+#
+# Sutton's cp_g is strongly non-monotonic (0.75 -> 2.00 Btu/lbm-R by 1960 R,
+# back to 1.00 for 2460-3960 R, then up to 10.00 by 6960 R). That is an
+# era-typical "effective cp" absorbing dissociation, and it is reproduced here
+# as given. h_g is monotonic regardless, since cp_g > 0 throughout.
+h_g:
+  - [277.777778, -74632.6]     # 500 R,  cp_g 0.75 Btu/lbm-R
+  - [555.555556, 942992.4]     # 1000 R, 1.00
+  - [811.111111, 2280442.4]    # 1460 R, 1.50
+  - [1088.888889, 4315692.4]   # 1960 R, 2.00
+  - [1366.666667, 6060192.4]   # 2460 R, 1.00
+  - [1644.444444, 7223192.4]   # 2960 R, 1.00
+  - [1922.222222, 8386192.4]   # 3460 R, 1.00
+  - [2200.000000, 9549192.4]   # 3960 R, 1.00
+  - [2477.777778, 11148317.4]  # 4460 R, 1.75
+  - [2755.555556, 13619692.4]  # 4960 R, 2.50
+  - [3033.333333, 17690192.4]  # 5460 R, 4.50
+  - [3311.111111, 24668192.4]  # 5960 R, 7.50
+  - [3588.888889, 34553692.4]  # 6460 R, 9.50
+  - [3866.666667, 45892942.4]  # 6960 R, 10.00
+
+# h_g above is on the sensible reference by construction, and Sutton gives no
+# formation enthalpy to convert it, so `h_g_abs_offset` is deliberately OMITTED
+# (absent -> None -> no offset applied). Do NOT add it: a non-null offset would
+# be applied on top of an already-sensible table (see pato_validation.md §11).
+# NB: the key must be absent, not `null` — material_loader.py does
+# `float(raw["h_g_abs_offset"]) if "h_g_abs_offset" in raw else None`, so an
+# explicit `null` raises TypeError rather than meaning "no offset".
+
+# [ASSUMED] Not in Table VI. SCAM default. See gaps item 6.
+gas_molar_mass: 0.022
+
+# ---------------------------------------------------------------------------
+# Sutton data recorded for reference — NOT consumed by SCAM
+# ---------------------------------------------------------------------------
+# Table VI(b) char surface closure. Sutton uses finite-rate oxidation kinetics
+# where SCAM expects a B' table; these values are preserved so the card is a
+# complete record of Table VI, and so a B' table can be generated consistently
+# with them later. See gaps item 7.
+sutton_surface_kinetics:
+  heat_of_combustion: 11862600.0        # 5100 Btu/lbm [J/kg]
+  heat_of_sublimation: 20934000.0       # 9000 Btu/lbm [J/kg]
+  frequency_factor: 218250.0            # 4.47e4 lbm/ft2-s-atm^0.5 -> kg/m2-s-atm^0.5
+  activation_energy: 176983.2           # 42.3 kcal/mole [J/mole]
+  reaction_order: 0.5

@@ -10,9 +10,13 @@
 #   condensed:     pure graphite C(gr)
 
 mpp:
-  mpp_bin:  /opt/Mutationpp/install/bin/bprime
-  mpp_data: /opt/Mutationpp/data
-  mpp_lib:  /opt/Mutationpp/install/lib
+  # Mutation++ install paths are intentionally NOT hardcoded here. They default
+  # to $MPP_DIRECTORY / $MPP_DATA_DIRECTORY (Mutation++'s own environment
+  # variables), falling back to ~/Mutationpp. Uncomment and set these only for a
+  # non-standard install:
+  #   mpp_bin:  /path/to/Mutationpp/install/bin/bprime
+  #   mpp_data: /path/to/Mutationpp/data
+  #   mpp_lib:  /path/to/Mutationpp/install/lib
 
   mixture:   tacot_air_bprime
   mixture_src: tacot_air_bprime.xml   # relative to this config file

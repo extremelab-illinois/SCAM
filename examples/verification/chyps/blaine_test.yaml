@@ -1,0 +1,142 @@
+# SPDX-License-Identifier: MIT
+# =============================================================================
+# SCAM input deck — CHyPS BlaineTest verification
+# =============================================================================
+#
+# Run:   python3 -m scam examples/verification/chyps/blaine_test.yaml
+# Plot:  python3 examples/verification/chyps/compare_chyps_blaine.py
+#
+# What this case tests
+# --------------------
+# Full ablative material response verified against the CHyPS BlaineTest
+# reference dataset.  TACOT v3.0, 5 cm slab, two-phase heating + cooldown:
+#
+#   Phase 1 (0–60 s):   rhoUeCH ramps 0.2→0.3 kg/m²/s, h_r = 1.5 MJ/kg
+#   Phase 2 (60–90 s):  rhoUeCH = 0.2 kg/m²/s,          h_r = 15 MJ/kg
+#   Cooldown (90–100 s): h_r = 0, rhoUeCH = 0.05 kg/m²/s
+#
+# Reference: BlaineTest_chyps_results/probes/T0–T8
+#   T0 = surface (Lagrangian, follows recession)
+#   T1–T5 = 1, 2, 4, 8, 12 mm from original surface (consumed by recession)
+#   T6–T7 = 16, 24 mm (survive full run)
+#   T8    = back face (50 mm)
+# =============================================================================
+
+
+name: "BlaineTest CHyPS Verification"
+
+
+# -----------------------------------------------------------------------------
+# Geometry
+# -----------------------------------------------------------------------------
+geometry:
+  type: slab
+
+
+# -----------------------------------------------------------------------------
+# Material stack — 5 cm TACOT, 201 nodes
+# -----------------------------------------------------------------------------
+stack:
+  layers:
+    - material: TACOT
+      thickness: 0.05
+      n_nodes: 201
+      n_subcells: 4
+
+
+# -----------------------------------------------------------------------------
+# Surface boundary condition — full energy balance
+# -----------------------------------------------------------------------------
+surface_bc:
+  type: energy_balance
+
+  rhoUeCH:
+    - [0.000,  0.03]
+    - [0.100,  0.20]
+    - [60.000, 0.30]
+    - [60.100, 0.20]
+    - [90.000, 0.20]
+    - [90.100, 0.05]
+    - [100.000, 0.05]
+
+  h_r:
+    - [0.000,   0.0]
+    - [0.100,   1.5e6]
+    - [60.000,  1.5e6]
+    - [60.100,  1.5e7]
+    - [90.000,  1.5e7]
+    - [90.100,  0.0]
+    - [100.000, 0.0]
+
+  emissivity: -1          # use material card values (virgin→char blend)
+  view_factor: 1.0
+  T_rad_in: 300.0
+
+  lambda_blowing: 0.5
+
+  # rho_e_u_e gates B' chemistry; zeroed at cooldown to prevent enthalpy
+  # reference mismatch when h_r=0 (see docs/verification/pato_validation.md §cooldown).
+  rho_e_u_e:
+    - [0.000,  0.03]
+    - [0.100,  0.20]
+    - [60.000, 0.30]
+    - [60.100, 0.20]
+    - [90.000, 0.20]
+    - [90.100, 0.0]
+    - [100.000, 0.0]
+
+  C_M: 1.0
+  p_e: 101325.0
+
+
+# -----------------------------------------------------------------------------
+# Back-face boundary condition — adiabatic
+# -----------------------------------------------------------------------------
+back_bc:
+  type: adiabatic
+
+
+# -----------------------------------------------------------------------------
+# Solver options
+# -----------------------------------------------------------------------------
+solver:
+  t_start: 0.0
+  t_end: 100.0
+
+  dt_init: 0.01
+  dt_min: 1.0e-5
+  dt_max: 0.5
+  dt_max_dT: 30.0
+  dt_max_drho_frac: 0.05
+
+  max_seb_iter: 50
+  seb_tol: 1.0
+
+  max_picard: 8
+  picard_tol: 0.05
+
+  allow_recession: true
+  continuous_remap: true
+  use_rho_old: true
+
+  element_transport: false
+  bprime_runtime: false
+
+  output_dt: 0.5
+
+  tc_positions: [0.001, 0.002, 0.004, 0.008, 0.012, 0.016, 0.024]
+
+
+# -----------------------------------------------------------------------------
+# Material
+# -----------------------------------------------------------------------------
+materials:
+  - ../../../scam/materials/ablative_organic/tacot_v3.0.yaml
+
+
+# -----------------------------------------------------------------------------
+# Output
+# -----------------------------------------------------------------------------
+output:
+  path: results/blaine_test/
+  format: csv

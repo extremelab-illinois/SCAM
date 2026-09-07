@@ -62,6 +62,28 @@ For live Cantera surface chemistry:
 pip install -e ".[bprime]"
 ```
 
+#### Optional: Mutation++ (not a pip dependency)
+
+[Mutation++](https://github.com/mutationpp/Mutationpp) is a compiled C++ library
+with its own CMake build, so it **cannot** be installed via `pip` and is
+deliberately absent from the extras above. It is entirely optional — Cantera
+covers every live-chemistry path in SCAM. You only need Mutation++ to run the
+`MutationppEvaluator` backend, used by
+`examples/verification/ablation2/compare_pato_ablation2_live_vs_pretab.py` and by
+the `*_mpp_config.yaml` material configs.
+
+Build it per its own instructions, then make sure its environment is on the
+path. SCAM locates it via Mutation++'s own variables, falling back to
+`~/Mutationpp`:
+
+```bash
+export MPP_DIRECTORY=/path/to/Mutationpp          # install root
+export MPP_DATA_DIRECTORY="$MPP_DIRECTORY/data"   # mixtures/, thermo/, transport/
+```
+
+If it is missing, only that one comparison script fails, with a message naming
+the binary it looked for.
+
 ---
 
 ## Quick Start
@@ -151,7 +173,7 @@ Materials are grouped by class. **Key:** ✅ verified against reference data · 
 | TACOT 3.0 (3-rxn) | `tacot_v3.0_3rxn.yaml` | ✅ | ✅ | ✅ | Same; exact 3-reaction form |
 | PICA (original) | `pica.yaml` | ⬜ | ⬜ | ⬜ | Tran 1997; Milos & Chen 2010 |
 | AVCOAT | `avcoat.yaml` | ⬜ | ⬜ | ⬜ | Chen & Milos 1999; Si fiberglass neglected in B′ |
-| Carbon phenolic | `carbon_phenolic.yaml` | ⬜ | ⬜ | ⬜ | Amar 2006; MX-4926 analogy |
+| Carbon phenolic | `carbon_phenolic.yaml` | ✅ | ⬜ | ⬜ | Amar 2006 App. D (mixed sources); char cp from Sutton NASA TN D-5930. Thermal props verified vs Amar §8.8 (surface, back face, recession, in-depth profiles); B′ table still unvalidated |
 | Silica phenolic | `silica_phenolic.yaml` | ⬜ | ⬜ | n/a | MX-2600 analogy; Si surface chemistry not modelled |
 | ASTERM | `asterm.yaml` | ⬜ | ⬜ | ⬜ | Zanetti 2015; IXV heritage |
 | ZURAM 18/50 | `zuram.yaml` | ⬜ | ⬜ | ⬜ | AblaNTIS TN-2.2 / VKI+DLR measurements; card_version 2.0 |
@@ -214,7 +236,9 @@ Three area-function modes via `GeometryConfig`:
 The surface solver accepts two interchangeable backends, selected per material in the `b_prime_tables` dict passed to the solver:
 
 - **`BPrimeTable`** — fast interpolation over a pre-computed YAML table; no Cantera needed at runtime. Generated offline by `scam/tools/generate_bprime.py`.
-- **`BprimeEvaluator`** — live Cantera equilibrium chemistry. Slower but activates the SEB advective enthalpy terms. Requires Cantera.
+- **`BprimeEvaluator`** — live Cantera equilibrium chemistry. Slower, but activates the SEB advective enthalpy terms. Requires Cantera (`pip install -e ".[bprime]"`).
+
+A third backend, **`MutationppEvaluator`** (`scam/physics/mpp_evaluator.py`), wraps the external Mutation++ `bprime` tool behind the same `lookup(...)` interface. It is optional and used only for cross-checking Cantera against Mutation++ — see [Optional: Mutation++](#optional-mutation-not-a-pip-dependency) in Installation.
 
 ---
 
@@ -239,9 +263,40 @@ Run any of these with:
 MPLBACKEND=Agg python3 examples/verification/ablation2/compare_pato_ablation2.py
 ```
 
-See `docs/verification/pato_validation.md` for a detailed record of the physics fixes and residual verification gaps.
+### Note on PATO reference data
 
-**Note on PATO reference data:** [PATO](https://pato.ac/) is a separate project (built on OpenFOAM, GPL-licensed) and is not redistributed here. This repository ships only small, derived numerical outputs (e.g. `PATO_Energy_TestCase_2.2.txt`) used as reference values for the code-to-code comparisons above — not PATO source code. Obtain PATO itself from its own repository under its own license if you need to reproduce the reference runs.
+**Licensing.** [PATO](https://pato.ac/) is a separate project (built on
+OpenFOAM, GPL-licensed) and is **not** redistributed here. This repository ships
+only small, derived numerical outputs used as reference values for the
+code-to-code comparisons above — not PATO source code. Obtain PATO itself from
+its own repository under its own license if you need to reproduce the reference
+runs. The CHyPS reference data is courtesy of Dr. Blaine Vollmer (University of
+Illinois at Urbana-Champaign), redistributed with permission; see
+`examples/verification/chyps/README.md`.
+
+**You do not need PATO installed to run these comparisons.** The PATO reference
+outputs they plot against are small text files, and the ones required are
+committed to this repository under
+`examples/verification/ablation1/pato_reference/` and
+`examples/verification/ablation2/pato_reference/` (plus the FIAT reference used
+by the ablation1 base case). Every script resolves the bundled copy first and
+only falls back to a local `~/PATO-dev` checkout if it is absent — that fallback
+exists for regenerating or extending the bundled set, not for normal use. The
+same applies to PATO's TACOT `gasProperties`: the needed conversion is committed
+as `scam/materials/ablative_organic/tacot_v3.0_gasProperties_pT.yaml`, and the
+readers fall back to a built-in table when the PATO tree is absent.
+
+Two exceptions:
+
+- `examples/verification/ablation2/compare_pato_ablation2_live_vs_pretab.py`
+  requires a **Mutation++** build (it exercises the live Mutation++ B′ backend).
+  Located via `$MPP_DIRECTORY`, else `~/Mutationpp`. Cantera
+  (`pip install -e ".[bprime]"`) is sufficient for every other case, including
+  the live-chemistry ones.
+- The 2D `AblationTestCase_3.x` comparison reads a live PATO case directory and
+  is not part of this distribution.
+
+See `docs/verification/pato_validation.md` for a detailed record of the physics fixes and residual verification gaps.
 
 ---
 

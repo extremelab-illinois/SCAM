@@ -101,7 +101,7 @@ class BPrimeTable:
 
     def __init__(self, path: str) -> None:
         self._path = path
-        with open(path, "r") as f:
+        with open(path, "r", encoding="utf-8") as f:
             raw = yaml.safe_load(f)
 
         from scipy.interpolate import RegularGridInterpolator
@@ -278,7 +278,7 @@ class BPrimeTableRowFormat:
 
     def __init__(self, path: str) -> None:
         self._path = path
-        with open(path, "r") as f:
+        with open(path, "r", encoding="utf-8") as f:
             raw = yaml.safe_load(f)
 
         columns: list[str] = raw["columns"]
@@ -393,7 +393,7 @@ class BPrimeTableRowFormat:
 
 def _load_b_prime_table(bp_path: str):
     """Load a B' table YAML file, auto-detecting 3-D grid vs row format."""
-    with open(bp_path, "r") as f:
+    with open(bp_path, "r", encoding="utf-8") as f:
         peek = yaml.safe_load(f)
     if "rows" in peek and "columns" in peek:
         return BPrimeTableRowFormat(bp_path)
@@ -415,7 +415,7 @@ def _load_gas_properties_pT(path: str) -> dict:
     ``properties.py::interp_gas_pT``: keys "p", "T" (1-D) and "M", "h_g",
     "mu" (2-D, shape (n_p, n_T)).
     """
-    with open(path, "r") as f:
+    with open(path, "r", encoding="utf-8") as f:
         raw = yaml.safe_load(f)
     p_ax = np.asarray(raw["p_Pa"], dtype=float)
     T_ax = np.asarray(raw["T_K"], dtype=float)
@@ -515,7 +515,7 @@ def load_material(path: str) -> tuple[MaterialCard, Optional[BPrimeTable]]:
     path = str(Path(path).resolve())
     card_dir = os.path.dirname(path)
 
-    with open(path, "r") as f:
+    with open(path, "r", encoding="utf-8") as f:
         raw = yaml.safe_load(f)
 
     if raw is None:

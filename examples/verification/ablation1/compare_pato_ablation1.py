@@ -41,7 +41,12 @@ PATO_REF_CASE = _LOCAL_REF_CASE if _LOCAL_REF_CASE.exists() else Path.home() / (
 PATO_MAT = Path.home() / "PATO-dev/data/Materials/Composites/TACOT"
 PATO_TA  = PATO_REF_CASE / "output/porousMat/scalar/Ta_plot"
 PATO_RHO = PATO_REF_CASE / "output/porousMat/scalar/rho_s_plot"
-FIAT_T   = PATO_CASE / "data/ref/FIAT/T"
+# FIAT reference is bundled too (it lives under the PATO *tutorials* tree, a
+# different root from the testsuites `ref` tree above, so it needs its own
+# bundled-first resolution). Without this, a checkout with no local PATO-dev
+# could not run this script at all.
+_LOCAL_FIAT = Path(__file__).resolve().parent / "pato_reference/AblationTestCase_1.0/data/ref/FIAT/T"
+FIAT_T   = _LOCAL_FIAT if _LOCAL_FIAT.exists() else PATO_CASE / "data/ref/FIAT/T"
 
 TACOT_YAML = REPO / "scam/materials/ablative_organic/tacot_v3.0.yaml"
 OUT_PNG      = Path(__file__).parent / "compare_pato_ablation1.png"

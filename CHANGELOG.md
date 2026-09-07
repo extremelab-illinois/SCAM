@@ -4,6 +4,75 @@
 All notable changes to SCAM are documented here. Versioning follows
 [Semantic Versioning](https://semver.org/).
 
+## [0.2.0] — 2026-09-07
+
+Adds a boundary condition and two verification cases, and fixes three bugs —
+one of which changes behaviour, see **Changed** below.
+
+### Added
+
+- **Back-face radiation boundary condition** (`BackBCType.RADIATION`), from a
+  user request. The back face may re-radiate to an enclosure and/or lose heat
+  through a convective film:
+  `q = eps*sigma*F*(T_back^4 - T_env^4) + h_back*(T_back - T_env)`.
+  Configure from YAML with `type: radiation` plus `emissivity_back`,
+  `T_env_back`, and optionally `view_factor_back` / `h_back`. The T^4 term is
+  Newton-linearised about the previous iterate, so no inner iteration is needed.
+  Verified against the exact steady equilibrium, with first-order grid
+  convergence; `emissivity_back: 0` reproduces `adiabatic` exactly.
+- **Amar (2006) §8.8 carbon-phenolic verification case**
+  (`examples/verification/amar_thesis/compare_amar_cp.py`). SCAM matches the
+  published reference on surface temperature (+69 °R at peak), back face
+  (−2 °R at 50 s), recession (+3%), and the in-depth profiles (RMS 89 °R over
+  nine snapshots). Digitized reference curves for Figs 8.14–8.15 and 8.28–8.32
+  are included.
+- **CHyPS BlaineTest verification case**
+  (`examples/verification/chyps/`). Surface temperature agrees within 3.2 K
+  through the high-flux phase, recession within 0.45%, and the deep probes
+  within ~6 K. Reference data courtesy of **Dr. Blaine Vollmer (University of
+  Illinois at Urbana-Champaign)**, redistributed with permission.
+- **`narmco_4028.yaml`** — a single-source carbon-phenolic card built entirely
+  from Sutton, NASA TN D-5930 (1970), Table VI, with an explicit list of the
+  quantities that report does not provide.
+
+### Changed
+
+- **`q_back` sign convention corrected (behaviour change).** The back-face
+  `prescribed_flux` BC is documented as positive-into-material, but the
+  assembly applied the opposite sign, so a positive `q_back` *cooled* the back
+  face. If you set a nonzero `q_back` in 0.1.0, its effect is now reversed —
+  which is to say, it now matches the documentation. Zero-flux and adiabatic
+  cases are unaffected.
+- Carbon-phenolic char specific heat now comes from Sutton NASA TN D-5930
+  Table VI(b) instead of Amar Appendix D Table D.4, whose cp column is
+  physically impossible at the cold end (209 J/kg·K at 278 K, versus ~700 for
+  graphite). This closed a 169 °R back-face error in the §8.8 case with no
+  change to peak surface temperature or recession.
+
+### Fixed
+
+- **Material and input files are now read as UTF-8 explicitly.** Previously
+  `open()` used the platform locale, so material cards failed to decode on
+  Windows and other non-UTF-8 locales with `UnicodeDecodeError`. Reported by a
+  user who had to delete a character from the TACOT card to run it.
+- The Amar §8.8 in-depth profile overlay silently plotted nothing (wrong
+  filename pattern) and used the wrong depth datum.
+- `compare_pato_ablation1.py` crashed without a local PATO checkout; the FIAT
+  reference it needs is now bundled, so all published PATO comparisons run
+  against repo-bundled data with no PATO installation.
+- Mutation++ paths are resolved from `$MPP_DIRECTORY` / `$MPP_DATA_DIRECTORY`
+  rather than a hardcoded location, so the optional Mutation++ backend works
+  outside the original development machine.
+
+### Notes
+
+- Mutation++ is optional and cannot be installed via pip (compiled C++/CMake);
+  only `compare_pato_ablation2_live_vs_pretab.py` needs it. Cantera
+  (`pip install -e ".[bprime]"`) covers every other live-chemistry path.
+- Still not included: the 2-D axisymmetric solver, the Amar §8.7
+  carbon-carbon case (unresolved — its reference cooldown appears to violate
+  energy conservation), and the Bianchi thesis case (not yet configured).
+
 ## [0.1.0] — 2026-08-29
 
 Initial public release.

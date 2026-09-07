@@ -142,10 +142,18 @@ solver differences in the older version.
 
 ## 6. How to reproduce
 
+`$MPP_DIRECTORY` / `$MPP_DATA_DIRECTORY` are Mutation++'s own environment
+variables, set by its install script. SCAM falls back to `~/Mutationpp` when they
+are unset, so a standard upstream install needs no extra configuration:
+
 ```bash
+# Point at the Mutation++ install (skip if its env script is already sourced)
+export MPP_DIRECTORY="${MPP_DIRECTORY:-$HOME/Mutationpp}"
+export MPP_DATA_DIRECTORY="${MPP_DATA_DIRECTORY:-$MPP_DIRECTORY/data}"
+
 # Install mixture file for Mutation++
 cp examples/verification/bprime/tacot_air_bprime.xml \
-   /opt/Mutationpp/data/mixtures/
+   "$MPP_DATA_DIRECTORY/mixtures/"
 
 # Run comparison (takes ~30 s for bprime sweep + Cantera live)
 MPLBACKEND=Agg python3 examples/verification/bprime/compare_bprime_mpp_vs_cantera.py
@@ -156,9 +164,9 @@ Output: `examples/verification/bprime/bprime_mpp_vs_cantera.png`
 To run the `bprime` CLI directly for a quick check:
 
 ```bash
-LD_LIBRARY_PATH=/opt/Mutationpp/install/lib \
-MPP_DATA_DIRECTORY=/opt/Mutationpp/data \
-/opt/Mutationpp/install/bin/bprime \
+LD_LIBRARY_PATH="$MPP_DIRECTORY/install/lib" \
+MPP_DATA_DIRECTORY="$MPP_DATA_DIRECTORY" \
+"$MPP_DIRECTORY/install/bin/bprime" \
   -T 1000:500:3500 -P 101325 -b 1.0 \
   -m tacot_air_bprime -bl air -py tacot_pyro -cp carbon
 ```

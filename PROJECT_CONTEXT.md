@@ -21,7 +21,7 @@ Update this file when focus shifts, bugs are resolved, or conventions change.
 
 **Stack:** Pure Python 3.10+, NumPy/SciPy for numerics, PyYAML for input, Matplotlib for output. Optional Cantera for live equilibrium chemistry.
 
-**Current state:** Physics-complete and PATO-verified through the full AblationTestCase_2.x benchmark family (surface T within 2 K, recession within 1% of PATO at t=60 s across all variants). The main TACOT 3.0 material (`scam/materials/ablative_organic/tacot_v3.0.yaml`) is the canonical TACOT validation card; `tacot_v3.0_3rxn.yaml` keeps the exact 3-reaction kinetics variant. `ablative_organic/pica.yaml` and `ablative_carbon/fiberform.yaml` are structural templates with placeholder values only. Amar (2006) §8.7 carbon-carbon verification is underway: material cards `ablative_carbon/carbon_carbon_amar2006.yaml` and `carbon_carbon_amar2006_ace.yaml` are in place with dual B′ tables (full Cantera CNO and ACE-style gri30); §8.8 carbon-phenolic script skeleton exists, but reference figures are not yet digitized.
+**Current state:** Physics-complete and PATO-verified through the full AblationTestCase_2.x benchmark family (surface T within 2 K, recession within 1% of PATO at t=60 s across all variants). The main TACOT 3.0 material (`scam/materials/ablative_organic/tacot_v3.0.yaml`) is the canonical TACOT validation card; `tacot_v3.0_3rxn.yaml` keeps the exact 3-reaction kinetics variant. `ablative_organic/pica.yaml` and `ablative_carbon/fiberform.yaml` are structural templates with placeholder values only. Amar (2006) §8.8 carbon-phenolic is **verified** (surface T, back face, recession and in-depth profiles all match; see `docs/verification/verification.md` §8.8). Amar §8.7 carbon-carbon remains the one open case: material cards `ablative_carbon/carbon_carbon_amar2006.yaml` and `carbon_carbon_amar2006_ace.yaml` are in place with dual B′ tables (full Cantera CNO and ACE-style gri30), but the peak is under-predicted and its reference cooldown appears physically anomalous.
 
 ---
 
@@ -85,6 +85,7 @@ core/constants, core/errors
 | `examples/verification/conduction/` | V1–V3 conduction verification scripts and output PNGs |
 | `examples/verification/ablation1/` | `compare_pato_ablation1*.py` scripts and output PNGs |
 | `examples/verification/ablation2/` | `compare_pato_ablation2*.py` scripts, `_pato2_common.py`, output PNGs |
+| `examples/verification/amar_thesis/` | Amar (2006) §8.7 CC and §8.8 CPh comparison scripts, digitized reference CSVs, debug diagnostics |
 | `tests/` | unit / integration / verification / validation |
 
 ---
@@ -118,10 +119,14 @@ core/constants, core/errors
 
 ## Current Focus
 
-Core physics and PATO validation are complete.
+Core physics and PATO validation are complete. Current work:
+
+- **Amar (2006) §8.7 carbon-carbon verification** — the one open verification case. Three of four root causes are closed by direct test (density refuted; surface advective enthalpy measured at +8 °R; `Ω_hw` proven faithful at 0.753 across four air models). The cooldown collapse is attributed to an energy-conservation contradiction in the *reference* (it radiates ~7× less than εσT⁴ demands) — an attribution strengthened by SCAM now matching §8.8 to −2 °R at the back face. Still open: the back-face peak arrives ~4 s early (`k` is the one diffusivity input never swept), and peak recession is 20–25% low with **neither** B′ table closing it (CNO 7.41×10⁻³, ACE 6.93×10⁻³ vs 9.251×10⁻³ target — note this inverts the older "use ACE" preference). See `examples/verification/amar_thesis/` and `docs/verification/verification.md` §Amar §8.7.
 
 Recently completed:
 
+- **Amar (2006) §8.8 carbon-phenolic — verified.** Figs 8.28–8.32 digitized; SCAM matches surface T (+69 °R at peak), back face (−2 °R at 50 s), recession (+3%) and the in-depth profiles (RMS 89 °R over 9 snapshots). The former ~169 °R back-face overshoot was traced to an **erroneous specific-heat column in Amar's own Table D.4** (0.05 Btu/lbm·°R = 209 J/kg·K at 278 K, physically impossible for a char), now superseded by Sutton NASA TN D-5930 Table VI(b). A single-source `narmco_4028.yaml` card was added from that same Sutton report.
+- **CHyPS BlaineTest — verified.** Surface within 3.2 K in the high-flux phase, recession within 0.45%, deep probes within ~6 K. The previously recorded ~126 K deep-probe deficit is gone, and its recorded root cause ("CHyPS omits composition-dependent solid enthalpy") is **disproven**: nulling `h_bar_chemical` now makes SCAM 220–275 K too hot at depth.
 - **TC2.2 / h_g reference fix** — YAML material cards store sensible `h_g`; PATO/Cantera use absolute. Added `MaterialCard.h_g_abs_offset` field and apply it in `assembly.py::_build_system` to convert sensible→absolute before Q_adv. Surface node gas outflow is now explicit (`mg_out[0] = m_dot_g[0]`); old SEB cooldown compensation block removed. Scripts replacing `h_g_table` with absolute data must clear `h_g_abs_offset=None`. TC2.2 (TACOT v2.2, Mutation++ B′, enthalpy BC): SCAM 1568.1 K vs PATO 1568.4 K (Δ = −0.3 K) at t = 60 s. Ablation2 base: +0.8 K. See `docs/verification/pato_validation.md` §11.
 - **Exact FVM energy formulation** — `ρ·h(T)` storage with `h_old` at `ρ_old`; Picard iteration; linear enthalpy extrapolation. Production ablation2 comparisons match PATO to ~+0.8 K at 60 s.
 - **Performance pass** — all inner loops vectorised; 501-node live-Cantera run ~11 s (element transport ~75 s).
@@ -129,8 +134,7 @@ Recently completed:
 
 Likely next areas:
 
-- Finish Amar §8.7 debug (close remaining +7% recession overshoot)
-- Digitize Amar §8.8 reference figures and run carbon-phenolic comparison
+- Amar §8.7: close the 20–25% recession deficit (the most likely place a genuine SCAM or B′-data issue remains) and the ~4 s early back-face peak
 - Additional materials (PICA, FiberForm — currently placeholder properties)
 
 ---

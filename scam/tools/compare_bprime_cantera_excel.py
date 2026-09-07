@@ -41,7 +41,7 @@ EXCEL_FILE  = REPO / "scam/materials/ablative_organic/tacot_bprime_from_ref_TACO
 def _parse_excel_table(path: Path) -> dict[tuple, list]:
     """Return groups[(p_Pa, Bg)] = sorted list of (T_K, Bc, hw_J_kg)."""
     groups: dict[tuple, list] = defaultdict(list)
-    with open(path) as f:
+    with open(path, encoding="utf-8") as f:
         for line in f:
             line = line.strip()
             if not line or line.startswith("p"):

@@ -8,7 +8,7 @@ heating 0.1–60 s, cooling 60.1–120 s). In the PATO boundary table, cooldown
 sets `rhoUeCH = 0.3e-2` kg/m²/s and `h_r=0`, but `chemistryOn=0` disables B′
 chemistry and the Bprime temperature BC ignores the `rhoUeCH/h_r` columns in
 that branch. The driver is
-[`examples/verification/ablation2/compare_pato_ablation2_equilibriumElementConservation.py`](../examples/verification/ablation2/compare_pato_ablation2_equilibriumElementConservation.py).
+[`examples/verification/ablation2/compare_pato_ablation2_equilibriumElementConservation.py`](../../examples/verification/ablation2/compare_pato_ablation2_equilibriumElementConservation.py).
 
 Each section gives the **symptom**, the **root cause**, the **fix** (with the
 files/functions touched), and the **result**.
@@ -17,7 +17,7 @@ For SCAM this means `rhoUeCH` and the B′ chemistry driver `rho_e_u_e` are not
 identical during cooldown: retain the mapped `rhoUeCH` value for diagnostics,
 but set `rho_e_u_e=0` so the B′ lookup and Cantera advective terms are skipped.
 When the B′ lookup is skipped while a Bprime backend exists,
-[`physics/surface_energy.py::seb_residual`](../scam/physics/surface_energy.py)
+[`physics/surface_energy.py::seb_residual`](../../scam/physics/surface_energy.py)
 falls back to the temperature convection branch (`hconv*(Tedge-T)`) with no
 advective or mass-removal sink.
 
@@ -33,7 +33,7 @@ PATO reference at t = 60 s: surface `T_wall = 1568.5 K`, recession ≈ 11.8 mm
 surface T, recession, and the whole in-depth profile — toward PATO at once,
 identifying char ablation rate as the single controlling lever.
 
-**Root cause.** In [`physics/surface_energy.py::seb_residual`](../scam/physics/surface_energy.py),
+**Root cause.** In [`physics/surface_energy.py::seb_residual`](../../scam/physics/surface_energy.py),
 the blowing correction `1/(1+λ·B)` was applied **only** to the convective heat
 flux (`rhoUeCH_eff`), while the char mass flux used the *unblown* transfer
 coefficient `m_dot_char = B'_c · ρ_e u_e C_M`. By the Reynolds analogy, blowing
@@ -50,7 +50,7 @@ rescales `B_g` by the blown coefficient diverges when `m_dot_pyro/denom > 1/λ`,
 e.g. the low-`C_M = 0.01` verification cases).
 
 **Result.** Surface-T gap 48 K → 31 K; recession 14.3 → 12.85 mm. Tests that
-rebuild the SEB ([`tests/verification/test_v5_surface_balance.py`](../tests/verification/test_v5_surface_balance.py))
+rebuild the SEB ([`tests/verification/test_v5_surface_balance.py`](../../tests/verification/test_v5_surface_balance.py))
 were updated to apply `blow_factor` to `m_dot_char` as well.
 
 ---
@@ -70,7 +70,7 @@ inward by one full recession depth (~6.4 mm at t = 30 s). The physics was fine.
 
 **Fix.** Use `y_nodes` directly as depth-from-original-surface; a probe at depth
 `d` is ablated once `d < y_nodes[0] (== s_total)`. Touched
-[`examples/verification/ablation2/_pato2_common.py::T_at_original_depths`](../examples/verification/ablation2/_pato2_common.py)
+[`examples/verification/ablation2/_pato2_common.py::T_at_original_depths`](../../examples/verification/ablation2/_pato2_common.py)
 and the profile/Z_C panels of the comparison script.
 
 **Result.** Max in-depth error 946 K → ~200 K. Recession-aligned, the profiles
@@ -86,7 +86,7 @@ agree within ~20–50 K (e.g. t = 30 s / 12 mm: SCAM 628 K vs PATO 610 K).
 **Symptom.** With element transport enabled, the gas-phase element fractions
 `Z_elem` (C/H/O/N) diverged — every `Z_i` clipped to 1.0 (column sum → 3).
 
-**Root cause.** In [`solvers/indepth_solver.py::step`](../scam/solvers/indepth_solver.py)
+**Root cause.** In [`solvers/indepth_solver.py::step`](../../scam/solvers/indepth_solver.py)
 the transport PDE was advected with the Darcy **thermal-expansion** flux while
 its source was the **pyrolysis production** rate `(−dρ/dt)`. These are
 mass-inconsistent, so the carrier-gas continuity
@@ -114,7 +114,7 @@ pure so the isolation unit tests keep their inputs).
 **Root cause (two mechanisms).**
 
 1. *Dominant, periodic.* The Lagrangian fixed grid drops/merges the surface cell
-   one cell at a time ([`mesh/remap.py`](../scam/mesh/remap.py)); each drop
+   one cell at a time ([`mesh/remap.py`](../../scam/mesh/remap.py)); each drop
    discretely exposes the next, cooler sub-surface node, so `T_wall` steps down
    ~11 K then re-heats. Period = one cell of recession.
 2. *Residual.* The adaptive-timestep controller was bang-bang (halve / ×1.2),
@@ -124,13 +124,13 @@ pure so the isolation unit tests keep their inputs).
 
 - `SolverOptions.continuous_remap` (default `False`). When `True`, recession
   uses a continuous moving-mesh (ALE) scheme,
-  [`mesh/receding.py::apply_recession_ale`](../scam/mesh/receding.py): the
+  [`mesh/receding.py::apply_recession_ale`](../../scam/mesh/receding.py): the
   ablating layer's nodes are redistributed between the receding surface and the
   fixed back face every step (node count fixed, **no discrete drops**), with
   conservative re-interpolation of `T`, `Z_elem`, and the per-nodelet
   `rho_components`.
 - A **smooth proportional** dt controller in
-  [`numerics/time_integration.py`](../scam/numerics/time_integration.py): scale
+  [`numerics/time_integration.py`](../../scam/numerics/time_integration.py): scale
   `dt` to keep the worst normalised change ≈ 0.9 of its limit, with the per-step
   change capped to ×0.5 … ×1.2.
 - A **recession-CFL** limit (only under `continuous_remap`):
@@ -219,7 +219,7 @@ difference — identical to SCAM's `h_bar`) and `hp` (the reaction enthalpy of t
 produced gas).
 
 **How SCAM maps to it.** SCAM splits the same energy differently: the `hs` part
-is the `h_bar` term in [`numerics/assembly.py`](../scam/numerics/assembly.py),
+is the `h_bar` term in [`numerics/assembly.py`](../../scam/numerics/assembly.py),
 and the `hp`/gas part is carried by SCAM's pore-gas energy terms (the
 gas-storage `cp`-correction + the `h_g` advection). This was confirmed by direct
 test on `AblationTestCase_2.x` (recession-aligned in-depth at t = 60 s, PATO
@@ -408,7 +408,7 @@ base-case mismatch into (1) a surface-composition error (`Z_C_pyro=None` used a
 too-carbon-poor nominal gas), and (2) table-vs-live enthalpy support (`h_wall`,
 `qAdv*`).
 
-### §10. Energy formulation: d(ρh)/dt vs ρ·dh/dt — effect on mean slab density
+## 10. Energy formulation: d(ρh)/dt vs ρ·dh/dt — effect on mean slab density
 
 **Background.** SCAM's in-depth FVM uses the exact energy storage
 `d(ρh)/dt = (ρ_old·h(T^n,ρ_old) − ρ_new·h(T^k,ρ_new)) / Δt` (controlled by
@@ -492,7 +492,7 @@ remaining slab, identical between SCAM and PATO by definition) was compared usin
 The cleaned β-formulation comparison intentionally plots only exact `d(ρh)/dt`,
 storage-only `ρ·dh/dt`, and the PATO reference; the closed-out diagnostic sweeps
 are documented above rather than left as permanent plot clutter. The script is
-[`examples/verification/ablation2/compare_pato_ablation2_beta.py`](../examples/verification/ablation2/compare_pato_ablation2_beta.py).
+[`examples/verification/ablation2/compare_pato_ablation2_beta.py`](../../examples/verification/ablation2/compare_pato_ablation2_beta.py).
 
 ## 11. Surface pyrolysis-gas advection and h_g enthalpy reference
 
@@ -577,7 +577,7 @@ Current exact-storage results are unchanged by the optimisation itself: base
 
 ### Ablation1 multiPorousMat 5 mm probe
 
-[`compare_pato_ablation1_multiPorousMat.py`](../examples/verification/ablation1/compare_pato_ablation1_multiPorousMat.py)
+[`compare_pato_ablation1_multiPorousMat.py`](../../examples/verification/ablation1/compare_pato_ablation1_multiPorousMat.py)
 matches PATO's `AblationTestCase_1.0_multiPorousMat`: a 1 cm TACOT porous layer
 at the hot face over a 1 cm inert cork layer. The important PATO detail is that
 `porousMat1Properties` uses `PyrolysisType LinearArrhenius`; the first layer is
@@ -597,7 +597,7 @@ enabling the missing decomposition.
 
 ### Multi-material 2.x stack
 
-[`compare_pato_ablation2_multiMat.py`](../examples/verification/ablation2/compare_pato_ablation2_multiMat.py)
+[`compare_pato_ablation2_multiMat.py`](../../examples/verification/ablation2/compare_pato_ablation2_multiMat.py)
 extends the same corrected 2.x surface physics to PATO's layered
 `AblationTestCase_2.x_multiMat`: a 5.80 cm TACOT_v3 ablating layer over two
 inert Fourier sublayers (0.14 cm and 1.27 cm), with the same
@@ -625,4 +625,4 @@ Current result (2026-06-13 run): SCAM reaches `T_wall ≈ 1568.0 K` and
 pyrolysis zone during cooldown (about 60–85 K at the 1–16 mm probes), while the
 deep TACOT probe and both Fourier sublayer probes remain essentially matched
 (≤ 1 K reported for 45.3 mm, subMat1, and subMat2). The regenerated plot is
-[`examples/verification/ablation2/compare_pato_ablation2_multiMat.png`](../examples/verification/ablation2/compare_pato_ablation2_multiMat.png).
+[`examples/verification/ablation2/compare_pato_ablation2_multiMat.png`](../../examples/verification/ablation2/compare_pato_ablation2_multiMat.png).

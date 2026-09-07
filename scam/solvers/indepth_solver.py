@@ -265,6 +265,11 @@ def step(
         _rho_old = None
         _T_old_rhs = state.T.copy()   # T^n — fixed throughout Picard iterations
 
+    # Time-varying edge/surface pressure feeds the Darcy solver's Dirichlet BC
+    # (p(y=0) = p_surface) so sub/super-atmospheric trajectories are honoured
+    # in-depth, not just at the B' table lookup.
+    p_surface_now = float(eval_bc(surface_bc.p_e, time))
+
     if surface_bc.bc_type == SurfaceBCType.PRESCRIBED_TEMP:
         # --- Dirichlet BC: pin T[0] = T_wall directly ---
         # Use large-conductance penalty in the tridiagonal (no F_cond needed).
@@ -280,6 +285,7 @@ def step(
             rho_old=_rho_old, T_prev=state.T_prev, h_old=h_old_arr,
             T_old_rhs=_T_old_rhs,
             T_surface_dirichlet=T_wall,
+            p_surface=p_surface_now,
         )
         T_new = solve_thomas(tri, backend=options.array_backend)
 
@@ -320,6 +326,7 @@ def step(
                 rho_old=_rho_old, T_prev=state.T_prev, h_old=h_old_arr,
                 T_old_rhs=_T_old_rhs,
                 backend=options.array_backend,
+                p_surface=p_surface_now,
             )
 
             T_wall, q_cond, m_dot_char, h_wall = solve_surface(

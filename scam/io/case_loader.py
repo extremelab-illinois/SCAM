@@ -148,6 +148,7 @@ def _parse_back_bc(raw: dict) -> BackBCConfig:
         "adiabatic": BackBCType.ADIABATIC,
         "prescribed_temp": BackBCType.PRESCRIBED_TEMP,
         "prescribed_flux": BackBCType.PRESCRIBED_FLUX,
+        "radiation": BackBCType.RADIATION,
     }
     if type_str not in type_map:
         raise SCAMInputError(
@@ -159,6 +160,20 @@ def _parse_back_bc(raw: dict) -> BackBCConfig:
         kwargs["T_back"] = _make_scalar_bc(raw["T_back"])
     if "q_back" in raw:
         kwargs["q_back"] = _make_scalar_bc(raw["q_back"])
+    # RADIATION back face
+    if "emissivity_back" in raw:
+        kwargs["emissivity_back"] = float(raw["emissivity_back"])
+    if "view_factor_back" in raw:
+        kwargs["view_factor_back"] = float(raw["view_factor_back"])
+    if "T_env_back" in raw:
+        kwargs["T_env_back"] = _make_scalar_bc(raw["T_env_back"])
+    if "h_back" in raw:
+        kwargs["h_back"] = _make_scalar_bc(raw["h_back"])
+    if bc_type is BackBCType.RADIATION and "emissivity_back" not in raw and "h_back" not in raw:
+        raise SCAMInputError(
+            "back_bc type 'radiation' requires 'emissivity_back' (and/or 'h_back'); "
+            "with both zero the BC is identical to 'adiabatic'."
+        )
     return BackBCConfig(**kwargs)
 
 
@@ -206,7 +221,7 @@ def load_case(path: str | os.PathLike) -> tuple[SimCase, dict, dict]:
     path = Path(path).resolve()
     case_dir = path.parent
 
-    with open(path) as fh:
+    with open(path, encoding="utf-8") as fh:
         raw = yaml.safe_load(fh)
 
     if raw is None:

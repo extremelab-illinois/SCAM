@@ -89,9 +89,10 @@ Inert structural or insulating sublayers that back the ablative stack. No chemis
 | `ablative_organic/cork.yaml` | Cork | provisional | — | Bouilly 2006; Natali 2011; Candau 2012 |
 | `ablative_organic/heeet.yaml` | heeet | provisional | — | Venkatapathy et al. 2009 |
 | `ablative_organic/heeet_inner.yaml` | heeet_inner | provisional | — | Same source, inner-layer variant |
-| `ablative_organic/carbon_phenolic.yaml` | CARBON_PHENOLIC | provisional | — | Amar 2006 thesis Appendix D |
+| `ablative_organic/carbon_phenolic.yaml` | CARBON_PHENOLIC | provisional | — | Amar 2006 thesis Appendix D, **except char cp** from Sutton NASA TN D-5930 Table VI(b) — Amar's Table D.4 cp column is erroneous (209 J/kg·K at 278 K); see docs/verification/verification.md §8.8 |
+| `ablative_organic/narmco_4028.yaml` | NARMCO_4028 | estimate | TN D-5930 | Narmco 4028 carbon phenolic, **single-source** from Sutton NASA TN D-5930 Table VI. Thermal properties fully sourced; kinetics component split, reaction order, virgin emissivity and gas molar mass are flagged assumptions (Table VI gives no component densities). No B′ table — Sutton closes the surface with finite-rate char oxidation, recorded as metadata. See the KNOWN GAPS block in the card |
 | `ablative_organic/silica_phenolic.yaml` | silica_phenolic | provisional | — | Multiple sources |
-| `ablative_organic/teflon.yaml` | PTFE | estimate | — | Kemp 1968 kinetic (Eq. 12) ablation closure; validated vs. Steg 1962 / Yurevich 1973 within ±6% |
+| `ablative_organic/teflon.yaml` | PTFE | estimate | — | Kemp 1968 kinetic (Eq. 12) ablation closure; validated vs. Steg 1962 / Yurevich 1973 within ±6% — see studies/teflon_ablation/ |
 | `ablative_organic/teflon_bprime_legacy.yaml` | PTFE_bprime_legacy | estimate | — | Superseded Gibbs-equilibrium fluorine B′ table; kept for regression/comparison only (overpredicts kinetic rate by 4-9 orders — not physically endorsed) |
 | `ablative_organic/zuram.yaml` | ZURAM | provisional | — | AblaNTIS TN-2.2 / VKI+DLR measurements (card_version 2.0) |
 | `ablative_organic/norcoat_liege.yaml` | NorcoatLiege | estimate | — | Values estimated |
