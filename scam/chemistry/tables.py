@@ -1,3 +1,11 @@
+"""Offline B' table generation: grid sweep, parallel evaluation, and output.
+
+Builds a table of ``BPrimeCase`` results over a (T_wall, p_e, B'g) grid
+(``build_table``, parallelized across a ``ProcessPoolExecutor``) and
+writes it to CSV (long or wide format) or JSON. This is the machinery
+behind ``scam/tools/generate_bprime.py``.
+"""
+
 from __future__ import annotations
 
 import argparse

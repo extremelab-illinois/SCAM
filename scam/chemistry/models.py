@@ -1,3 +1,12 @@
+"""Result dataclasses for the SCAM chemistry package.
+
+``BPrimeCase`` is the per-grid-point result of a B' equilibrium
+computation (``scam.chemistry.thermochemistry.compute_bprime_case``):
+the case inputs (T_wall, pressure, B'g) alongside the computed wall
+state (B'_c, wall gas enthalpy/molar mass, species mole fractions).
+Consumed by ``scam.chemistry.tables`` to assemble offline B' tables.
+"""
+
 from __future__ import annotations
 
 import math

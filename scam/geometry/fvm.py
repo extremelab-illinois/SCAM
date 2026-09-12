@@ -19,7 +19,8 @@ def harmonic_conductivity(k_left: float, k_right: float) -> float:
     """Harmonic-mean conductivity at the interface between two cells.
 
     The harmonic mean gives the correct effective conductivity for two
-    resistances in series (half-cell on each side):
+    resistances in series (half-cell on each side)::
+
         k_eff = 2 k_L k_R / (k_L + k_R)
     """
     if k_left + k_right == 0.0:

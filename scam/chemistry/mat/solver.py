@@ -44,38 +44,23 @@ from typing import Any
 
 @dataclass(frozen=True)
 class NewtonSolverConfig:
-    """Solver tuning parameters.
+    """Solver tuning parameters."""
 
-    Attributes
-    ----------
-    max_steps:
-        Maximum inner-solver steps passed to Cantera's ``equilibrate``.
-    max_iter:
-        Maximum outer iterations passed to Cantera's ``equilibrate``.
-    log_level:
-        Cantera verbosity (0 = silent).
-    damp_factor:
-        Factor applied to initial condensed-phase moles on each damped
-        retry (0 < damp_factor < 1).  A value of 0.5 halves the moles
-        on each attempt.
-    max_retries:
-        Maximum number of damped retries after all solver variants have
-        failed.  Each retry multiplies the initial condensed moles by
-        ``damp_factor``.
-    species_cutoff:
-        Mole fractions below this threshold are treated as numerically
-        zero when evaluating species-presence checks.
-    use_continuation:
-        When ``True`` (default), ``ContinuationSolver`` sorts grid points
-        in continuation order.  Set ``False`` to disable.
-    """
-
-    max_steps: int = 5000
-    max_iter: int = 200
-    log_level: int = 0
+    max_steps: int = 5000        #: max inner-solver steps passed to Cantera's ``equilibrate``
+    max_iter: int = 200          #: max outer iterations passed to Cantera's ``equilibrate``
+    log_level: int = 0           #: Cantera verbosity (0 = silent)
+    #: Factor applied to initial condensed-phase moles on each damped
+    #: retry (0 < damp_factor < 1); 0.5 halves the moles on each attempt.
     damp_factor: float = 0.5
+    #: Max number of damped retries after all solver variants have
+    #: failed; each retry multiplies the initial condensed moles by
+    #: ``damp_factor``.
     max_retries: int = 3
+    #: Mole fractions below this threshold are treated as numerically
+    #: zero when evaluating species-presence checks.
     species_cutoff: float = 1e-20
+    #: When True (default), ``ContinuationSolver`` sorts grid points in
+    #: continuation order; False disables that.
     use_continuation: bool = True
 
     def __post_init__(self) -> None:
@@ -96,33 +81,19 @@ class NewtonSolverConfig:
 
 @dataclass(frozen=True)
 class SolverDiagnostics:
-    """Convergence metadata for one grid point.
+    """Convergence metadata for one grid point."""
 
-    Attributes
-    ----------
-    converged:
-        ``True`` if Cantera's equilibrate converged on the first or a
-        subsequent attempt.
-    solver_used:
-        Name of the Cantera solver that converged (``"gibbs"``, ``"vcs"``),
-        or ``"failed"`` if all attempts failed.
-    n_attempts:
-        Total number of equilibrate() calls made (1 = converged first try).
-    elapsed_s:
-        Wall-clock time for this grid point (seconds).
-    warm_started:
-        ``True`` when the Solution objects carried state from the previous
-        grid point (i.e. continuation was active).
-    initial_condensed_moles:
-        Initial condensed-phase moles used in the successful attempt.
-        Equals the configured value when converged on the first try.
-    """
-
-    converged: bool
+    converged: bool          #: True if Cantera's equilibrate converged on the first or a subsequent attempt
+    #: Name of the Cantera solver that converged (``"gibbs"``, ``"vcs"``),
+    #: or ``"failed"`` if all attempts failed.
     solver_used: str
-    n_attempts: int
-    elapsed_s: float
+    n_attempts: int          #: total number of ``equilibrate()`` calls made (1 = converged first try)
+    elapsed_s: float          #: wall-clock time for this grid point [s]
+    #: True when the Solution objects carried state from the previous
+    #: grid point (i.e. continuation was active).
     warm_started: bool = False
+    #: Initial condensed-phase moles used in the successful attempt;
+    #: equals the configured value when converged on the first try.
     initial_condensed_moles: float = float("nan")
 
 

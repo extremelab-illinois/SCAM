@@ -24,16 +24,16 @@ def newton_scalar(
 ) -> float:
     """Scalar Newton iteration with finite-difference Jacobian.
 
-    Convergence criterion: |f(x)| < tol.
+    Convergence criterion: ``|f(x)|`` < tol.
 
     Parameters
     ----------
     f:
-        Residual function f(x) → scalar. Converges when |f(x)| < tol.
+        Residual function f(x) → scalar. Converges when ``|f(x)|`` < tol.
     x0:
         Initial guess.
     tol:
-        Absolute convergence tolerance on the residual |f(x)| [same units as f].
+        Absolute convergence tolerance on the residual ``|f(x)|`` [same units as f].
     max_iter:
         Maximum number of iterations before raising SCAMNumericsError.
     dx_fd:
@@ -92,7 +92,7 @@ def bisect(
     a, b:
         Bracket endpoints (f(a) * f(b) < 0 required).
     tol:
-        Absolute convergence tolerance on |f(x)|.
+        Absolute convergence tolerance on ``|f(x)|``.
     max_iter:
         Maximum iterations.
     """

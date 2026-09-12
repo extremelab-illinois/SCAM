@@ -1,18 +1,19 @@
 # SPDX-License-Identifier: MIT
 """Tridiagonal coefficient assembly for the 1-D FVM energy equation.
 
-Energy equation for node n (cell-centred FVM with area function A(y)):
+Energy equation for node n (cell-centred FVM with area function A(y))::
 
     d/dt [ rho_n * cp_n * T_n * A_n * delta_n ]
         = G_{n-1/2} * (T_{n-1} - T_n) - G_{n+1/2} * (T_n - T_{n+1})
           + Q_decomp_n * A_n * delta_n
           + Q_pyro_n   * A_n * delta_n
 
-Semi-implicit Backward Euler (theta = 1) for conduction, explicit for sources:
+Semi-implicit Backward Euler (theta = 1) for conduction, explicit for sources::
 
     A_n * T_{n-1}^{k+1} + B_n * T_n^{k+1} + C_n * T_{n+1}^{k+1} = D_n
 
-where:
+where::
+
     A_n = -G_{n-1/2}
     C_n = -G_{n+1/2}
     B_n = M_n + G_{n-1/2} + G_{n+1/2}
@@ -21,21 +22,21 @@ where:
     M_n  = rho_n * cp_n * A_n * delta_n / dt    [thermal mass / dt]
     G_{n+1/2} = conductance between nodes n and n+1 [W/K]
 
-Surface node (n = 0, half-node):
-    The left face receives prescribed heat flux q_cond [W/m^2]:
-        (in-material direction positive)
-    A_0 = 0 (no left neighbour)
-    D_0 += q_cond * A_face_0  (where A_face_0 = A at the surface position)
+Surface node (n = 0, half-node): the left face receives prescribed heat flux
+q_cond [W/m^2] (in-material direction positive); ``A_0 = 0`` (no left
+neighbour) and ``D_0 += q_cond * A_face_0`` (where ``A_face_0`` is the area
+at the surface position).
 
 Back node (n = N-1, half-node):
-    Adiabatic: C_{N-1} = 0 (already zero by convention); no flux added to D.
-    Prescribed T: handled by pinning T_{N-1} externally after solve.
-    Prescribed flux: D_{N-1} += q_back * A_face_back.
+
+- Adiabatic: ``C_{N-1} = 0`` (already zero by convention); no flux added to D.
+- Prescribed T: handled by pinning ``T_{N-1}`` externally after the solve.
+- Prescribed flux: ``D_{N-1} += q_back * A_face_back``.
 
 F_cond back-substitution
 ------------------------
-The SEB requires q_cond(T_wall).  The tridiagonal can be partially reduced
-(forward elimination) to express q_cond as a linear function of T_wall:
+The SEB requires q_cond(T_wall). The tridiagonal can be partially reduced
+(forward elimination) to express q_cond as a linear function of T_wall::
 
     q_cond = alpha_F * T_wall + beta_F
 

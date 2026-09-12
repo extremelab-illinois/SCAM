@@ -3,6 +3,7 @@
 
 When the surface cell (node 0) has shrunk to below the drop threshold,
 this module:
+
 1. Merges node 0 (thin remnant) with node 1 (the cell just behind it)
    using a volume-weighted average for T and rho_components.
 2. Removes node 0 from all global arrays — node 1 becomes the new node 0.
@@ -48,8 +49,9 @@ def interpolate_to_nodelets(
 
     Uses piecewise linear interpolation with cumulative volume as the
     coordinate (eq. 6.1.54 in the reference CMA thesis):
-      - Nodelets j = 0 .. J//2 - 1 interpolate between (T_left, T_center)
-      - Nodelets j = J//2 .. J-1  interpolate between (T_center, T_right)
+
+    - Nodelets j = 0 .. J//2 - 1 interpolate between (T_left, T_center)
+    - Nodelets j = J//2 .. J-1  interpolate between (T_center, T_right)
 
     For the surface node (no left neighbour) T_left = T_center.
     For the back node (no right neighbour) T_right = T_center.

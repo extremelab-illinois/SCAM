@@ -1,8 +1,8 @@
 # SPDX-License-Identifier: MIT
 """Plot thermophysical properties of a SCAM material card.
 
-Usage
------
+**Usage**::
+
     # SI (default) — show only
     python scam/tools/plot_material.py scam/materials/ablative_organic/tacot_v3.0.yaml
 

@@ -1,12 +1,21 @@
 <!-- SPDX-License-Identifier: MIT -->
-# SCAM Documentation
+# SCAM documentation
 
-This folder is organized by document purpose:
+This folder is the source for the Sphinx documentation site (built with
+`sphinx-build`, config in `conf.py`). It is organized by document purpose:
 
+- `theory/` — the theory manual: derivations and analysis of SCAM's physics
+  models, plus formulations extracted from PATO.
 - `verification/` — verification ladders, PATO comparisons, and benchmark notes.
-- `physics/` — derivations and analysis of SCAM physics models.
-- `reference/` — extracted reference formulations from external codes and papers.
+  Files matching `9[0-9]_*.md` are private (main-only); see CLAUDE.md.
+- `planning/` — private roadmaps and implementation plans (excluded from the
+  built site on every branch; see `conf.py`'s `exclude_patterns`).
 
-Start with `verification/verification.md` for the 1-D verification ladder,
-`verification/verification2d.md` for the 2-D verification cases, and
-`verification/pato_validation.md` for the SCAM/PATO comparison record.
+To build the site locally:
+
+```bash
+pip install -e ".[docs]"
+sphinx-build -b html -W --keep-going docs docs/_build/html
+```
+
+Then open `docs/_build/html/index.html`.

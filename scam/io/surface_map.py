@@ -13,12 +13,13 @@ Columns:
 All centimetre values are converted to metres on load.
 
 The "axial" coordinate Z in the CSV is measured DOWN from the nose, while
-the mesh uses h measured UP from the back face.  Conversion:
+the mesh uses h measured UP from the back face.  Conversion::
+
     h = h_nose + Z   where h_nose = 2 * r_cyl (nose tip axial position)
     e.g. Z=0 → h=h_nose=0.1 m;  Z=-9.992 cm → h=h_nose-0.09992 ≈ 0.00008 m
 
-Usage
------
+**Usage**
+
 ::
 
     from scam.io.surface_map import load_surface_map, map_to_hot_faces
@@ -38,23 +39,14 @@ from numpy.typing import NDArray
 
 @dataclass
 class SurfaceBCTable:
-    """Parsed surface_bc.csv data in SI units.
+    """Parsed surface_bc.csv data in SI units."""
 
-    Attributes
-    ----------
-    s : (N,) arc length from nose [m]
-    r : (N,) radial coordinate [m]
-    h : (N,) axial coordinate in mesh frame [m]  (0 at back, h_nose at nose)
-    q_ratio : (N,) q_w / q_w(0)  — heat-flux / CH ratio
-    p_ratio : (N,) p_w / p_w(0)  — pressure ratio
-    h_nose : float  — axial position of nose tip in mesh frame [m]
-    """
-    s: NDArray
-    r: NDArray
-    h: NDArray
-    q_ratio: NDArray
-    p_ratio: NDArray
-    h_nose: float
+    s: NDArray          #: (N,) arc length from nose [m]
+    r: NDArray           #: (N,) radial coordinate [m]
+    h: NDArray           #: (N,) axial coordinate in mesh frame [m] (0 at back, h_nose at nose)
+    q_ratio: NDArray     #: (N,) ``q_w / q_w(0)`` -- heat-flux / CH ratio
+    p_ratio: NDArray     #: (N,) ``p_w / p_w(0)`` -- pressure ratio
+    h_nose: float        #: axial position of the nose tip in mesh frame [m]
 
 
 def load_surface_map(

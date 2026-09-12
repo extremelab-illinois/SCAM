@@ -8,7 +8,7 @@ wall enthalpy, advective enthalpies, blowing correction, and cooldown branch mus
 all use compatible references.
 
 For the diagnostic chemistry modes in the TACOT 3.0 ablation2 comparison, see
-[`surface_chemistry_modes.md`](surface_chemistry_modes.md).
+[`03_surface_chemistry_modes.md`](03_surface_chemistry_modes.md).
 
 The implementation lives mainly in:
 

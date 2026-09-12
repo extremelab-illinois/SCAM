@@ -8,8 +8,8 @@ for B'c and h_wall.  Subsequent ``lookup()`` calls are O(1) interpolations.
 ``surface_enthalpies()`` delegates to a Cantera ``CanteraBackend`` (same NASA-9
 reference as Mutation++, so h_g − h_wall differences are physically consistent).
 
-Usage
------
+**Usage**::
+
     from scam.physics.mpp_evaluator import MutationppEvaluator
     ev = MutationppEvaluator.from_config(
         "scam/materials/ablative_organic/tacot_v3.0_mpp_config.yaml"

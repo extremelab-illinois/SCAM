@@ -7,31 +7,33 @@ Solves the 1-D quasi-steady gas pressure equation across all material layers:
 
 where  Γ = K / μ_g  is the gas mobility [m² / (Pa·s)].
 
-Boundary conditions:
-    p(surface, y=0)  = p_surface   (Dirichlet — open to free stream)
-    dp/dy(back, y=L) = 0           (Neumann — adiabatic/no-flow back wall)
+Boundary conditions::
+
+    p(surface, y=0)  = p_surface   (Dirichlet -- open to free stream)
+    dp/dy(back, y=L) = 0           (Neumann -- adiabatic/no-flow back wall)
 
 The equation is quasi-steady because the pressure diffusion timescale
-    τ_p ~ L² · μ · ε_g / (K · p₀)  ≈ 0.001 s
-is orders of magnitude shorter than the thermal timescale (~seconds).
+(``tau_p ~ L^2 * mu * eps_g / (K * p0) ~ 0.001 s``) is orders of magnitude
+shorter than the thermal timescale (~seconds).
 
-The resulting gas mass flux is:
-    J_g(y) = −ρ_g · (K/μ) · dp/dy   [kg/(m²·s)]
+The resulting gas mass flux is::
+
+    J_g(y) = -rho_g * (K/mu) * dp/dy   [kg/(m^2*s)]
 
 which is used directly in pressure_darcy_energy_source() to replace the simpler
 thermal-expansion continuity approach.
 
 Effective permeability at each node
 ------------------------------------
-K_eff is computed by _node_permeability() in three stages:
+K_eff is computed by _node_permeability() in two stages:
 
-  1. Virgin/char blend: K_node = eps_v · K_virgin + (1 − eps_v) · K_char
-     where eps_v = (ρ − ρ_char) / (ρ_virgin − ρ_char) is the virgin fraction.
-     If permeability_virgin is not set (== 0), K_char is used for both phases.
-
-  2. Klinkenberg slip correction (disabled when klinkenberg_b == 0):
-        K_app = K_node · (1 + klinkenberg_b / p)
-     Significant only at sub-atmospheric pressures (p < ~1 kPa for typical ablators).
+1. Virgin/char blend: ``K_node = eps_v * K_virgin + (1 - eps_v) * K_char``,
+   where ``eps_v = (rho - rho_char) / (rho_virgin - rho_char)`` is the
+   virgin fraction. If permeability_virgin is not set (== 0), K_char is
+   used for both phases.
+2. Klinkenberg slip correction (disabled when klinkenberg_b == 0):
+   ``K_app = K_node * (1 + klinkenberg_b / p)``. Significant only at
+   sub-atmospheric pressures (p < ~1 kPa for typical ablators).
 
 Note on magnitude: for TACOT char (K=2×10⁻¹¹ m², μ≈3×10⁻⁵ Pa·s), the
 pressure perturbation is typically Δp < 1 Pa (0.001% of atmospheric).  The

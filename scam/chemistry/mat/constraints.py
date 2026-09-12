@@ -30,21 +30,15 @@ import numpy as np
 
 @dataclass(frozen=True)
 class SurfaceElementConstraint:
-    """Target molar ratios for elements in the condensed surface layer.
+    """Target molar ratios for elements in the condensed surface layer."""
 
-    Attributes
-    ----------
-    ratios:
-        Mapping of element symbol → relative molar amount.  Only the
-        ratios between values matter; absolute values are normalised
-        internally.  Example: ``{"Si": 1.0, "C": 1.0}`` for SiC (Si:C = 1:1).
-    strict:
-        If ``True`` (default), raise ``ConstraintInfeasibleError`` when no
-        feasible solution exists.  If ``False``, return the unconstrained
-        X_l and set ``constraint_satisfied=False`` on the result.
-    """
-
+    #: Mapping of element symbol -> relative molar amount. Only the ratios
+    #: between values matter; absolute values are normalised internally.
+    #: Example: ``{"Si": 1.0, "C": 1.0}`` for SiC (Si:C = 1:1).
     ratios: dict[str, float]
+    #: If True (default), raise ``ConstraintInfeasibleError`` when no
+    #: feasible solution exists. If False, return the unconstrained X_l
+    #: and set ``constraint_satisfied=False`` on the result.
     strict: bool = True
 
     def __post_init__(self) -> None:

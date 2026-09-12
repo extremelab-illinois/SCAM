@@ -23,7 +23,14 @@ separate branch and remote:
     `scam/config/case2d.py`, `scam/io/case_loader_2d.py`, their tests, examples
     and docs, and `examples/verification/ablation3/` (it also needs a live
     PATO-dev tree, which public users will not have)
-  - `docs/planning/` — private notes on future SCAM development, not shipped
+  - `docs/planning/` — private notes on future SCAM development, not shipped.
+    Removed from the tip in `public-v0.2.0`, but they were published in
+    `public-v0.1.0` (commit 74a74e1, 2026-08-29) and therefore **remain
+    retrievable from the public repository's history**. A deliberate decision
+    was made on 2026-09-07 not to rewrite public history to purge them: doing so
+    would require a force-push, which this project's policy forbids, and would
+    break existing clones. Do not "fix" this later — just keep new planning docs
+    out of promotions.
   - `examples/verification/amar_thesis/compare_amar_cc.py` — the §8.7
     carbon-carbon case, still unresolved. The §8.8 carbon-phenolic case **is**
     published; the machinery both share lives in `_amar_common.py` precisely so
@@ -31,6 +38,17 @@ separate branch and remote:
     `compare_amar_cc` again** — that would re-couple them.
   - `examples/verification/bianchi_thesis/` — not yet configured
   - `graphify-out/`, and any hardcoded personal path
+  - **Documentation pages marked main-only by the `9x_` filename convention.**
+    Any file matching `docs/**/9[0-9]_*.md` is private and must never be
+    promoted. Current members: `docs/verification/90_verification_2d.md`,
+    `docs/verification/91_ablation3_debug_status.md`,
+    `docs/verification/92_ablation3_pressure_handoff.md`. Future 2-D theory
+    and API-reference pages (once written) belong in this range too.
+    Promotion drops them with `git rm -f` on every file matching the
+    pattern — they never need a manual list, because the same regex both
+    creates and removes them. See "The `docs/` Sphinx build" below for why
+    this convention exists and the rules that keep it working on both
+    branches.
 - **Third-party data that IS published, and its terms** — check before adding
   more: the Amar digitized figure data is our own digitization of a publicly
   distributed thesis; the CHyPS reference data is courtesy of Dr. Blaine Vollmer
@@ -73,6 +91,59 @@ separate branch and remote:
   **Never `git push public --tags`** — that uploads every local tag regardless
   of branch, including internal `vX.Y.Z` tags that point into private history,
   and forces the underlying private commit objects to be transferred too.
+
+## The `docs/` Sphinx build
+
+`docs/` is a Sphinx + MyST documentation source tree (`docs/conf.py`; build
+with `pip install -e ".[docs]"` then
+`sphinx-build -b html -W --keep-going docs docs/_build/html`). It must build
+cleanly with `-W` (warnings-as-errors) on **both** `main` and `public-release`,
+using the *same* `docs/conf.py` — no branch detection in that file. ReadTheDocs
+builds `public-release` from a shallow detached HEAD, so a branch-conditional
+`conf.py` would make the two builds non-comparable and is never the fix.
+
+Two filename rules make that possible:
+
+- **`NN_` numeric prefix** on every page, giving each section's single glob
+  toctree (`:glob:` + a bare `*` in that section's `index.md`) a curated order.
+- **`9x_` prefix means `main`-only.** Any file matching `docs/**/9[0-9]_*.md`
+  is private (see the promotion exclusion list above). Digits sort before
+  letters, so private pages land at the bottom of the sidebar on `main` and
+  simply vanish on `public-release` — no manual exclusion list needed for
+  these files specifically; the same `9[0-9]_*` regex both identifies and
+  `git rm -f`s them during promotion.
+
+The invariant that keeps `-W` green on both branches: **every `docs/`
+subdirectory in the build exists on both branches and holds at least one
+always-public page.** Never create a `main`-only *directory* — whatever
+references it (a glob or an explicit toctree entry) warns under `-W` on
+`public-release`, because an unmatched glob and a toctree entry pointing at a
+missing document are both hard warnings (an unmatched `exclude_patterns` entry
+is the one thing that stays silent, which is why `docs/planning/` — which
+cannot satisfy the invariant — is excluded from the build on both branches
+instead of prefixed). A public page must never link (relative link or
+`{doc}`) to a `9x_` page; that builds on `main` and raises
+`myst.xref_missing` on `public-release`, so the public `-W` build is the
+self-policing gate for that rule. New 2-D API-reference content must live in
+a single `9x_`-prefixed stub page, never scattered into the shared
+`docs/api/*.md` pages that document non-2-D subpackages, even when a 2-D
+module lives in an otherwise-shared package (e.g. `scam/config/case2d.py`).
+
+Before promoting or trusting a green build on `main` alone, simulate
+`public-release` locally from a worktree synced to git-tracked files only
+(uncommitted/gitignored files, e.g. locally regenerated PNGs, are absent from
+a real clone and from ReadTheDocs, so a `main` build that only passes because
+of on-disk cruft is a false negative):
+
+```bash
+git worktree add --detach /tmp/scam-pubsim main
+find /tmp/scam-pubsim/docs -regex '.*/9[0-9]_.*\.md' -delete
+rm -rf /tmp/scam-pubsim/docs/planning
+rm -rf /tmp/scam-pubsim/scam/{mesh2d,numerics2d,physics2d,solvers2d,state2d}
+rm -f  /tmp/scam-pubsim/scam/config/case2d.py /tmp/scam-pubsim/scam/io/case_loader_2d.py
+sphinx-build -b html -W --keep-going /tmp/scam-pubsim/docs /tmp/scam-pubsim/docs/_build/html
+git worktree remove /tmp/scam-pubsim --force
+```
 
 ## Commands
 

@@ -57,50 +57,32 @@ class ElementSet:
 
 @dataclass(frozen=True)
 class CondensedSpecies:
-    """A single condensed-phase species that may be present at the surface.
+    """A single condensed-phase species that may be present at the surface."""
 
-    Attributes
-    ----------
-    name:
-        Cantera species name or a label for a custom phase.
-    molecular_weight_kg_per_kmol:
-        Molar mass in kg/kmol.
-    elements:
-        Mapping of element symbol → number of atoms per formula unit
-        (e.g. ``{"Si": 1, "C": 1}`` for SiC).
-    failure_temperature_K:
-        Temperature above which this species is assumed to fail/melt/spall.
-        ``None`` means no failure model.
-    density_kg_per_m3:
-        Bulk density.  Optional; used for volumetric failure-rate models.
-    """
-
-    name: str
-    molecular_weight_kg_per_kmol: float
+    name: str                                    #: Cantera species name, or a label for a custom phase
+    molecular_weight_kg_per_kmol: float          #: molar mass [kg/kmol]
+    #: Mapping of element symbol -> number of atoms per formula unit
+    #: (e.g. ``{"Si": 1, "C": 1}`` for SiC).
     elements: dict[str, float]
+    #: Temperature above which this species is assumed to fail/melt/spall.
+    #: None means no failure model.
     failure_temperature_K: float | None = None
-    density_kg_per_m3: float | None = None
+    density_kg_per_m3: float | None = None       #: bulk density; optional, used for volumetric failure-rate models
 
 
 @dataclass(frozen=True)
 class PyrolysisGas:
     """Composition and blowing rate specification for a pyrolysis stream.
 
-    Attributes
-    ----------
-    composition_mass:
-        Mass-fraction composition string (Cantera format, e.g.
-        ``"CH4:0.46,CO:0.35,H2O:0.19"``).  Exactly one of
-        *composition_mass* or *composition_mole* must be provided.
-    composition_mole:
-        Mole-fraction composition string.
-    bg_values:
-        B'g values at which to evaluate this stream.  An empty sequence
-        means only B'g = 0 is used.
+    Exactly one of ``composition_mass``/``composition_mole`` must be set
+    (enforced in ``__post_init__``).
     """
 
+    #: Mass-fraction composition string (Cantera format, e.g.
+    #: ``"CH4:0.46,CO:0.35,H2O:0.19"``).
     composition_mass: str | None = None
-    composition_mole: str | None = None
+    composition_mole: str | None = None          #: mole-fraction composition string
+    #: B'g values at which to evaluate this stream; empty means only B'g = 0.
     bg_values: tuple[float, ...] = (0.0,)
 
     def __post_init__(self) -> None:
@@ -122,34 +104,19 @@ class SurfaceMaterial:
     A material card bundles the gas mechanism, condensed-phase species,
     and optional pyrolysis gas into a single transferable object that
     can be passed to the solver or table generator.
-
-    Attributes
-    ----------
-    name:
-        Human-readable label (e.g. ``"carbon_char"``).
-    gas_mechanism:
-        Path or Cantera built-in name for the gas-phase kinetics file.
-    gas_phase_name:
-        Named phase inside *gas_mechanism* (for multi-phase YAML files).
-        Empty string means use the default phase.
-    condensed_species:
-        Ordered list of condensed species present at the surface.
-    active_elements:
-        Elements tracked in the surface mass balance.  Defaults to the
-        union of elements in all *condensed_species*.
-    pyrolysis_gas:
-        Optional pyrolysis gas specification.
-    description:
-        Free-text description.
     """
 
-    name: str
-    gas_mechanism: str
-    condensed_species: list[CondensedSpecies] = field(default_factory=list)
+    name: str                 #: human-readable label (e.g. ``"carbon_char"``)
+    gas_mechanism: str        #: path or Cantera built-in name for the gas-phase kinetics file
+    condensed_species: list[CondensedSpecies] = field(default_factory=list)  #: ordered list of condensed species present at the surface
+    #: Named phase inside ``gas_mechanism`` (for multi-phase YAML files);
+    #: empty string means use the default phase.
     gas_phase_name: str = ""
+    #: Elements tracked in the surface mass balance; defaults to the
+    #: union of elements in all ``condensed_species``.
     active_elements: list[str] = field(default_factory=list)
-    pyrolysis_gas: PyrolysisGas | None = None
-    description: str = ""
+    pyrolysis_gas: PyrolysisGas | None = None     #: optional pyrolysis gas specification
+    description: str = ""                          #: free-text description
 
     def __post_init__(self) -> None:
         if not self.active_elements and self.condensed_species:
@@ -180,23 +147,14 @@ class SurfaceMaterial:
 class BoundaryLayerState:
     """Thermodynamic state of the boundary-layer edge.
 
-    Attributes
-    ----------
-    temperature_K:
-        Edge total temperature.
-    pressure_Pa:
-        Local pressure (assumed uniform across the boundary layer).
-    composition_mass:
-        Edge gas mass-fraction string.
-    composition_mole:
-        Edge gas mole-fraction string.  Exactly one of *composition_mass*
-        or *composition_mole* must be set.
+    Exactly one of ``composition_mass``/``composition_mole`` must be set
+    (enforced in ``__post_init__``).
     """
 
-    temperature_K: float
-    pressure_Pa: float
-    composition_mass: str | None = None
-    composition_mole: str | None = None
+    temperature_K: float          #: edge total temperature [K]
+    pressure_Pa: float            #: local pressure (assumed uniform across the boundary layer) [Pa]
+    composition_mass: str | None = None    #: edge gas mass-fraction string
+    composition_mole: str | None = None    #: edge gas mole-fraction string
 
     def __post_init__(self) -> None:
         if (self.composition_mass is None) == (self.composition_mole is None):
@@ -225,54 +183,25 @@ class MATResult:
 
     Populated incrementally by the solver; fields left as ``None`` were
     not computed (e.g. if finite-rate reactions are disabled).
-
-    Attributes
-    ----------
-    control_point:
-        The (T, p, B'g) input.
-    converged:
-        Whether the solver converged.
-    Bprime_c:
-        Ablation blowing parameter for the primary condensed element.
-    Bprime_g:
-        Pyrolysis gas blowing parameter (equals ``control_point.Bg``).
-    Bprime_fail:
-        Failure/melt/spall blowing parameter.
-    Bprime_total:
-        Sum of all blowing contributions.
-    wall_gas_composition_X:
-        Wall gas mole-fraction string.
-    h_wall_gas_J_kg:
-        Wall gas specific enthalpy (J/kg).
-    MW_wall_gas_kg_per_kmol:
-        Wall gas mean molecular weight.
-    condensed_surface_mole_fractions:
-        Mole fractions of each condensed species at the surface.
-    active_reactions:
-        Names of heterogeneous reactions that are active.
-    reaction_rates:
-        Reaction rates (kmol/m²/s) for each active reaction.
-    convergence_residual:
-        Final residual norm from the Newton solver.
     """
 
-    control_point: MATControlPoint
-    converged: bool = False
+    control_point: MATControlPoint     #: the (T, p, B'g) input
+    converged: bool = False             #: whether the solver converged
 
-    Bprime_c: float | None = None
-    Bprime_g: float | None = None
-    Bprime_fail: float | None = None
-    Bprime_total: float | None = None
+    Bprime_c: float | None = None       #: ablation blowing parameter for the primary condensed element
+    Bprime_g: float | None = None       #: pyrolysis gas blowing parameter (equals ``control_point.Bg``)
+    Bprime_fail: float | None = None    #: failure/melt/spall blowing parameter
+    Bprime_total: float | None = None   #: sum of all blowing contributions
 
-    wall_gas_composition_X: str | None = None
-    h_wall_gas_J_kg: float | None = None
-    MW_wall_gas_kg_per_kmol: float | None = None
+    wall_gas_composition_X: str | None = None      #: wall gas mole-fraction string
+    h_wall_gas_J_kg: float | None = None            #: wall gas specific enthalpy [J/kg]
+    MW_wall_gas_kg_per_kmol: float | None = None    #: wall gas mean molecular weight
 
-    condensed_surface_mole_fractions: dict[str, float] | None = None
-    active_reactions: list[str] | None = None
-    reaction_rates: dict[str, float] | None = None
+    condensed_surface_mole_fractions: dict[str, float] | None = None   #: mole fractions of each condensed species at the surface
+    active_reactions: list[str] | None = None                          #: names of heterogeneous reactions that are active
+    reaction_rates: dict[str, float] | None = None                     #: reaction rates [kmol/m^2/s] for each active reaction
 
-    convergence_residual: float | None = None
+    convergence_residual: float | None = None       #: final residual norm from the Newton solver
 
 
 # ---------------------------------------------------------------------------

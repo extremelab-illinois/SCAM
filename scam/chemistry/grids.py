@@ -1,4 +1,12 @@
 # SPDX-License-Identifier: MIT
+"""Numeric grid parsing for the B' table generator CLI.
+
+Parses a temperature/pressure/B'g axis specification -- either an
+explicit comma-separated list, or a ``start:stop:step`` /
+``start:stop`` range -- into a list of floats, used by
+``scam.chemistry.tables`` to build the sweep grid for offline B'
+table generation.
+"""
 def parse_number_grid(text: str, *, name: str) -> list[float]:
     value = text.strip()
     if not value:

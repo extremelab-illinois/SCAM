@@ -53,48 +53,47 @@ class SurfaceBCConfig:
     bc_type: SurfaceBCType = SurfaceBCType.ENERGY_BALANCE
 
     # --- temperature-based convection (default) ---
-    # Convective heat transfer coefficient [W/m^2/K]
-    alpha_conv: ScalarBC = 0.0
-    # Adiabatic wall (recovery) temperature [K]
-    T_aw: ScalarBC = 300.0
+    alpha_conv: ScalarBC = 0.0     #: convective heat transfer coefficient [W/m^2/K]
+    T_aw: ScalarBC = 300.0         #: adiabatic wall (recovery) temperature [K]
 
     # --- enthalpy-based convection (PATO rhoUeCH / h_r style) ---
-    # Lumped mass-heat-transfer coefficient rho_e*u_e*C_H [kg/m^2/s].
-    # When > 0 this mode overrides alpha_conv / T_aw.
+    #: Lumped mass-heat-transfer coefficient ``rho_e*u_e*C_H`` [kg/m^2/s].
+    #: When > 0 this mode overrides ``alpha_conv``/``T_aw``.
     rhoUeCH: ScalarBC = 0.0
-    # Freestream recovery enthalpy h_r [J/kg] (same reference as h_g_table).
+    #: Freestream recovery enthalpy ``h_r`` [J/kg] (same reference as ``h_g_table``).
     h_r: ScalarBC = 0.0
 
-    # Surface emissivity (overrides material card value if set > 0)
-    emissivity: float = -1.0   # -1 means "use material card value"
-    view_factor: float = 1.0
-    # Incoming radiation source temperature [K] (e.g. enclosure wall or flame)
+    #: Surface emissivity (overrides the material card value if set > 0);
+    #: ``-1`` means "use material card value".
+    emissivity: float = -1.0
+    view_factor: float = 1.0       #: geometric view factor to the radiation sink [-]
+    #: Incoming radiation source temperature [K] (e.g. enclosure wall or flame)
     T_rad_in: ScalarBC = 0.0
 
-    # Blowing correction parameters
-    lambda_blowing: ScalarBC = 0.5  # 0.5 laminar, 0.4 turbulent
-    # Blowing correction model:
-    #   "rational" — 1/(1 + lambda*B_total), SCAM legacy (Amar-style).
-    #   "kays"     — Phi/(exp(Phi)-1), implicit solve for char flux (Amar Eq. 42).
-    #   "lees"     — log(1+Phi)/Phi, PATO's constantLambdaBlowingCorrectionModel;
-    #                also uses B'_g on the blown basis for the B' table lookup
-    #                (matching PATO BprimeBoundaryConditions.C line 613).
+    #: Blowing correction exponent (0.5 laminar, 0.4 turbulent).
+    lambda_blowing: ScalarBC = 0.5
+    #: Blowing correction model: ``"rational"`` (SCAM legacy, Amar-style),
+    #: ``"kays"`` (implicit solve for char flux, Amar Eq. 42), or ``"lees"``
+    #: (PATO's constantLambdaBlowingCorrectionModel). See the user manual's
+    #: boundary-conditions chapter (:doc:`/user/05_boundary_conditions`) for
+    #: the full formulas -- and its warning that this field is not currently
+    #: read by the YAML case-deck loader.
     blowing_model: str = "rational"
-    # Optional hot-wall Stanton correction Omega_hw(T_wall, time, h_wall).
-    # Applied to both C_H and C_M, preserving the configured C_H/C_M ratio.
+    #: Optional hot-wall Stanton correction ``Omega_hw(T_wall, time, h_wall)``,
+    #: applied to both C_H and C_M, preserving the configured C_H/C_M ratio.
     stanton_wall_correction: Optional[StantonWallCorrection] = None
-    # Set false when rhoUeCH already contains the hot-wall correction but the
-    # B'-to-mass-transfer relation still needs it (legacy trajectory inputs).
+    #: Set False when ``rhoUeCH`` already contains the hot-wall correction
+    #: but the B'-to-mass-transfer relation still needs it (legacy
+    #: trajectory inputs).
     apply_wall_correction_to_heat: bool = True
-    rho_e_u_e: ScalarBC = 0.0     # freestream mass flux [kg/m^2/s]
-    C_M: ScalarBC = 0.0            # mass transfer Stanton number [-]
+    rho_e_u_e: ScalarBC = 0.0      #: freestream mass flux [kg/m^2/s]
+    C_M: ScalarBC = 0.0            #: mass transfer Stanton number [-]
 
-    # Edge pressure [Pa] for B' table lookup
-    p_e: ScalarBC = 101325.0
+    p_e: ScalarBC = 101325.0       #: edge pressure [Pa] for the B' table lookup
 
-    # Prescribed-mode overrides (used when bc_type != ENERGY_BALANCE)
-    q_prescribed: Optional[Callable[[float], float]] = None   # [W/m^2] net flux
-    T_prescribed: Optional[Callable[[float], float]] = None   # [K]
+    # --- prescribed-mode overrides (used when bc_type != ENERGY_BALANCE) ---
+    q_prescribed: Optional[Callable[[float], float]] = None   #: net flux [W/m^2]
+    T_prescribed: Optional[Callable[[float], float]] = None   #: surface temperature [K]
 
 
 @dataclass
@@ -102,23 +101,17 @@ class BackBCConfig:
     """Back-face boundary condition configuration."""
 
     bc_type: BackBCType = BackBCType.ADIABATIC
-    T_back: ScalarBC = 300.0    # [K], used for PRESCRIBED_TEMP
-    q_back: ScalarBC = 0.0      # [W/m^2] into material, used for PRESCRIBED_FLUX
+    T_back: ScalarBC = 300.0    #: [K], used for PRESCRIBED_TEMP
+    q_back: ScalarBC = 0.0      #: [W/m^2] into material, used for PRESCRIBED_FLUX
 
     # --- RADIATION back face ---------------------------------------------
-    # Net loss  q = eps_back * sigma * view_factor_back * (T_N^4 - T_env_back^4),
-    # i.e. the back face radiates to an enclosure at ``T_env_back``.  Positive
-    # net loss cools the back face.  Optionally add a convective film via
-    # ``h_back`` to model free convection on a backshell:
-    #     q_extra = h_back * (T_N - T_env_back)
-    # Both are combined and applied as a single temperature-dependent flux.
-    #
-    # The T^4 term is linearised about the previous iterate each Picard/timestep
-    # pass (Newton form), so it is stable without an inner iteration.
-    emissivity_back: float = 0.0        # [-] 0 disables the radiative term
-    T_env_back: ScalarBC = 300.0        # [K] environment/enclosure temperature
-    view_factor_back: float = 1.0       # [-]
-    h_back: ScalarBC = 0.0              # [W/m^2/K] optional convective film
+    # See the user manual's boundary-conditions chapter
+    # (:doc:`/user/05_boundary_conditions`) for the combined radiative +
+    # convective flux formula and the Newton-linearisation note.
+    emissivity_back: float = 0.0        #: [-] 0 disables the radiative term
+    T_env_back: ScalarBC = 300.0        #: [K] environment/enclosure temperature
+    view_factor_back: float = 1.0       #: [-]
+    h_back: ScalarBC = 0.0              #: [W/m^2/K] optional convective film
 
 
 def eval_bc(param: ScalarBC, t: float) -> float:

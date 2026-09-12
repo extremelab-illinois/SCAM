@@ -37,43 +37,26 @@ from dataclasses import dataclass
 
 @dataclass(frozen=True)
 class WallState:
-    """Equilibrated wall gas state returned by a ThermochemBackend.
+    """Equilibrated wall gas state returned by a ThermochemBackend."""
 
-    Attributes
-    ----------
-    temperature_K:
-        Wall temperature (equals the input, unchanged by TP equilibration).
-    pressure_Pa:
-        Pressure (unchanged).
-    h_J_kg:
-        Specific enthalpy of the wall gas mixture (J/kg).
-    MW_kg_per_kmol:
-        Mean molecular weight of the wall gas (kg/kmol).
-    element_mass_fractions:
-        Dict mapping element symbol → elemental mass fraction in the
-        equilibrated wall gas.
-    species_mole_fractions:
-        Dict mapping species name → mole fraction (all species present in
-        the mechanism, including those at zero).
-    gas_moles:
-        Total moles of gas phase after equilibration.  ``None`` if the
-        backend does not track phase moles.
-    condensed_moles:
-        Total moles of the condensed phase after equilibration.
-        ``None`` if the backend does not track phase moles.
-    condensed_phase_mole_fractions:
-        Per-phase mole fractions for multi-condensed runs.  ``None`` for
-        single-condensed cases.
-    """
-
-    temperature_K: float
-    pressure_Pa: float
-    h_J_kg: float
-    MW_kg_per_kmol: float
+    temperature_K: float      #: wall temperature (equals the input, unchanged by TP equilibration)
+    pressure_Pa: float        #: pressure (unchanged)
+    h_J_kg: float              #: specific enthalpy of the wall gas mixture [J/kg]
+    MW_kg_per_kmol: float      #: mean molecular weight of the wall gas [kg/kmol]
+    #: Dict mapping element symbol -> elemental mass fraction in the
+    #: equilibrated wall gas.
     element_mass_fractions: dict[str, float]
+    #: Dict mapping species name -> mole fraction (all species present in
+    #: the mechanism, including those at zero).
     species_mole_fractions: dict[str, float]
+    #: Total moles of gas phase after equilibration; None if the backend
+    #: does not track phase moles.
     gas_moles: float | None = None
+    #: Total moles of the condensed phase after equilibration; None if the
+    #: backend does not track phase moles.
     condensed_moles: float | None = None
+    #: Per-phase mole fractions for multi-condensed runs; None for
+    #: single-condensed cases.
     condensed_phase_mole_fractions: dict[str, float] | None = None
 
 

@@ -1,3 +1,13 @@
+"""Cantera-backed equilibrium B' computation.
+
+Computes ``compute_bprime_case``: given a wall temperature, edge
+pressure, and pyrolysis-gas blowing parameter B'g, runs a Cantera
+multiphase equilibrium calculation for the ablating surface and
+returns a ``BPrimeCase`` (B'_c, wall enthalpy, wall gas composition).
+This is the reference implementation both ``generate_bprime.py``
+(offline tables) and ``BprimeEvaluator`` (live evaluation) build on.
+"""
+
 from __future__ import annotations
 
 import math

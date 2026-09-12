@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: MIT
 """Load MaterialCard and BPrimeTable from YAML files.
 
-YAML material card format:
+YAML material card format:::
 
     name: TACOT
     version: "3.0"
@@ -34,7 +34,7 @@ YAML material card format:
     emissivity_char_table: [[300, 0.90], [2000, 0.92], ...]
     b_prime_table: tacot_v3.0_bprime_air.yaml          # relative to this file
 
-B' table YAML format (3-D, legacy):
+B' table YAML format (3-D, legacy):::
 
     description: "..."
     T_wall_K:  [500, 700, ...]
@@ -47,14 +47,14 @@ B' table YAML format (3-D, legacy):
     target_element: C                 # optional, defaults to C
     surface_source_target_fraction: 1.0
 
-B' table YAML format (row-format, TACOT 3.0-style):
+B' table YAML format (row-format, TACOT 3.0-style):::
 
     columns: ["p_e_Pa", "B_g_prime", "B_c_prime", ..., "T_wall_K", ..., "h_wall_J_kg", "ablating?"]
     rows:
       - [101325.0, 0.5, 0.001, ..., 3200.0, ..., 1.2e7, "ablating"]
       - ...
 
-B' table YAML format (4-D, element conservation):
+B' table YAML format (4-D, element conservation):::
 
     description: "..."
     axes:

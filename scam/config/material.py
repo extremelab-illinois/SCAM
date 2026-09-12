@@ -29,12 +29,12 @@ class ComponentCard:
     """
 
     name: str
-    rho_0: float      # initial (virgin) apparent density [kg/m^3]
-    rho_r: float      # residual (char) apparent density [kg/m^3]; must satisfy rho_r < rho_0
-    A_rate: float     # Arrhenius pre-exponential [1/s]
-    E_act: float      # activation energy [J/mol]
-    m_exp: float      # reaction order exponent [-]
-    h_decomp: float = 0.0  # decomposition enthalpy [J/kg]; endothermic (absorbs heat) > 0
+    rho_0: float      #: initial (virgin) apparent density [kg/m^3]
+    rho_r: float      #: residual (char) apparent density [kg/m^3]; must satisfy ``rho_r < rho_0``
+    A_rate: float     #: Arrhenius pre-exponential [1/s]
+    E_act: float      #: activation energy [J/mol]
+    m_exp: float      #: reaction order exponent [-]
+    h_decomp: float = 0.0  #: decomposition enthalpy [J/kg]; endothermic (absorbs heat) is positive
 
 
 @dataclass
@@ -45,7 +45,7 @@ class BPrimeTableRef:
     The file path is resolved relative to the material card's directory.
     """
 
-    path: str  # path to B' table YAML, relative to the material card file
+    path: str  #: path to the B' table YAML, relative to the material card file
 
 
 @dataclass
@@ -74,23 +74,24 @@ class KineticAblationCard:
     not a generic handbook table) for the closed-form validation to hold.
     """
 
-    B: float          # pre-exponential [1/s]
-    E_a: float        # activation energy [J/mol]
+    B: float          #: pre-exponential [1/s]
+    E_a: float        #: activation energy [J/mol]
 
-    # Full heat of ablation h_gw(T_w) - h_so(T_w) [J/kg] = a + b*T + c*T^2:
-    # sensible T0->T_w heating + depolymerization energy.  Used ONLY inside
-    # the Eq. 12 mass-flux formula above (the denominator).
+    #: Full heat of ablation ``h_gw(T_w) - h_so(T_w)`` [J/kg] = ``a + b*T +
+    #: c*T^2``: sensible T0->T_w heating plus depolymerization energy. Used
+    #: only inside the Eq. 12 mass-flux formula above (the denominator).
     h_ablation_total_coeffs: tuple[float, float, float] = (0.0, 0.0, 0.0)
 
-    # Depolymerization-ONLY reaction enthalpy [J/kg] = a + b*T.  Used for the
-    # SEB's mass-removal energy term instead of h_ablation_total, because
-    # SCAM's own resolved in-depth FVM conduction (rho*h(T) formulation)
-    # already accounts for the wall node's actual sensible heating history —
-    # subtracting the full h_ablation_total there would double-count it.
+    #: Depolymerization-only reaction enthalpy [J/kg] = ``a + b*T``. Used
+    #: for the SEB's mass-removal energy term instead of
+    #: ``h_ablation_total``, because SCAM's own resolved in-depth FVM
+    #: conduction (``rho*h(T)`` formulation) already accounts for the wall
+    #: node's actual sensible heating history -- subtracting the full
+    #: ``h_ablation_total`` there would double-count it.
     h_ablation_reaction_coeffs: tuple[float, float] = (0.0, 0.0)
 
-    # Optional override of the reacting/wall density if it differs from
-    # mat.rho_char (default: None -> use mat.rho_char).
+    #: Optional override of the reacting/wall density if it differs from
+    #: ``mat.rho_char`` (default: None -> use ``mat.rho_char``).
     rho_sw_override: Optional[float] = None
 
 
@@ -107,145 +108,144 @@ class MaterialCard:
     """
 
     name: str
-    rho_virgin: float           # total virgin density [kg/m^3]
-    rho_char: float             # total char density [kg/m^3]
-    gamma_resin: float          # resin volume fraction in virgin composite [-]
+    rho_virgin: float           #: total virgin density [kg/m^3]
+    rho_char: float             #: total char density [kg/m^3]
+    gamma_resin: float          #: resin volume fraction in virgin composite [-]
 
-    # Decomposing constituents — arbitrary count; must be ordered (fastest first by convention)
-    components: list = field(default_factory=list)  # list[ComponentCard]
+    #: Decomposing constituents -- arbitrary count; must be ordered (fastest
+    #: first, by convention). ``list[ComponentCard]``.
+    components: list = field(default_factory=list)
 
-    # Thermal conductivity tables [[T_K, k_W_mK], ...] for virgin and char phases
+    #: Thermal conductivity table [[T_K, k_W_mK], ...], virgin phase.
     k_virgin_table: np.ndarray = field(default_factory=lambda: np.array([[300.0, 0.3], [3000.0, 0.3]]))
+    #: Thermal conductivity table [[T_K, k_W_mK], ...], char phase.
     k_char_table: np.ndarray   = field(default_factory=lambda: np.array([[300.0, 1.0], [3000.0, 1.0]]))
 
-    # In-plane conductivity tables (stored for future anisotropy support; unused by 1-D solver)
+    #: In-plane conductivity table (stored for future anisotropy support;
+    #: unused by the 1-D solver).
     k_virgin_ip_table: Optional[np.ndarray] = None
     k_char_ip_table:   Optional[np.ndarray] = None
 
-    # Specific heat tables [[T_K, cp_J_kgK], ...] for virgin and char phases
+    #: Specific heat table [[T_K, cp_J_kgK], ...], virgin phase.
     cp_virgin_table: np.ndarray = field(default_factory=lambda: np.array([[300.0, 1000.0], [3000.0, 1000.0]]))
+    #: Specific heat table [[T_K, cp_J_kgK], ...], char phase.
     cp_char_table: np.ndarray   = field(default_factory=lambda: np.array([[300.0, 1200.0], [3000.0, 1200.0]]))
 
-    # Pyrolysis gas specific enthalpy table [[T_K, h_g_J_kg], ...]
+    #: Pyrolysis gas specific enthalpy table [[T_K, h_g_J_kg], ...].
     h_g_table: np.ndarray = field(default_factory=lambda: np.array([[300.0, 0.0], [3000.0, 3.0e6]]))
 
-    # Optional absolute enthalpy tables [[T_K, h_J_kg], ...] for solid phases.
-    # When provided, enables the NASA Apollo h_bar pyrolysis energy source
-    # instead of the per-component h_decomp approach.
+    #: Optional absolute enthalpy table [[T_K, h_J_kg], ...], virgin phase.
+    #: When both this and ``h_char_table`` are provided, enables the NASA
+    #: Apollo ``h_bar`` pyrolysis energy source instead of the
+    #: per-component ``h_decomp`` approach.
     h_virgin_table: Optional[np.ndarray] = None
     h_char_table: Optional[np.ndarray] = None
 
-    # Sensible enthalpy tables [[T_K, h_J_kg], ...] integrated from cp tables
-    # (∫₀ᵀ cp dT).  Populated automatically by material_loader.py; used for
-    # the ρ·h(T) energy storage RHS in the tridiagonal assembly.  Leave None
-    # when constructing MaterialCard directly — the assembly will build them
-    # on-the-fly via build_sensible_enthalpy_table().
+    #: Sensible enthalpy table [[T_K, h_J_kg], ...], virgin phase, integrated
+    #: from the ``cp`` table. Populated automatically by
+    #: ``material_loader.py``; used for the ``rho*h(T)`` energy storage RHS
+    #: in the tridiagonal assembly. Leave None when constructing
+    #: ``MaterialCard`` directly -- the assembly builds it on the fly via
+    #: ``build_sensible_enthalpy_table()``.
     h_virgin_sensible: Optional[np.ndarray] = None
     h_char_sensible: Optional[np.ndarray] = None
 
-    # Gas-phase porosity for energy storage term d(eps_g*rho_g*h_g)/dt.
-    # Set both to zero (default) to skip the correction entirely.
-    eps_g_virgin: float = 0.0        # gas porosity of virgin material [-]
-    eps_g_char:   float = 0.0        # gas porosity of fully charred material [-]
-    gas_molar_mass: float = 0.022    # pyrolysis gas molar mass [kg/mol]
-    gas_molar_mass_table: Optional[np.ndarray] = None  # optional [[T_K, M_kg_mol], ...]
-    gas_viscosity_table: Optional[np.ndarray] = None   # optional [[T_K, mu_Pa_s], ...]
-    gas_pressure:   float = 101325.0 # ambient gas pressure for ideal-gas rho_g [Pa]
-    # Optional full (p, T) equilibrium pyrolysis-gas property tables (PATO
-    # gasProperties format).  Dict with 1-D "p" [Pa] (ascending), 1-D "T" [K]
-    # (ascending), and 2-D (P, N) arrays "M" [kg/mol], "h_g" [J/kg, absolute
-    # reference], "mu" [Pa·s].  When present, the 2D gas transport/energy path
-    # interpolates bilinearly in (p, T) like PATO's Tabulated GasProperties;
-    # the 1-D T-only tables above remain the fallback (and the 1D solver path).
+    #: Gas porosity of the virgin material [-], for the energy storage term
+    #: ``d(eps_g*rho_g*h_g)/dt``. Both zero (default) skips the correction
+    #: entirely.
+    eps_g_virgin: float = 0.0
+    eps_g_char:   float = 0.0        #: gas porosity of the fully-charred material [-]
+    gas_molar_mass: float = 0.022    #: pyrolysis gas molar mass [kg/mol]
+    gas_molar_mass_table: Optional[np.ndarray] = None  #: optional [[T_K, M_kg_mol], ...]
+    gas_viscosity_table: Optional[np.ndarray] = None   #: optional [[T_K, mu_Pa_s], ...]
+    gas_pressure:   float = 101325.0 #: ambient gas pressure for ideal-gas rho_g [Pa]
+    #: Optional full (p, T) equilibrium pyrolysis-gas property table (PATO
+    #: gasProperties format): dict with 1-D ``p`` [Pa] (ascending), 1-D
+    #: ``T`` [K] (ascending), and 2-D ``(P, N)`` arrays ``M`` [kg/mol],
+    #: ``h_g`` [J/kg, absolute reference], ``mu`` [Pa*s]. When present, the
+    #: 2-D gas transport/energy path interpolates bilinearly in (p, T); the
+    #: 1-D T-only tables above remain the fallback (and the 1-D solver path).
     gas_properties_pT: Optional[dict] = None
 
-    # Surface emissivity (used when this is the surface layer).
-    # emissivity_char: if >= 0, the emissivity is blended linearly with the
-    # char fraction so that emissivity → emissivity_char when fully charred.
-    # Negative (default) means use the same emissivity for both phases.
+    #: Virgin-phase scalar surface emissivity (used when this is the
+    #: surface layer).
     emissivity: float = 0.85
+    #: Char-phase scalar emissivity; if >= 0, blended linearly with the
+    #: char fraction so emissivity -> ``emissivity_char`` when fully
+    #: charred. Negative (default) means use the same value as
+    #: ``emissivity`` for both phases.
     emissivity_char: float = -1.0
 
-    # Optional temperature-dependent emissivity tables [[T_K, emissivity], ...]
-    # for the virgin and char phases.  When provided, these take precedence over
-    # the scalar emissivity / emissivity_char above: ε is interpolated at the
-    # wall temperature for each phase and then blended by the local char fraction
-    # (see physics/properties.py::surface_emissivity).  Leave None to use the
-    # scalar values.  emissivity_char_table falls back to emissivity_virgin_table
-    # if only the virgin table is supplied.
+    #: Optional temperature-dependent emissivity table [[T_K, emissivity],
+    #: ...] for the virgin phase; takes precedence over the scalar
+    #: ``emissivity``/``emissivity_char`` above when present -- see
+    #: ``properties.py::surface_emissivity``.
     emissivity_virgin_table: Optional[np.ndarray] = None
+    #: As ``emissivity_virgin_table``, char phase; falls back to
+    #: ``emissivity_virgin_table`` if only the virgin table is supplied.
     emissivity_char_table: Optional[np.ndarray] = None
 
-    # When True the gas energy storage term d(ε_g·ρ_g·h_g)/dt is absorbed
-    # implicitly into an effective cp correction in specific_heat().  Default
-    # is now False (matches PATO's explicit formulation).  Retained for backward
-    # compatibility; will be removed in a future version.
+    #: When True the gas energy storage term ``d(eps_g*rho_g*h_g)/dt`` is
+    #: absorbed implicitly into an effective cp correction in
+    #: ``specific_heat()``. Default False (matches PATO's explicit
+    #: formulation). Retained for backward compatibility; will be removed
+    #: in a future version.
     gas_storage_implicit: bool = False
 
-    # Darcy permeability [m²].  Used by the pressure-driven Darcy solver.
-    # Set to 0.0 (default) to skip the pressure equation and use the simpler
-    # thermal-expansion-only approximation in darcy_flow.py.
-    permeability: float = 0.0        # char (or single-value) permeability
-    permeability_virgin: float = 0.0 # virgin permeability; blended with permeability by char fraction
+    #: Darcy permeability [m^2] (char, or single-value), used by the
+    #: pressure-driven Darcy solver. ``0.0`` (default) skips the pressure
+    #: equation in favour of the simpler thermal-expansion-only
+    #: approximation in ``darcy_flow.py``.
+    permeability: float = 0.0
+    permeability_virgin: float = 0.0 #: virgin permeability; blended with ``permeability`` by char fraction
 
-    # Klinkenberg slip correction: K_app = K * (1 + klinkenberg_b / p).
-    # Set to 0.0 (default) to disable.  Significant only at sub-atmospheric pressures
-    # (p < ~1 kPa for typical ablators).  For TACOT the value below is an estimate
-    # derived from Kozeny-Carman pore-size analysis (d_pore ≈ 1 µm, see docs).
+    #: Klinkenberg slip correction, ``K_app = K * (1 + klinkenberg_b / p)``.
+    #: ``0.0`` (default) disables it. Significant only at sub-atmospheric
+    #: pressures (below roughly 1 kPa for typical ablators).
     klinkenberg_b: float = 0.0
 
-    # Set False for inert layers (no mass equation, no decomposition subgrid)
-    decomposing: bool = True
+    decomposing: bool = True   #: False for inert layers (no mass equation, no decomposition subgrid)
 
-    # B' table reference (None for non-ablating materials)
-    b_prime_ref: Optional[BPrimeTableRef] = None
+    b_prime_ref: Optional[BPrimeTableRef] = None  #: B' table reference (None for non-ablating materials)
 
-    # Kemp (1968) kinetic ablation closure (None for non-ablating materials or
-    # materials using the B'-table equilibrium closure instead).  Mutually
-    # exclusive with b_prime_ref — material_loader.py enforces this at load
-    # time and seb_residual() gives kinetic_ablation unconditional precedence
-    # when both would otherwise be present.
+    #: Kemp (1968) kinetic ablation closure (None for non-ablating
+    #: materials, or materials using the B'-table equilibrium closure
+    #: instead). Mutually exclusive with ``b_prime_ref`` --
+    #: ``material_loader.py`` enforces this at load time.
     kinetic_ablation: Optional[KineticAblationCard] = None
 
-    # Elemental mass fractions [C, H, O, N] of the pyrolysis gas vs temperature.
-    # Shape (4, n_T, 2): axis-0 = element index (C=0,H=1,O=2,N=3), each entry is
-    # [[T0, Z0], [T1, Z1], ...].  Single-row tables give a temperature-independent
-    # composition.  None → element transport disabled for this layer.
+    #: Elemental mass fractions [C, H, O, N] of the pyrolysis gas vs
+    #: temperature. Shape ``(4, n_T, 2)``: axis 0 is the element index
+    #: (C=0, H=1, O=2, N=3); each entry is [[T0, Z0], [T1, Z1], ...].
+    #: A single-row table gives a temperature-independent composition.
+    #: None disables element transport for this layer.
     pyro_elem_fracs: Optional[np.ndarray] = None
 
-    # Initial elemental mass fractions [C, H, O, N] for the in-material gas phase.
-    # Used by material_response.py to initialise Z_elem when element_transport=True.
-    # None → initialise to ambient air (Z_ELEM_AIR).
+    #: Initial elemental mass fractions [C, H, O, N] for the in-material
+    #: gas phase, used to initialise ``Z_elem`` when
+    #: ``element_transport=True``. None initialises to ambient air.
     initial_Z_elem: Optional[np.ndarray] = None
 
-    # Effective element diffusivity in the porous medium [m²/s].
-    # Applied uniformly to all four elements; divided by tortuosity below.
+    #: Effective element diffusivity in the porous medium [m^2/s], applied
+    #: uniformly to all four elements and divided by ``tortuosity``.
     element_diffusivity: float = 1.0e-5
 
-    # Pore tortuosity factor [-].  Effective diffusivity = element_diffusivity / tortuosity.
-    tortuosity: float = 1.0
+    tortuosity: float = 1.0    #: pore tortuosity factor [-]
 
-    # Physical category tag from the material card (metadata only, not used by solver).
-    # Values: subsurface | ablative_carbon | ablative_silica | ablative_organic |
-    #         ablative_silicone | ablative_hybrid
+    #: Physical category tag (metadata only, not used by the solver):
+    #: ``subsurface`` | ``ablative_carbon`` | ``ablative_silica`` |
+    #: ``ablative_organic`` | ``ablative_silicone`` | ``ablative_hybrid``.
     material_category: Optional[str] = None
 
-    # Absolute-reference offset for the pyrolysis gas enthalpy.
-    # When the material's h_g_table is on the SENSIBLE reference (h_g(298K)≈0),
-    # this offset converts it to the Cantera/NASA-9 absolute reference so that
-    # q_adv_pyro = m_dot_pyro * (h_g_abs(T_w) - h_wall) in the SEB is
-    # consistent with h_wall from the B' lookup:
-    #   h_g_abs(T) = h_g_sensible(T) + h_g_abs_offset
-    # Derived from the formation enthalpy of the nominal pyrolysis gas at 298 K
-    # (Cantera NASA-9 reference).  Leave None for materials that already store
-    # the absolute-reference h_g in h_g_table, or when q_adv is not used.
+    #: Sensible-to-absolute reference offset [J/kg] for ``h_g_table``. See
+    #: the material-card schema reference
+    #: (:doc:`/reference/02_material_card_schema`) for the double-application
+    #: trap this field guards against.
     h_g_abs_offset: Optional[float] = None
 
-    # Versioning and quality metadata (not used by solver).
-    # dataset_version: upstream source release (e.g. "3.0" for TACOT 3.0).
-    #   Omitted when no single authoritative version exists.
-    # card_version: SCAM-internal revision, incremented when the card changes.
-    # status: verified | provisional | estimate
+    #: Upstream dataset release (e.g. ``"3.0"`` for TACOT 3.0); metadata
+    #: only, not used by the solver. Omitted when no single authoritative
+    #: version exists.
     dataset_version: Optional[str] = None
-    card_version: str = "1.0"
-    status: str = "provisional"
+    card_version: str = "1.0"       #: SCAM-internal revision; increment when the card changes
+    status: str = "provisional"     #: ``verified`` | ``provisional`` | ``estimate``

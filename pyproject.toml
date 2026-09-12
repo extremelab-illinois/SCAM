@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "scam"
-version = "0.2.0"
+version = "0.3.0"
 description = "Simple Code for Ablative Materials — 1-D charring ablation solver"
 license = "MIT"
 requires-python = ">=3.10"
@@ -20,6 +20,17 @@ dependencies = [
 dev = ["pytest>=7.0", "pytest-cov", "h5py>=3.8"]
 hdf5 = ["h5py>=3.8"]
 bprime = ["cantera>=3.0", "pandas>=1.5"]
+# Documentation build (Sphinx + MyST).  Deliberately NOT folded into `dev`:
+# nobody running the test suite needs Sphinx.  Upper bounds are major-version
+# caps only -- myst-parser has renamed `myst_enable_extensions` entries across
+# majors before, and a docs build going red because upstream shipped a major is
+# exactly what these prevent.  See docs/conf.py.
+docs = [
+    "sphinx>=7.2,<9",
+    "myst-parser>=2.0,<5",
+    "furo>=2024.1.29",
+    "sphinx-copybutton>=0.5.2",
+]
 # NOTE: Mutation++ is intentionally NOT listed here. It is a compiled C++ library
 # with its own CMake build and has no pip distribution, so it cannot be expressed
 # as a dependency. It is optional (Cantera covers every live-chemistry path);

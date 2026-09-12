@@ -7,9 +7,10 @@ The timestep is adapted based on:
 3. Hard limits dt_min and dt_max from SolverOptions.
 
 The adaptation rule is:
-    If |ΔT_max| > dt_max_dT:       halve dt
-    If |Δρ/ρ_max| > dt_max_drho:   halve dt
-    If both are well within limits:  grow dt by 20 % (up to dt_max)
+
+    If ``|delta T_max|`` > dt_max_dT: halve dt
+    If ``|delta rho / rho_max|`` > dt_max_drho: halve dt
+    If both are well within limits: grow dt by 20% (up to dt_max)
 """
 
 from __future__ import annotations

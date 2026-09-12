@@ -5,13 +5,16 @@ In the CMA (Charring Material Ablation) model for porous ablators, only char
 oxidation drives physical surface recession.  Pyrolysis gas exits through the
 porous char via Darcy flow and does NOT ablate the surface.
 
+::
+
     s_dot = m_dot_char / rho_char    [m/s]
 
 where:
-    m_dot_char  = char erosion mass flux [kg/m^2/s] (from B' table)
-    rho_char    = fully-charred density of the surface material [kg/m^3]
-                  (material constant — the surface is assumed fully charred
-                   before it recedes, consistent with the CMA surface balance)
+
+- ``m_dot_char`` = char erosion mass flux [kg/m^2/s] (from B' table)
+- ``rho_char`` = fully-charred density of the surface material [kg/m^3]
+  (material constant — the surface is assumed fully charred before it
+  recedes, consistent with the CMA surface balance)
 
 s_dot >= 0 always (material can only be removed, not added).
 """

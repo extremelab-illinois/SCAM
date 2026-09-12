@@ -2,7 +2,8 @@
 """Mixture enthalpy and charring energy quantities.
 
 The in-depth energy equation includes a chemical energy source from
-the density change:
+the density change::
+
     Q_decomp = -(drho/dt) * h_bar(T)
 
 where h_bar is the enthalpy difference between virgin and char phases

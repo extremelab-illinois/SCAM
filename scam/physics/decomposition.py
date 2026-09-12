@@ -3,7 +3,7 @@
 
 Each thermal node n contains J nodelets indexed 0..J-1 from surface to back.
 The decomposition ODE is integrated analytically at the nodelet temperature
-(held fixed at T_nodelet over the timestep dt):
+(held fixed at T_nodelet over the timestep dt)::
 
     drho_i/dt = -k_i * rho_0_i * ((rho_i - rho_r_i) / rho_0_i)^m_i
     k_i = A_rate_i * exp(-E_act_i / (R * T_nodelet))
@@ -16,18 +16,22 @@ Two branches depending on reaction order m_i:
     m ≠ 1 (power-law):
         Let xi = (rho_i - rho_r) / rho_0,  normalized excess density
         d(xi)/dt = -k * xi^m / rho_0^{m-1}   (actually d(rho)/dt=-k*rho_0*xi^m)
-        Analytical solution for constant k:
+        Analytical solution for constant k::
+
             xi(t+dt)^{1-m} = xi(t)^{1-m} + (m-1) * k/rho_0^{m-1} * dt   ... (*)
+
         then rho_i(t+dt) = rho_r + rho_0 * xi_new
 
-        (*) derivation: integrate xi^{-m} dxi = -k/rho_0^{m-1} dt
-            → xi^{1-m}/(1-m) = constant + (-k/rho_0^{m-1}) t
-            → xi^{1-m} = xi_0^{1-m} + (m-1)*k/rho_0^{m-1} * dt  (for m>1, xi decreases)
+        (*) derivation: integrate ``xi^{-m} dxi = -k/rho_0^{m-1} dt``::
+
+            xi^{1-m}/(1-m) = constant + (-k/rho_0^{m-1}) t
+            xi^{1-m} = xi_0^{1-m} + (m-1)*k/rho_0^{m-1} * dt  (for m>1, xi decreases)
 
 Irreversibility is enforced by clamping rho_i_new in [rho_r, rho_i_old].
 
 Mass conservation on the moving Lagrangian grid includes a convective correction
-for the material velocity at each nodelet (eq. 6.1.42 / 6.1.66 in the CMA reference):
+for the material velocity at each nodelet (eq. 6.1.42 / 6.1.66 in the CMA reference)::
+
     drho/dt|_y  (at fixed coordinate) includes an advection term
     from the surface motion s_dot.  This is applied AFTER the Arrhenius update
     and before the volume-averaged density is projected back to the thermal grid.

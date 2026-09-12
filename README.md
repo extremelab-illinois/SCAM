@@ -5,6 +5,12 @@ A 1-D charring ablation solver for spacecraft thermal protection systems, implem
 
 SCAM models the coupled thermal and chemical response of ablative heat shields (carbon-phenolic composites, felt insulation, etc.) under aerothermal heating — the same physics that governs re-entry vehicle survivability. It is verified against the [PATO](https://pato.ac) reference solver's `AblationTestCase` benchmark suite.
 
+**Full documentation (user manual, theory manual, schema reference,
+verification record) lives in [`docs/`](docs/) — build it locally with
+`pip install -e ".[docs]"` then
+`sphinx-build -b html docs docs/_build/html`, or start reading the source
+Markdown directly from [`docs/index.md`](docs/index.md).**
+
 ---
 
 ## Physics

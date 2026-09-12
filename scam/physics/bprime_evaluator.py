@@ -12,8 +12,8 @@ about 0.3 ms per lookup (~3–4 s for ~11.6k lookups).
 Warm-start: Cantera Solution objects are created once at instantiation and
 reused across calls (Cantera's internal state acts as a warm start).
 
-Usage
------
+**Usage**::
+
     from scam.physics.bprime_evaluator import BprimeEvaluator
     ev = BprimeEvaluator.from_config("scam/materials/ablative_organic/tacot_v3.0_bprime_config.yaml")
     B_c, h_wall = ev.lookup(2000.0, 101325.0, 0.3, Z_C_pyro=0.35)

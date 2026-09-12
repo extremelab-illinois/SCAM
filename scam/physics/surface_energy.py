@@ -2,7 +2,7 @@
 """Surface energy balance (SEB).
 
 The surface energy balance closes the energy equation at the ablating surface.
-For the full ENERGY_BALANCE mode, the SEB residual is:
+For the full ENERGY_BALANCE mode, the SEB residual is::
 
     f(T_w) = q_conv_eff(T_w)           [convective + blowing correction]
            + q_rad_in(T_w)             [incoming radiation]
@@ -12,14 +12,16 @@ For the full ENERGY_BALANCE mode, the SEB residual is:
            - q_cond(T_w)               [heat conducted into material]
            = 0
 
-where q_cond is obtained from the F_cond relationship:
+where q_cond is obtained from the F_cond relationship::
+
     q_cond = alpha_F * T_w + beta_F
 
 The Newton iterate on T_w uses a finite-difference Jacobian.
 
 Heat flux sign convention:
-    Positive = into the material from the environment.
-    q_cond positive = heat flows from surface INTO the solid.
+
+- Positive = into the material from the environment.
+- q_cond positive = heat flows from surface INTO the solid.
 """
 
 from __future__ import annotations

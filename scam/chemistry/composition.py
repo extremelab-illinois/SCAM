@@ -1,4 +1,11 @@
 # SPDX-License-Identifier: MIT
+"""Gas-composition string parsing for the SCAM chemistry package.
+
+Parses ``"species:value,species:value,..."`` composition strings (mole
+or mass fractions, depending on caller convention) into normalized
+``{species: value}`` dicts, resolving a small set of case-insensitive
+species-name aliases (e.g. ``"o2"`` -> ``"O2"``).
+"""
 _ALIASES = {
     "Ar": "AR",
     "ar": "AR",

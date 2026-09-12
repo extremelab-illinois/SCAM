@@ -28,22 +28,13 @@ from dataclasses import dataclass, field
 
 @dataclass(frozen=True)
 class FailureState:
-    """Result of the failure model at a single (T_wall, X_l) point.
+    """Result of the failure model at a single (T_wall, X_l) point."""
 
-    Attributes
-    ----------
-    failing_species:
-        Names of condensed species whose failure temperature is exceeded.
-    Bprime_fail:
-        Dimensionless failure blowing parameter:
-        sum of surface mole fractions of all failing species.
-    active:
-        ``True`` when at least one species is failing.
-    """
-
-    failing_species: tuple[str, ...]
+    failing_species: tuple[str, ...]     #: names of condensed species whose failure temperature is exceeded
+    #: Dimensionless failure blowing parameter: sum of surface mole
+    #: fractions of all failing species.
     Bprime_fail: float
-    active: bool
+    active: bool                          #: True when at least one species is failing
 
     @property
     def is_passive(self) -> bool:

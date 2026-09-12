@@ -6,18 +6,20 @@ tab-separated text file with Fortran D-notation floats and columns:
 
     p (bar) \\t B'g \\t Temp (K) \\t B'c \\t Hw (kJ/kg)
 
-Usage
------
+**Usage**::
+
     python scam/tools/compare_bprime_cantera_excel.py --bg-plot 0.5 1.0
 
 Options
 -------
---bg-plot B [B ...]  B'g values to evaluate and plot.  If omitted all B'g
-                     values in the file are used (slow).
---workers N          Parallel Cantera workers (default: 4)
---output FILE        Output PNG (default: <script_dir>/compare_bprime_cantera_excel.png)
---p-atm P [P ...]   Pressures to plot in atm (default: all found in file)
---bg-floor FLOOR     Floor for B'g=0 when calling Cantera (default: 1e-6)
+
+- ``--bg-plot B [B ...]``: B'g values to evaluate and plot. If omitted all
+  B'g values in the file are used (slow).
+- ``--workers N``: parallel Cantera workers (default: 4).
+- ``--output FILE``: output PNG (default:
+  ``<script_dir>/compare_bprime_cantera_excel.png``).
+- ``--p-atm P [P ...]``: pressures to plot in atm (default: all found in file).
+- ``--bg-floor FLOOR``: floor for B'g=0 when calling Cantera (default: 1e-6).
 """
 
 from __future__ import annotations

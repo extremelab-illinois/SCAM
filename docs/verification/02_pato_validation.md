@@ -247,7 +247,7 @@ unaffected by the enthalpy-table path.
 
 For a standalone implementation reference for SCAM's SEB signs, branches,
 enthalpy references, table-vs-Cantera behavior, and cooldown gates, see
-[`docs/physics/surface_energy_balance.md`](../physics/surface_energy_balance.md).
+[`docs/theory/02_surface_energy_balance.md`](../theory/02_surface_energy_balance.md).
 
 A term-by-term comparison against PATO's `Bprime` boundary condition
 (`BprimeBoundaryConditions.C`) revealed SCAM's SEB was **missing the advective
@@ -624,5 +624,6 @@ Current result (2026-06-13 run): SCAM reaches `T_wall ≈ 1568.0 K` and
 `12.06 mm`. The full-run max in-depth differences are largest in the TACOT
 pyrolysis zone during cooldown (about 60–85 K at the 1–16 mm probes), while the
 deep TACOT probe and both Fourier sublayer probes remain essentially matched
-(≤ 1 K reported for 45.3 mm, subMat1, and subMat2). The regenerated plot is
-[`examples/verification/ablation2/compare_pato_ablation2_multiMat.png`](../../examples/verification/ablation2/compare_pato_ablation2_multiMat.png).
+(≤ 1 K reported for 45.3 mm, subMat1, and subMat2). The regenerated plot is written to
+`examples/verification/ablation2/compare_pato_ablation2_multiMat.png`
+(not tracked in git; regenerate it by running the command above).

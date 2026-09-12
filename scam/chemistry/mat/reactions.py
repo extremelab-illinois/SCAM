@@ -45,44 +45,28 @@ _R = 8314.46261815324
 
 @dataclass(frozen=True)
 class HeterogeneousReaction:
-    """One finite-rate heterogeneous surface reaction.
+    """One finite-rate heterogeneous surface reaction."""
 
-    Attributes
-    ----------
-    name:
-        Human-readable label (e.g. ``"C+O2->CO2"``).
-    gas_reactants:
-        Mapping of gas-phase species name → stoichiometric coefficient
-        (used in the rate product).  E.g. ``{"O2": 1.0}``.
-    condensed_reactant:
-        Name of the condensed-phase species consumed (informational only;
-        does not affect rate calculation).
-    gas_products:
-        Mapping of gas-phase product species → stoichiometric coefficient
-        (informational only).
-    A:
-        Pre-exponential factor (units depend on reaction order; consistent
-        with the rate being in kmol/m²/s when mole fractions are used).
-    beta:
-        Temperature exponent in T^beta (dimensionless).
-    Ea_J_per_kmol:
-        Activation energy (J/kmol).  Use 0 for a barrierless reaction.
-    reversible:
-        Whether the reaction is reversible.  Currently always treated as
-        irreversible; flag reserved for future equilibrium-rate extension.
-    reaction_order:
-        Overall reaction order in gas-phase species.  When 0 the rate
-        depends only on temperature (zero-order, wall-limited).
-    """
-
-    name: str
+    name: str                            #: human-readable label (e.g. ``"C+O2->CO2"``)
+    #: Mapping of gas-phase species name -> stoichiometric coefficient
+    #: (used in the rate product), e.g. ``{"O2": 1.0}``.
     gas_reactants: dict[str, float]
+    #: Name of the condensed-phase species consumed (informational only;
+    #: does not affect the rate calculation).
     condensed_reactant: str
+    #: Mapping of gas-phase product species -> stoichiometric coefficient
+    #: (informational only).
     gas_products: dict[str, float]
+    #: Pre-exponential factor (units depend on reaction order; consistent
+    #: with the rate being in kmol/m^2/s when mole fractions are used).
     A: float
-    beta: float = 0.0
-    Ea_J_per_kmol: float = 0.0
+    beta: float = 0.0                    #: temperature exponent in ``T^beta`` (dimensionless)
+    Ea_J_per_kmol: float = 0.0            #: activation energy [J/kmol]; 0 for a barrierless reaction
+    #: Whether the reaction is reversible. Currently always treated as
+    #: irreversible; flag reserved for future equilibrium-rate extension.
     reversible: bool = False
+    #: Overall reaction order in gas-phase species; 0 means the rate
+    #: depends only on temperature (zero-order, wall-limited).
     reaction_order: float = 1.0
 
     def __post_init__(self) -> None:

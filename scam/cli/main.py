@@ -1,8 +1,8 @@
 # SPDX-License-Identifier: MIT
 """CLI entry point: ``python -m scam case.yaml`` or ``scam case.yaml``.
 
-Usage
------
+**Usage**::
+
     scam case.yaml                 # run case, write output to path in deck
     scam case.yaml --verbose       # extra progress output
     scam case.yaml --output out/   # override output directory

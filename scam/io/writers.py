@@ -7,15 +7,15 @@ CSV (always available)
 ----------------------
 - ``{output_path}/time_history.csv``  — per-output-step scalars
   (time, T_wall, s_total, s_dot, q_cond, m_dot_pyro, m_dot_char,
-   tc_0, tc_1, ...)
+  tc_0, tc_1, ...)
 - ``{output_path}/temperature_profiles.csv``  — T(y) at each saved step
   (first column = node depth [m] at t=0, subsequent columns = T [K] at each time)
 - ``{output_path}/depth_profiles.csv``  — y_nodes [m] at each saved step
   (first column = node depth at t=0, subsequent columns = actual node positions
-   at each snapshot; differs from temperature_profiles depth col for ALE cases)
+  at each snapshot; differs from temperature_profiles depth col for ALE cases)
 - ``{output_path}/char_fraction_profiles.csv``  — β(y) at each saved step
   (β = (ρ_virgin − ρ) / (ρ_virgin − ρ_char); written only when stack and
-   mat_cards are supplied to write_csv / write_results)
+  mat_cards are supplied to write_csv / write_results)
 
 HDF5 (requires h5py, enabled via format="hdf5")
 ------------------------------------------------

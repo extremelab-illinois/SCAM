@@ -8,15 +8,18 @@ gas outward toward the surface via Darcy flow.  This gas carries sensible
 enthalpy, acting as a heat sink in the energy equation.
 
 Relationship to the gas energy STORAGE correction in properties.py:
-    The full gas energy term is  ∂(ε_g·ρ_g·h_g)/∂t + ∂(ρ_g·h_g·u_g)/∂y.
-    Expanding the time-derivative and using gas continuity at constant p shows
-    that the two parts split into:
-      • Storage  → ε_g·ρ_g·cp_g·∂T/∂t  (handled as a cp correction in properties.py)
-      • Advection → ρ_g·u_g·cp_g·∂T/∂y  (handled HERE, using sensible h_g)
-    Using SENSIBLE enthalpy (h_g − h_g(T_ref)) in the advection formula avoids
-    double-counting the formation-energy bookkeeping already included in the cp
-    correction.  The combination of the two terms recovers the full PATO
-    EnergyType-Pyrolysis + MassType-DarcyLaw behaviour.
+
+The full gas energy term is ``d(eps_g*rho_g*h_g)/dt + d(rho_g*h_g*u_g)/dy``.
+Expanding the time-derivative and using gas continuity at constant p shows
+that the two parts split into:
+
+- Storage: ``eps_g*rho_g*cp_g*dT/dt`` (handled as a cp correction in properties.py)
+- Advection: ``rho_g*u_g*cp_g*dT/dy`` (handled HERE, using sensible h_g)
+
+Using SENSIBLE enthalpy (``h_g - h_g(T_ref)``) in the advection formula avoids
+double-counting the formation-energy bookkeeping already included in the cp
+correction. The combination of the two terms recovers the full PATO
+EnergyType-Pyrolysis + MassType-DarcyLaw behaviour.
 
 Sign conventions (match the rest of SCAM):
     y = 0 at the hot surface, increases INTO the material.
