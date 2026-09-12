@@ -4,6 +4,30 @@
 All notable changes to SCAM are documented here. Versioning follows
 [Semantic Versioning](https://semver.org/).
 
+## [0.3.2] — 2026-09-12
+
+Documentation-only release: the theory manual's equations are now typeset
+rather than printed as ASCII pseudocode.
+
+### Changed
+
+- **Theory manual equations are now rendered math.** The surface-energy-balance,
+  governing-equations, and surface-chemistry-modes chapters previously carried
+  their equations as plain ASCII in gray code blocks
+  (`q_conv = rhoUeCH_eff * (h_r - h_wall)`); they are now typeset LaTeX,
+  using the symbols defined in the nomenclature chapter so the pages agree.
+  36 equations across the manual. Equation content is unchanged — this was
+  transcription, not a physics revision.
+- Blocks in those chapters that were never equations are now marked up as
+  what they are: the flux sign convention as a list, the
+  enthalpy-reference rule as an admonition, and the SEB symptom/diagnosis
+  pairs as a table. Genuine code (Python calls, a Cantera composition
+  string, an OpenFOAM dictionary, a pseudocode listing) stays as code.
+- `01_governing_equations.md` now distinguishes the cell area
+  ($\mathcal{A}_n$) from the tridiagonal sub-diagonal coefficient ($A_n$),
+  which the source code writes with the same letter; a note records the
+  collision for anyone cross-referencing `numerics/assembly.py`.
+
 ## [0.3.1] — 2026-09-12
 
 Documentation-only release: fixes unrendered equations on the published

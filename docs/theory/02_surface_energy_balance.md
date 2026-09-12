@@ -23,16 +23,16 @@ The implementation lives mainly in:
 
 SCAM uses the following flux convention at the front surface:
 
-```text
-positive heat flux = into the material
-q_cond > 0         = heat conducted from the surface into the solid
-```
+- A **positive** heat flux is directed **into** the material.
+- $q_\text{cond} > 0$ therefore means heat is conducted from the surface
+  into the solid.
 
 The SEB residual is assembled so that the solved wall temperature satisfies
 
-```text
-residual(T_w) = heat into surface - heat conducted into solid = 0
-```
+$$
+f(T_w) = \underbrace{q_\text{in}}_{\text{heat into surface}}
+       - \underbrace{q_\text{cond}}_{\text{conducted into solid}} = 0
+$$
 
 In code:
 
@@ -49,9 +49,9 @@ The in-depth energy equation is tridiagonal.  Before solving the surface
 temperature, SCAM partially eliminates the tridiagonal system to express the
 unknown conductive flux as a linear function of wall temperature:
 
-```text
-q_cond(T_w) = alpha_F * T_w + beta_F
-```
+$$
+q_\text{cond}(T_w) = \alpha_F\,T_w + \beta_F
+$$
 
 That reduction is computed by `numerics/assembly.py::compute_F_cond`.  The SEB
 Newton solve only sees a scalar residual in `T_w`; once `T_w` is found, the
@@ -66,9 +66,9 @@ correction, radiation, and in-depth conduction are solved together.
 
 For PATO-style Bprime cases, the active heating branch is:
 
-```text
-q_conv = rhoUeCH_eff * (h_r - h_wall)
-```
+$$
+q_\text{conv} = (\rho_e u_e C_H)_\text{eff}\,(h_r - h_w)
+$$
 
 where:
 
@@ -78,32 +78,37 @@ where:
 - `h_wall` is the equilibrium wall-gas enthalpy returned by the B' backend.
 - `rhoUeCH_eff` is `rhoUeCH` reduced by blowing.
 
-The B' lookup also gives the unblown char ablation coefficient:
+The B' lookup (either the table or Cantera) also returns $B'_c$, which gives
+the unblown char ablation flux:
 
-```text
-B'_c = Bprime table or Cantera result
-m_dot_char_unblown = B'_c * rho_e_u_e * C_M
-```
+$$
+\dot{m}_\text{char}^\text{unblown} = B'_c\,\rho_e u_e\,C_M
+$$
 
 The pyrolysis-gas blowing parameter is formed from the in-depth gas flux:
 
-```text
-B'_g = m_dot_pyro / (rho_e_u_e * C_M)
-```
+$$
+B'_g = \frac{\dot{m}_\text{pyro}}{\rho_e u_e\,C_M}
+$$
 
 Then SCAM computes the total blowing factor on the unblown basis:
 
-```text
-B_total = (max(m_dot_char_unblown, 0) + max(m_dot_pyro, 0)) / denom_blow
-F_blow  = 1 / (1 + lambda_blowing * B_total)
-```
+$$
+B_\text{total} =
+  \frac{\max\!\left(\dot{m}_\text{char}^\text{unblown},\,0\right)
+      + \max\!\left(\dot{m}_\text{pyro},\,0\right)}
+       {\rho_e u_e\,C_M}
+\qquad
+F_\text{blow} = \frac{1}{1 + \lambda\,B_\text{total}}
+$$
 
 The same factor reduces both heat and char mass transfer:
 
-```text
-rhoUeCH_eff = rhoUeCH * F_blow
-m_dot_char  = m_dot_char_unblown * F_blow
-```
+$$
+(\rho_e u_e C_H)_\text{eff} = \rho_e u_e C_H\,F_\text{blow}
+\qquad
+\dot{m}_\text{char} = \dot{m}_\text{char}^\text{unblown}\,F_\text{blow}
+$$
 
 This shared reduction is intentional.  It follows the Reynolds-analogy logic
 used by the CMA/Bprime formulation: injected gases reduce heat and mass transfer
@@ -114,16 +119,16 @@ recession and changes the thermal state through too much surface mass loss.
 
 In older heat-flux style equations it is natural to write an explicit sink like:
 
-```text
--(m_dot_char + m_dot_pyro) * h_wall
-```
+$$
+-\left(\dot{m}_\text{char} + \dot{m}_\text{pyro}\right) h_w
+$$
 
 In the enthalpy-based Bprime branch, SCAM does not add that sink separately.
 The term is already folded into the standard CMA/PATO-style convective expression:
 
-```text
-q_conv = rhoUeCH_eff * (h_r - h_wall)
-```
+$$
+q_\text{conv} = (\rho_e u_e C_H)_\text{eff}\,(h_r - h_w)
+$$
 
 Adding another mass-removal term in this branch would double-count the wall-gas
 enthalpy loss.  Therefore:
@@ -141,19 +146,21 @@ enthalpy references are consistent.
 
 ## 5. PATO Advective Terms: `qAdvPyro` and `qAdvChar`
 
-PATO's `Bprime` boundary condition includes two surface advective enthalpy terms:
+PATO's `Bprime` boundary condition includes two surface advective enthalpy
+terms, `qAdvPyro` and `qAdvChar`:
 
-```text
-qAdvPyro = mDotGw * (h_g - h_w)
-qAdvChar = mDotCw * (h_c - h_w)
-```
+$$
+q_\text{AdvPyro} = \dot{m}_{g,w}\,(h_g - h_w)
+\qquad
+q_\text{AdvChar} = \dot{m}_{c,w}\,(h_c - h_w)
+$$
 
 SCAM implements the same correction as:
 
-```text
-q_adv = m_dot_pyro * (h_g - h_wall)
-      + m_dot_char * (h_c - h_wall)
-```
+$$
+q_\text{adv} = \dot{m}_\text{pyro}\,(h_g - h_w)
+             + \dot{m}_\text{char}\,(h_c - h_w)
+$$
 
 These terms are physically separate from the B' mass balance:
 
@@ -177,7 +184,7 @@ The advective terms are only meaningful when `h_g`, `h_c`, and `h_wall` are on
 the same thermochemical reference.  This is the central rule for debugging SEB
 differences:
 
-```text
+```{important}
 Never subtract enthalpies from different references.
 ```
 
@@ -215,10 +222,8 @@ method is called.  The `try/except` is what makes old tables fall back to
 
 There are two independent questions:
 
-```text
-1. How are B'_c and h_wall obtained?
-2. How are h_g and h_c for q_adv obtained?
-```
+1. How are `B'_c` and `h_wall` obtained?
+2. How are `h_g` and `h_c` for `q_adv` obtained?
 
 A table and live Cantera can agree perfectly on `B'_c` and `h_wall` while still
 using different `h_g`/`h_c` values.  This is exactly the trap that appears in
@@ -228,9 +233,11 @@ TACOT 3.0 debugging.
 
 The B' lookup is:
 
-```text
-(T_wall, p_e, B'_g[, Z_C_pyro]) -> (B'_c, h_wall)
-```
+$$
+\left(T_w,\ p_e,\ B'_g\ [,\ Z_{C,\text{pyro}}]\right)
+\;\longrightarrow\;
+\left(B'_c,\ h_w\right)
+$$
 
 If the table was generated from Cantera with the same gas composition, pressure,
 temperature, and `B'_g`, then:
@@ -245,9 +252,11 @@ up to interpolation error.
 
 The advective lookup is:
 
-```text
-(T_wall, p_e[, Z_C_pyro]) -> (h_g, h_c)
-```
+$$
+\left(T_w,\ p_e\ [,\ Z_{C,\text{pyro}}]\right)
+\;\longrightarrow\;
+\left(h_g,\ h_c\right)
+$$
 
 For 3-D tables generated by `scam/tools/generate_bprime.py`,
 `csv_to_scam_yaml()` stores `h_g` and `h_c` as 2-D arrays over `(T, p)` when it
@@ -274,13 +283,12 @@ For 4-D element-transport tables, the generator stores
 `h_g(T,p,Z_C_pyro)` and `h_c(T,p)`.  The loader clamps/interpolates the
 composition axis in the same way as the B′ lookup.
 
-That difference affects `q_adv`, not recession.  A common symptom is:
+That difference affects `q_adv`, not recession.  A common symptom is all three
+of these at once:
 
-```text
-recession matches PATO
-surface temperature is still off by tens of kelvin
-B'_c comparison looks perfect
-```
+- recession matches PATO,
+- surface temperature is still off by tens of kelvin,
+- the `B'_c` comparison looks perfect.
 
 The correct conclusion is not "B' is wrong"; it is "the advective enthalpy path
 is not using the same composition/reference convention."
@@ -294,11 +302,11 @@ CH4:0.5551, CO:0.2418, H2O:0.2031
 ```
 
 This matches the intended TACOT pyrolysis-gas elemental inventory.  The nominal
-carbon mass fraction is approximately:
+carbon mass fraction is approximately
 
-```text
-Z_C_pyro = 0.494984
-```
+$$
+Z_{C,\text{pyro}} = 0.494984
+$$
 
 Passing `Z_C_pyro` into `BprimeEvaluator` does not strongly change `B'_c` or
 `h_wall` for the base ablation2 conditions, but it can strongly change the
@@ -306,11 +314,8 @@ pyrolysis-gas enthalpy returned by `surface_enthalpies()` because the evaluator
 reconstructs a gas composition from the elemental carbon fraction.
 
 For that reason, both the canonical live comparison and newly generated TACOT
-tables use:
-
-```text
-explicit nominal Z_C_pyro for the advective enthalpy composition
-```
+tables use the **explicit nominal $Z_{C,\text{pyro}}$** for the advective
+enthalpy composition.
 
 This keeps the tabulated mass balance while making the PATO-style
 `qAdvPyro/qAdvChar` terms use the same convention as the live Cantera comparison.
@@ -337,16 +342,17 @@ against material sensible char enthalpy.
 
 Radiation is split into incoming and outgoing pieces:
 
-```text
-q_rad_in  = epsilon * view_factor * sigma * T_rad_in^4
-q_rad_out = epsilon * view_factor * sigma * T_w^4
-```
+$$
+q_\text{rad,in}  = \varepsilon\,F\,\sigma\,T_\text{rad,in}^4
+\qquad
+q_\text{rad,out} = \varepsilon\,F\,\sigma\,T_w^4
+$$
 
-Then:
+where $F$ is the geometric `view_factor`. Both enter the residual as
 
-```text
-residual += q_rad_in - q_rad_out
-```
+$$
+f(T_w) \mathrel{+}= q_\text{rad,in} - q_\text{rad,out}
+$$
 
 When `emissivity_override > 0`, the boundary condition value is used directly.
 Otherwise SCAM uses `properties.surface_emissivity(mat, T_w, rho_surface)`,
@@ -373,42 +379,33 @@ check these in order:
 
 Useful symptoms:
 
-```text
-B'_c matches, recession matches, T_wall cold:
-    likely q_adv or h_wall/h_g/h_c reference issue
-
-recession too high and T_wall cold:
-    likely char mass flux / blowing correction issue
-
-cooldown much too cold:
-    likely Cantera advective terms or mass-removal sink active after chemistry off
-
-startup or cutoff max error huge but aligned-time values look good:
-    likely comparison sampling artifact around steep transients
-```
+| Symptom | Likely cause |
+|---|---|
+| `B'_c` matches, recession matches, `T_wall` cold | `q_adv`, or an `h_wall`/`h_g`/`h_c` reference mismatch |
+| Recession too high **and** `T_wall` cold | Char mass flux / blowing correction |
+| Cooldown much too cold | Cantera advective terms, or a mass-removal sink still active after chemistry is switched off |
+| Startup/cutoff max error huge but aligned-time values look fine | Comparison sampling artifact around steep transients |
 
 ## 12. Current Residual Equation in One Place
 
 For the active B' enthalpy branch:
 
-```text
-B'_g       = m_dot_pyro / (rho_e_u_e*C_M)
-(B'_c,h_w) = Bprime(T_w, p_e, B'_g, Z_C_pyro)
-
-m_dot_c0  = B'_c * rho_e_u_e * C_M
-B_total   = (max(m_dot_c0,0) + max(m_dot_pyro,0)) / (rho_e_u_e*C_M)
-F_blow    = 1 / (1 + lambda_blowing*B_total)
-
-m_dot_c   = m_dot_c0 * F_blow
-rhoUeCH_eff = rhoUeCH * F_blow
-
-q_conv = rhoUeCH_eff * (h_r - h_w)
-q_adv  = m_dot_pyro * (h_g - h_w) + m_dot_c * (h_c - h_w)
-q_rad  = epsilon*sigma*(T_rad_in^4 - T_w^4)
-q_cond = alpha_F*T_w + beta_F
-
-residual(T_w) = q_conv + q_adv + q_rad - q_cond
-```
+$$
+\begin{aligned}
+B'_g &= \frac{\dot{m}_\text{pyro}}{\rho_e u_e C_M} \\[4pt]
+\left(B'_c,\ h_w\right) &= \text{Bprime}\!\left(T_w,\ p_e,\ B'_g,\ Z_{C,\text{pyro}}\right) \\[8pt]
+\dot{m}_{c,0} &= B'_c\,\rho_e u_e\,C_M \\[4pt]
+B_\text{total} &= \frac{\max(\dot{m}_{c,0},0) + \max(\dot{m}_\text{pyro},0)}{\rho_e u_e C_M} \\[4pt]
+F_\text{blow} &= \frac{1}{1 + \lambda\,B_\text{total}} \\[8pt]
+\dot{m}_c &= \dot{m}_{c,0}\,F_\text{blow} \\[4pt]
+(\rho_e u_e C_H)_\text{eff} &= \rho_e u_e C_H\,F_\text{blow} \\[8pt]
+q_\text{conv} &= (\rho_e u_e C_H)_\text{eff}\,(h_r - h_w) \\[4pt]
+q_\text{adv}  &= \dot{m}_\text{pyro}\,(h_g - h_w) + \dot{m}_c\,(h_c - h_w) \\[4pt]
+q_\text{rad}  &= \varepsilon\,\sigma\left(T_\text{rad,in}^4 - T_w^4\right) \\[4pt]
+q_\text{cond} &= \alpha_F\,T_w + \beta_F \\[8pt]
+f(T_w) &= q_\text{conv} + q_\text{adv} + q_\text{rad} - q_\text{cond}
+\end{aligned}
+$$
 
 with the important qualifications:
 

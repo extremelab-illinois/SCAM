@@ -11,19 +11,29 @@ described in `CLAUDE.md`'s Architecture section.
 
 ## Energy equation
 
-For node `n`:
+For node $n$:
 
-```text
-d/dt [ rho_n * cp_n * T_n * A_n * delta_n ]
-    = G_{n-1/2} * (T_{n-1} - T_n) - G_{n+1/2} * (T_n - T_{n+1})
-      + Q_decomp_n * A_n * delta_n
-      + Q_pyro_n   * A_n * delta_n
-```
+$$
+\begin{aligned}
+\frac{d}{dt}\left[\rho_n\,c_{p,n}\,T_n\,\mathcal{A}_n\,\Delta_n\right]
+ &= G_{n-1/2}\left(T_{n-1} - T_n\right) - G_{n+1/2}\left(T_n - T_{n+1}\right) \\
+ &\quad + Q_{\text{decomp},n}\,\mathcal{A}_n\,\Delta_n \\
+ &\quad + Q_{\text{pyro},n}\,\mathcal{A}_n\,\Delta_n
+\end{aligned}
+$$
 
-`G_{n+1/2}` is the conductance between nodes `n` and `n+1` [W/K], harmonic in
+$G_{n+1/2}$ is the conductance between nodes $n$ and $n+1$ [W/K], harmonic in
 the two nodes' conductivities and areas (`geometry/fvm.py::interface_conductance`,
 `face_area`), and includes any inter-layer contact resistance at a stack
 boundary.
+
+```{note}
+$\mathcal{A}_n$ is the cell **area** and $\Delta_n$ its thickness, so
+$\mathcal{A}_n \Delta_n$ is the cell volume. The tridiagonal coefficients
+below are separately named $A_n, B_n, C_n, D_n$ — the code writes both the
+area and the sub-diagonal coefficient as `A`, so watch the context when
+cross-referencing `numerics/assembly.py`.
+```
 
 ```{note}
 This page states the equation with the simpler `rho·cp·T` storage term for
@@ -40,16 +50,24 @@ the `(ρ_old·h_old − ρ_new·h_k)` density-change term folded into `D_n`.
 Conduction is fully implicit (`theta = 1`); decomposition and pyrolysis-gas
 sources are evaluated explicitly at the start of the step (per the solver
 sequence in `solvers/indepth_solver.py::step()`). The per-node coefficients
-of the tridiagonal system `A_n·T_{n-1} + B_n·T_n + C_n·T_{n+1} = D_n` are:
+of the tridiagonal system
+$A_n T_{n-1} + B_n T_n + C_n T_{n+1} = D_n$ are:
 
-```text
-A_n = -G_{n-1/2}
-C_n = -G_{n+1/2}
-B_n = M_n + G_{n-1/2} + G_{n+1/2}
-D_n = M_n * T_n^k + (Q_decomp_n + Q_pyro_n) * A_n * delta_n
+$$
+\begin{aligned}
+A_n &= -G_{n-1/2} \\
+C_n &= -G_{n+1/2} \\
+B_n &= M_n + G_{n-1/2} + G_{n+1/2} \\
+D_n &= M_n\,T_n^{\,k}
+     + \left(Q_{\text{decomp},n} + Q_{\text{pyro},n}\right)\mathcal{A}_n\,\Delta_n
+\end{aligned}
+$$
 
-M_n = rho_n * cp_n * A_n * delta_n / dt      # thermal mass / dt
-```
+where $M_n$ is the cell's thermal mass divided by the timestep:
+
+$$
+M_n = \frac{\rho_n\,c_{p,n}\,\mathcal{A}_n\,\Delta_n}{\Delta t}
+$$
 
 **Surface node** (`n = 0`, half-node): no left neighbour (`A_0 = 0`); the
 left face instead receives the prescribed conduction flux `q_cond`
@@ -72,9 +90,9 @@ system for every SEB Newton iterate, `compute_F_cond` performs a backward
 elimination of the assembled system down to node 0, producing the linear
 relationship
 
-```text
-q_cond = alpha_F * T_wall + beta_F
-```
+$$
+q_\text{cond} = \alpha_F\,T_w + \beta_F
+$$
 
 which is what `solvers/surface_solver.py`'s Newton iteration actually
 iterates against — one scalar equation, not a full linear solve, per

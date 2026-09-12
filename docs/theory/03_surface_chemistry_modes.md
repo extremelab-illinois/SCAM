@@ -77,10 +77,12 @@ mass loss (`B'_c`) or from the enthalpy terms in the surface energy balance.
 This mode uses table `B'_c` and table `h_wall`, but takes Cantera enthalpy
 differences for the advective terms:
 
-```text
-h_g = h_wall_table + (h_g_cantera - h_wall_cantera)
-h_c = h_wall_table + (h_c_cantera - h_wall_cantera)
-```
+$$
+\begin{aligned}
+h_g &= h_w^\text{table} + \left(h_g^\text{Cantera} - h_w^\text{Cantera}\right) \\
+h_c &= h_w^\text{table} + \left(h_c^\text{Cantera} - h_w^\text{Cantera}\right)
+\end{aligned}
+$$
 
 That keeps the table wall-enthalpy reference while adding PATO-style advective
 enthalpy differences.  In the current script this mode uses raw Cantera composition
