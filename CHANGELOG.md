@@ -4,6 +4,27 @@
 All notable changes to SCAM are documented here. Versioning follows
 [Semantic Versioning](https://semver.org/).
 
+## [0.3.1] — 2026-09-12
+
+Documentation-only release: fixes unrendered equations on the published
+site and links to it from the README.
+
+### Fixed
+
+- **Equations in the two PATO reference chapters rendered as raw LaTeX**
+  (`docs/theory/80_pato_internal_energy_balance.md`,
+  `81_pato_material_recession.md`). Both used LaTeX's `\[...\]` / `\(...\)`
+  delimiters, which MyST's `dollarmath` extension does not recognize, so the
+  blocks were parsed as ordinary Markdown prose — which also consumed the
+  underscores in subscripted terms, publishing visible backslashes and
+  mangled symbols (`\rho\_e u\_e C\_H`) instead of typeset math. Converted
+  to `$$...$$` / `$...$`; no equation content changed.
+
+### Added
+
+- README now carries a documentation badge and links to the published site
+  at <https://scam.readthedocs.io/en/latest/>.
+
 ## [0.3.0] — 2026-09-12
 
 Adds a full documentation site (Sphinx + MyST): a user manual, a theory

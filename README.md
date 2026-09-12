@@ -1,15 +1,18 @@
 <!-- SPDX-License-Identifier: MIT -->
 # SCAM —  <span style="font-size: 65%;"> (not so)</span> Simple Code for Ablative Materials
 
+[![Documentation Status](https://readthedocs.org/projects/scam/badge/?version=latest)](https://scam.readthedocs.io/en/latest/)
+
 A 1-D charring ablation solver for spacecraft thermal protection systems, implemented in pure Python.
 
 SCAM models the coupled thermal and chemical response of ablative heat shields (carbon-phenolic composites, felt insulation, etc.) under aerothermal heating — the same physics that governs re-entry vehicle survivability. It is verified against the [PATO](https://pato.ac) reference solver's `AblationTestCase` benchmark suite.
 
-**Full documentation (user manual, theory manual, schema reference,
-verification record) lives in [`docs/`](docs/) — build it locally with
-`pip install -e ".[docs]"` then
-`sphinx-build -b html docs docs/_build/html`, or start reading the source
-Markdown directly from [`docs/index.md`](docs/index.md).**
+**📖 Full documentation — user manual, theory manual, schema reference, and
+verification record — is published at
+[scam.readthedocs.io](https://scam.readthedocs.io/en/latest/).**
+
+To build it locally instead: `pip install -e ".[docs]"` then
+`sphinx-build -b html docs docs/_build/html` (or `make -C docs strict`).
 
 ---
 

@@ -96,11 +96,28 @@ separate branch and remote:
 
 `docs/` is a Sphinx + MyST documentation source tree (`docs/conf.py`; build
 with `pip install -e ".[docs]"` then
-`sphinx-build -b html -W --keep-going docs docs/_build/html`). It must build
-cleanly with `-W` (warnings-as-errors) on **both** `main` and `public-release`,
-using the *same* `docs/conf.py` — no branch detection in that file. ReadTheDocs
+`sphinx-build -b html -W --keep-going docs docs/_build/html`, or
+`make -C docs strict`). It must build cleanly with `-W`
+(warnings-as-errors) on **both** `main` and `public-release`, using the
+*same* `docs/conf.py` — no branch detection in that file. ReadTheDocs
 builds `public-release` from a shallow detached HEAD, so a branch-conditional
 `conf.py` would make the two builds non-comparable and is never the fix.
+
+**The published site is <https://scam.readthedocs.io/en/latest/>**, built by
+ReadTheDocs from the public remote's `main` (i.e. this repo's
+`public-release`), configured by the root `.readthedocs.yaml`. `main` itself
+is never published — RTD cannot serve a private repo on the free tier — so
+docs work on `main` is only visible locally until it is promoted. **A docs
+fix is not live until it has been promoted to `public-release` and pushed**;
+check the site, not just `main`, when verifying a rendering fix.
+
+**Math must use `$$...$$` / `$...$`, never LaTeX's `\[...\]` / `\(...\)`.**
+MyST's `dollarmath` extension does not recognize the LaTeX delimiter
+convention at all, so such blocks fall through to ordinary Markdown
+parsing, which eats the underscores in subscripted terms
+(`\mathbf{u}_{mesh}` → `\mathbf{u}{mesh}`) and renders raw backslashes on
+the published page. This shipped live once in
+`docs/theory/8{0,1}_pato_*.md` before it was caught.
 
 Two filename rules make that possible:
 

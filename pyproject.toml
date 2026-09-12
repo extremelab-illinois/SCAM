@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "scam"
-version = "0.3.0"
+version = "0.3.1"
 description = "Simple Code for Ablative Materials — 1-D charring ablation solver"
 license = "MIT"
 requires-python = ">=3.10"

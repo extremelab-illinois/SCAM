@@ -61,7 +61,7 @@ solve
 
 In compact mathematical form, this corresponds to the residual
 
-\[
+$$
 \rho_s c_p
 \left[
 \frac{\partial T}{\partial t}
@@ -81,7 +81,7 @@ In compact mathematical form, this corresponds to the residual
 +
 \nabla\cdot\left(\boldsymbol{\phi}_{Hg}\right)
 =0.
-\]
+$$
 
 Here `mesh_.phi()` is the OpenFOAM mesh-motion flux. Therefore, **surface recession enters the internal energy equation through the dynamic-mesh/ALE correction terms**, not as a standalone recession-rate source in the energy equation.
 
@@ -110,13 +110,13 @@ epsgRhogEg = eps_g*rho_g*h_g - eps_g*p;
 
 That is,
 
-\[
+$$
 \epsilon_g \rho_g e_g
 =
 \epsilon_g \rho_g h_g - \epsilon_g p.
-\]
+$$
 
-This is the pore-gas internal-energy density written from the enthalpy relation \(\rho e = \rho h - p\), multiplied by the gas volume fraction.
+This is the pore-gas internal-energy density written from the enthalpy relation $\rho e = \rho h - p$, multiplied by the gas volume fraction.
 
 ## 6. Gas enthalpy transport coefficient
 
@@ -128,17 +128,17 @@ GammaHg = ((h_g*p*M)/(mu*R*T))*K;
 
 or
 
-\[
+$$
 \Gamma_{Hg}
 =
 \frac{h_g p M_g}{\mu_g R T}\,\mathbf{K}.
-\]
+$$
 
 This coefficient multiplies the pressure equation contribution in the energy residual as
 
-\[
+$$
 -\nabla\cdot\left(\Gamma_{Hg}\nabla p\right).
-\]
+$$
 
 PATO also defines
 
@@ -166,11 +166,11 @@ solve
 
 with
 
-\[
+$$
 \eta = \frac{\epsilon_g M_g}{RT},
 \qquad
 \Gamma = \frac{pM_g}{\mu_gRT}\mathbf{K}.
-\]
+$$
 
 The pyrolysis gas production source is `piTotal`. Thus, pyrolysis affects the internal energy equation both through direct pyrolysis energy/source terms and indirectly through pressure-driven gas enthalpy transport.
 
@@ -193,13 +193,13 @@ solve
 
 This corresponds to
 
-\[
+$$
 \frac{\partial \xi_i}{\partial t}
 -
 \nabla\cdot\left(\mathbf{u}_{mesh}\xi_i\right)
 =
 A_i T^{n_i}\exp\left(-\frac{E_i}{RT}\right)\left|1-\xi_i\right|^{m_i}.
-\]
+$$
 
 The pyrolysis mass-production rate for each reaction is then computed as
 
